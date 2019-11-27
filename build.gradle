@@ -1,0 +1,66 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'gradle.plugin.nl.javadude.gradle.plugins:license-gradle-plugin:0.13.1'
+    }
+}
+
+plugins {
+    id 'nebula.plugin-plugin' version '13.2.0'
+}
+
+apply plugin: 'com.github.hierynomus.license'
+
+repositories {
+    jcenter()
+}
+
+group = 'org.gradle'
+description = 'To detect flaky tests'
+
+contacts {
+    'jkschneider@gmail.com' {
+        moniker 'Jon Schneider'
+        github 'jkschneider'
+    }
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    testCompile 'com.netflix.nebula:nebula-test:latest.release'
+}
+
+pluginBundle {
+    website = 'https://github.com/gradle/test-retry-plugin'
+    vcsUrl = 'https://github.com/gradle/test-retry-plugin.git'
+    description = project.description
+
+    plugins {
+        springProjectPlugin {
+            id = 'io.spring.release'
+            displayName = 'Spring release plugin'
+            description = project.description
+            tags = ['spring']
+        }
+    }
+
+    mavenCoordinates {
+        groupId = 'org.gradle'
+        artifactId = 'test-retry-plugin'
+    }
+}
+
+license {
+    header = file('gradle/licenseHeader.txt')
+    exclude '**/*.tokens'
+    mapping {
+        kt = 'JAVADOC_STYLE'
+    }
+    sourceSets = project.sourceSets
+    strictCheck = true
+}
