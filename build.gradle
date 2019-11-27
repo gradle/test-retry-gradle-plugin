@@ -1,0 +1,21 @@
+plugins {
+    id 'nebula.release' version '13.2.1'
+}
+
+group = 'org.gradle'
+description = 'Mitigate flaky tests by retrying tests when they fail'
+
+afterEvaluate { project ->
+    println "I'm building $project.name with version $project.version"
+}
+
+evaluationDependsOn("plugin")
+
+tasks.named("final") {
+    dependsOn tasks.findByPath(":plugin:publishPlugins")
+}
+
+tasks.named("candidate") {
+    dependsOn tasks.findByPath(":plugin:publishPlugins")
+}
+

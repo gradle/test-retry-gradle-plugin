@@ -1,0 +1,5 @@
+.teamcity/target
+.idea
+build/
+.gradle/
+gradle.properties
