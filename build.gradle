@@ -42,10 +42,10 @@ pluginBundle {
 
     plugins {
         springProjectPlugin {
-            id = 'io.spring.release'
-            displayName = 'Spring release plugin'
+            id = 'org.gradle.test-retry'
+            displayName = 'Gradle test retry plugin'
             description = project.description
-            tags = ['spring']
+            tags = ['testing']
         }
     }
 
