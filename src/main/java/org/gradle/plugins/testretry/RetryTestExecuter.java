@@ -18,21 +18,23 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     }
 
     @Override
-    public void execute(JvmTestExecutionSpec jvmTestExecutionSpec, TestResultProcessor testResultProcessor) {
+    public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor);
         if(extension.getMaxRetries() > 0) {
-            delegate.execute(jvmTestExecutionSpec, retryTestResultProcessor);
+            delegate.execute(spec, retryTestResultProcessor);
             int retryCount = 0;
-            while(retryCount < extension.getMaxRetries() && retryTestListener.getFailedTests().size() > 0 ) {
+//            System.out.println("retries = " + extension.getMaxRetries());
+            while(retryCount < extension.getMaxRetries() && retryTestResultProcessor.getRetries().size() > 0 ) {
                 retryTestListener.reset();
-//                if(retryCount + 1 == extension.getMaxRetries()) {
-//                    retryTestResultProcessor.lastRetry();
-//                }
-                delegate.execute(jvmTestExecutionSpec, retryTestResultProcessor);
+                if(retryCount + 1 == extension.getMaxRetries()) {
+                    retryTestResultProcessor.lastRetry();
+                }
+                delegate.execute(spec, retryTestResultProcessor);
                 retryCount++;
             }
         } else {
-            delegate.execute(jvmTestExecutionSpec, testResultProcessor);
+//            System.out.println("no retry");
+            delegate.execute(spec, testResultProcessor);
         }
     }
 

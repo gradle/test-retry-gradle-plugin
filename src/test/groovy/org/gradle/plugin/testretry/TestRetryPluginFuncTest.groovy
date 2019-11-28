@@ -1,4 +1,7 @@
 import org.gradle.testkit.runner.GradleRunner
+
+import java.lang.management.ManagementFactory
+
 import static org.gradle.testkit.runner.TaskOutcome.*
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -111,13 +114,13 @@ class TestRetryPluginFuncTest extends Specification {
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
             .withPluginClasspath()
-            .withArguments('test')
-            .buildAndFail() // should not fail
+            .withArguments('test', '--tests', '**FlakyTest**')
+            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+            .build()
 
         then:
         println result.output
-        result.output.contains('4 tests completed, 1 failed') // TODO: Should be 4 tests completed'
-        result.task(":test").outcome == FAILED // TODO: should be success
+        result.task(":test").outcome == SUCCESS // TODO: should be success
     }
 
     def "can retry failed tests"() {
