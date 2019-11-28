@@ -34,7 +34,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             while (retryCount < extension.getMaxRetries() && retryTestResultProcessor.getRetries().size() > 0) {
                 retryTestListener.reset();
                 JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
-                retryTestResultProcessor.reset();
+                retryTestResultProcessor.setupRetry();
 //                System.out.println("\n\n\n");
 //                System.out.println("retryCount = " + retryCount);
 

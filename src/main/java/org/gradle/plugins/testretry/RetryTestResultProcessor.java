@@ -20,16 +20,27 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     private Map<Object, TestDescriptorInternal> all = new HashMap<Object, TestDescriptorInternal>();
     private List<TestDescriptorInternal> retries = new ArrayList<>();
+    private boolean retry;
 
     public RetryTestResultProcessor(TestResultProcessor delegate) {
         this.delegate = delegate;
     }
 
+
     @Override
     public void started(TestDescriptorInternal testDescriptorInternal, TestStartEvent testStartEvent) {
+
+        if(testDescriptorInternal.isRoot() ) {
+            if(retry) {
+                return;
+            } else {
+                all.put(testDescriptorInternal.getId(), testDescriptorInternal);
+            }
+        }
         if (!testDescriptorInternal.isComposite()) {
             all.put(testDescriptorInternal.getId(), testDescriptorInternal);
         }
+
 //        System.out.println("RetryTestResultProcessor.started");
 //        System.out.println("testDescriptorInternal = " + testDescriptorInternal.getDisplayName() + "  --  " + testDescriptorInternal.getId() + ", testStartEvent = " + testStartEvent);
         delegate.started(testDescriptorInternal, testStartEvent);
@@ -38,6 +49,10 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void completed(Object o, TestCompleteEvent testCompleteEvent) {
+
+        if(!(retries.isEmpty() && lastRetry) && all.containsKey(o) && all.get(o).isRoot() ) {
+            return;
+        }
 //        System.out.println("RetryTestResultProcessor.completed");
 //        System.out.println("o = " + o + ", testCompleteEvent = " + testCompleteEvent.getResultType());
         TestDescriptorInternal testDescriptorInternal = all.get(o);
@@ -82,9 +97,10 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         lastRetry = true;
     }
 
-    public void reset() {
+    public void setupRetry() {
         retries.clear();
         all.clear();
+        retry = true;
     }
 
     public List<TestDescriptorInternal> getRetries() {

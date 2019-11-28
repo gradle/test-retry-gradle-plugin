@@ -126,8 +126,6 @@ acme.flaky.FlakyTest > test FAILED
 
 acme.SuccesfulTest > test PASSED
 
-2 tests completed, 1 failed
-
 acme.flaky.FlakyTest > test PASSED
 
 3 tests completed, 1 failed
