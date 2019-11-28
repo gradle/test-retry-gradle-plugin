@@ -49,7 +49,7 @@ public class TestRetryPlugin implements Plugin<Project> {
             setTestExecuter.setAccessible(true);
             RetryTestListener retryTestListener = new RetryTestListener();
             test.addTestListener(retryTestListener);
-            setTestExecuter.invoke(test, new RetryTestExecuter(delegate, retryTestListener, extension));
+            setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test, retryTestListener, extension));
         } catch (NoSuchMethodException | IllegalAccessException e) {
             throw new RuntimeException(e);
         } catch (InvocationTargetException e) {

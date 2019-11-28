@@ -74,6 +74,10 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     }
 
+    class RetryTestDescriptor {
+
+    }
+
     public void lastRetry() {
         lastRetry = true;
     }

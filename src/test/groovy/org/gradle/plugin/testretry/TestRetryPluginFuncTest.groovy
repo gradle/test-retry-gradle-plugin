@@ -114,13 +114,24 @@ class TestRetryPluginFuncTest extends Specification {
         def result = GradleRunner.create()
             .withProjectDir(testProjectDir.root)
             .withPluginClasspath()
-            .withArguments('test', '--tests', '**FlakyTest**')
+            .withArguments('test')
             .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .build()
 
         then:
         println result.output
-        result.task(":test").outcome == SUCCESS // TODO: should be success
+        result.task(":test").outcome == SUCCESS
+        result.output.contains("""
+acme.flaky.FlakyTest > test FAILED
+
+acme.SuccesfulTest > test PASSED
+
+2 tests completed, 1 failed
+
+acme.flaky.FlakyTest > test PASSED
+
+3 tests completed, 1 failed
+""")
     }
 
     def "can retry failed tests"() {
