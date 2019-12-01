@@ -12,7 +12,7 @@ plugins {
     id 'nebula.plugin-plugin' version '13.2.0'
 }
 
-//apply plugin: 'com.github.hierynomus.license'
+apply plugin: 'com.github.hierynomus.license'
 
 repositories {
     jcenter()
@@ -62,12 +62,12 @@ pluginBundle {
     }
 }
 
-//license {
-//    header = file('gradle/licenseHeader.txt')
-//    exclude '**/*.tokens'
-//    mapping {
-//        kt = 'JAVADOC_STYLE'
-//    }
-//    sourceSets = project.sourceSets
-//    strictCheck = true
-//}
+license {
+    header = file('gradle/licenseHeader.txt')
+    exclude '**/*.tokens'
+    mapping {
+        kt = 'JAVADOC_STYLE'
+    }
+    sourceSets = project.sourceSets
+    strictCheck = true
+}

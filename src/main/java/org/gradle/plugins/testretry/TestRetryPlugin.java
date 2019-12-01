@@ -21,7 +21,6 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.api.Task;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

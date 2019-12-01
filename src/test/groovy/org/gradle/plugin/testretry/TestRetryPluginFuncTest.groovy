@@ -1,11 +1,29 @@
+/*
+ * Copyright 2019 Gradle, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.gradle.plugin.testretry
+
 import org.gradle.testkit.runner.GradleRunner
-
-import java.lang.management.ManagementFactory
-
-import static org.gradle.testkit.runner.TaskOutcome.*
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+
+import java.lang.management.ManagementFactory
+
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class TestRetryPluginFuncTest extends Specification {
     @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -47,7 +65,7 @@ class TestRetryPluginFuncTest extends Specification {
         result.task(":test").outcome == SUCCESS
     }
 
-    def "do not reexecute succesful tests"() {
+    def "do not re-execute successful tests"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -84,7 +102,7 @@ class TestRetryPluginFuncTest extends Specification {
         result.task(":test").outcome == SUCCESS
     }
 
-    def "does not retry with all tests succcesful"() {
+    def "does not retry with all tests successful"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -121,15 +139,15 @@ class TestRetryPluginFuncTest extends Specification {
         then:
         println result.output
         result.task(":test").outcome == SUCCESS
-        result.output.contains("""
-acme.flaky.FlakyTest > test FAILED
-
-acme.SuccesfulTest > test PASSED
-
-acme.flaky.FlakyTest > test PASSED
-
-3 tests completed, 1 failed
-""")
+        result.output.contains("""\
+            acme.SuccessfulTest > test PASSED
+    
+            acme.flaky.FlakyTest > test FAILED
+            
+            acme.flaky.FlakyTest > test PASSED
+            
+            3 tests completed, 1 failed
+        """.stripIndent())
     }
 
     def "can retry failed tests"() {
@@ -173,14 +191,14 @@ acme.flaky.FlakyTest > test PASSED
 
     def successfulTest() {
         testProjectDir.newFolder('src', 'test', 'java', 'acme', 'successful')
-        def flakyTest = testProjectDir.newFile('src/test/java/acme/SuccesfulTest.java')
+        def flakyTest = testProjectDir.newFile('src/test/java/acme/SuccessfulTest.java')
         flakyTest << """
         package acme;
         
         import static org.junit.Assert.assertEquals;
         import org.junit.Test;
 
-        public class SuccesfulTest {
+        public class SuccessfulTest {
             @Test
             public void test() {
                 assertEquals(6, 6);
