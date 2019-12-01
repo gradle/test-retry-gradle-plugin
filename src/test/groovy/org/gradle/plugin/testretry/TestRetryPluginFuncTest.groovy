@@ -19,6 +19,7 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.lang.management.ManagementFactory
 
@@ -26,7 +27,13 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 class TestRetryPluginFuncTest extends Specification {
-    @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+//    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
+//                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
+
+    static List<String> GRADLE_VERSIONS = ['6.0.1']
+
+    @Rule
+    TemporaryFolder testProjectDir = new TemporaryFolder()
     File settingsFile
     File buildFile
 
@@ -35,7 +42,8 @@ class TestRetryPluginFuncTest extends Specification {
         buildFile = testProjectDir.newFile('build.gradle')
     }
 
-    def "can apply plugin"() {
+    @Unroll
+    def "can apply plugin (gradle version #gradleVersion)"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -55,17 +63,21 @@ class TestRetryPluginFuncTest extends Specification {
         successfulTest()
         when:
         def result = GradleRunner.create()
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withArguments('test')
-            .build()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withArguments('test')
+                .build()
 
         then:
-        println result.output
         result.task(":test").outcome == SUCCESS
+
+        where:
+        gradleVersion << GRADLE_VERSIONS
     }
 
-    def "do not re-execute successful tests"() {
+    @Unroll
+    def "do not re-execute successful tests (gradle version #gradleVersion)"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -90,19 +102,24 @@ class TestRetryPluginFuncTest extends Specification {
         """
         and:
         successfulTest()
+
         when:
         def result = GradleRunner.create()
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withArguments('test')
-            .build()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withArguments('test')
+                .build()
 
         then:
-        println result.output
         result.task(":test").outcome == SUCCESS
+
+        where:
+        gradleVersion << GRADLE_VERSIONS
     }
 
-    def "does not retry with all tests successful"() {
+    @Unroll
+    def "does not retry with all tests successful (gradle version #gradleVersion)"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -125,19 +142,21 @@ class TestRetryPluginFuncTest extends Specification {
                 }
             }
         """
+
         and:
         successfulTest()
         flakyTest()
+
         when:
         def result = GradleRunner.create()
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withArguments('test')
-            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-            .build()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withArguments('test')
+                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+                .build()
 
         then:
-        println result.output
         result.task(":test").outcome == SUCCESS
         result.output.contains("""\
             acme.SuccessfulTest > test PASSED
@@ -148,9 +167,13 @@ class TestRetryPluginFuncTest extends Specification {
             
             3 tests completed, 1 failed
         """.stripIndent())
+
+        where:
+        gradleVersion << GRADLE_VERSIONS
     }
 
-    def "can retry failed tests"() {
+    @Unroll
+    def "can retry failed tests (gradle version #gradleVersion)"() {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
@@ -176,23 +199,27 @@ class TestRetryPluginFuncTest extends Specification {
         """
         and:
         failedTest()
+
         when:
         def result = GradleRunner.create()
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withArguments('test')
-            .buildAndFail()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withArguments('test')
+                .buildAndFail()
 
         then:
-        println result.output
         result.task(":test").outcome == FAILED
         result.output.contains("6 tests completed, 6 failed")
+
+        where:
+        gradleVersion << GRADLE_VERSIONS
     }
 
-    def successfulTest() {
+    private void successfulTest() {
         testProjectDir.newFolder('src', 'test', 'java', 'acme', 'successful')
-        def flakyTest = testProjectDir.newFile('src/test/java/acme/SuccessfulTest.java')
-        flakyTest << """
+        def successfulTest = testProjectDir.newFile('src/test/java/acme/SuccessfulTest.java')
+        successfulTest << """
         package acme;
         
         import static org.junit.Assert.assertEquals;
@@ -206,7 +233,8 @@ class TestRetryPluginFuncTest extends Specification {
         }
         """
     }
-    def failedTest() {
+
+    private void failedTest() {
         testProjectDir.newFolder('src', 'test', 'java', 'acme', 'failed')
         def failedTest = testProjectDir.newFile('src/test/java/acme/FailedTest.java')
         failedTest << """
@@ -224,38 +252,28 @@ class TestRetryPluginFuncTest extends Specification {
         """
     }
 
-    def flakyTest() {
+    private void flakyTest() {
         testProjectDir.newFolder('src', 'test', 'java', 'acme', 'flaky')
         def flakyTest = testProjectDir.newFile('src/test/java/acme/flaky/FlakyTest.java')
         flakyTest << """
         package acme.flaky;
         
-        import static org.junit.Assert.assertFalse;
-        import static org.junit.Assert.assertTrue;
+        import static org.junit.Assert.*;
+        import java.nio.file.*;
         import org.junit.Test;
 
         public class FlakyTest {
             @Test
-            public void test() {
-                if(new java.io.File("marker.file").exists()) {
+            public void test() throws java.io.IOException {
+                Path marker = Paths.get("marker.file");
+                if(Files.exists(marker)) {
                     assertTrue(true);
                 } else {
-                    writeMarkerFile();
+                    Files.write(marker, "mark".getBytes());
                     assertFalse(true);
                 }
             }
-        
-            public void writeMarkerFile() {
-                try {
-                    java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter("marker.file"));
-                    writer.write("Marker");
-                    writer.close();
-                } catch(java.io.IOException ioEx) {
-                 // shouldn't happen
-                }
-            }
         }
-
         """
     }
 }
