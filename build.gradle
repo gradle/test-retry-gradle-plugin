@@ -71,3 +71,12 @@ license {
     sourceSets = project.sourceSets
     strictCheck = true
 }
+
+bintray {
+    repo = 'gradle-plugins'
+    userOrg = 'gradle'
+    websiteUrl = 'https://github.com/gradle/test-retry-gradle-plugin'
+    vcsUrl = 'https://github.com/gradle/test-retry-gradle-plugin.git'
+    issueTrackerUrl = 'https://github.com/gradle/test-retry-gradle-plugin/issues'
+    labels = ['gradle']
+}
