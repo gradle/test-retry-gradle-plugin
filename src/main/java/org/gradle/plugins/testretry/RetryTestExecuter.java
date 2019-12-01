@@ -69,7 +69,9 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 //        JUnitTestFramework originTestFramework = (JUnitTestFramework) spec.getTestFramework();
         // TODO fix testng support
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        retries.forEach((d) -> retriedTestFilter.includeTest(d.getClassName(), d.getName()));
+        retries.stream()
+                .filter(d -> d.getClassName() != null)
+                .forEach(d -> retriedTestFilter.includeTest(d.getClassName(), d.getName()));
         JUnitTestFramework jUnitTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
         return new JvmTestExecutionSpec(jUnitTestFramework,
             spec.getClasspath(),

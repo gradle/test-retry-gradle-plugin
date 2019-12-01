@@ -29,7 +29,7 @@ public class TestRetryPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getTasks().withType(Test.class, (Test t) -> configureTestTask(t));
+        project.getTasks().withType(Test.class, this::configureTestTask);
     }
 
     private void configureTestTask(Test test) {
@@ -49,11 +49,8 @@ public class TestRetryPlugin implements Plugin<Project> {
             RetryTestListener retryTestListener = new RetryTestListener();
             test.addTestListener(retryTestListener);
             setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test, retryTestListener, extension));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e.getCause());
         }
     }
-
 }
