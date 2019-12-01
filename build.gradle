@@ -43,8 +43,8 @@ dependencies {
 }
 
 pluginBundle {
-    website = 'https://github.com/gradle/test-retry-plugin'
-    vcsUrl = 'https://github.com/gradle/test-retry-plugin.git'
+    website = 'https://github.com/gradle/test-retry-gradle-plugin'
+    vcsUrl = 'https://github.com/gradle/test-retry-gradle-plugin.git'
     description = project.description
 
     plugins {
@@ -58,7 +58,7 @@ pluginBundle {
 
     mavenCoordinates {
         groupId = 'org.gradle'
-        artifactId = 'test-retry-plugin'
+        artifactId = 'test-retry-gradle-plugin'
     }
 }
 
