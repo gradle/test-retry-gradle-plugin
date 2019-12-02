@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RetryTestResultProcessor implements TestResultProcessor {
 
@@ -33,8 +35,8 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     private boolean lastRetry = false;
 
-    private Map<Object, TestDescriptorInternal> all = new HashMap<>();
-    private List<TestDescriptorInternal> retries = new ArrayList<>();
+    private Map<Object, TestDescriptorInternal> all = new ConcurrentHashMap<>();
+    private List<TestDescriptorInternal> retries = new CopyOnWriteArrayList<>();
     private boolean retry;
 
     public RetryTestResultProcessor(TestResultProcessor delegate) {
@@ -65,13 +67,13 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void completed(Object o, TestCompleteEvent testCompleteEvent) {
 
-        if(!(retries.isEmpty() && lastRetry) && all.containsKey(o) && all.get(o).isRoot() ) {
+        TestDescriptorInternal testDescriptor = all.get(o);
+        if(!(retries.isEmpty() && lastRetry) && testDescriptor != null && testDescriptor.isRoot() ) {
             return;
         }
 //        System.out.println("RetryTestResultProcessor.completed");
 //        System.out.println("o = " + o + ", testCompleteEvent = " + testCompleteEvent.getResultType());
-        TestDescriptorInternal testDescriptorInternal = all.get(o);
-        if (testDescriptorInternal != null && retries.contains(testDescriptorInternal)) {
+        if (testDescriptor != null && retries.contains(testDescriptor)) {
             delegate.completed(o, new TestCompleteEvent(testCompleteEvent.getEndTime(), TestResult.ResultType.FAILURE));
         } else {
             delegate.completed(o, testCompleteEvent);
