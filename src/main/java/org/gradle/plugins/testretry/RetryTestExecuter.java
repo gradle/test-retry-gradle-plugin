@@ -21,6 +21,7 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.testing.Test;
 
 import java.util.List;
@@ -30,19 +31,18 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private Test testTask;
     private RetryTestListener retryTestListener;
-    private final RetryTestTaskExtension extension;
+    private final int maxRetries;
 
-    public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate, Test test, RetryTestListener retryTestListener, RetryTestTaskExtension extension) {
+    public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate, Test test, RetryTestListener retryTestListener, int maxRetries) {
         this.delegate = delegate;
         this.testTask = test;
         this.retryTestListener = retryTestListener;
-        this.extension = extension;
+        this.maxRetries = maxRetries;
     }
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor);
-        int maxRetries = extension.getMaxRetries();
         if (maxRetries > 0) {
             delegate.execute(spec, retryTestResultProcessor);
             int retryCount = 0;
