@@ -30,7 +30,7 @@ class TestRetryPluginFuncTest extends Specification {
 //    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
 //                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
 
-    static List<String> GRADLE_VERSIONS = ['6.0.1']
+    static List<String> GRADLE_VERSIONS = ['5.0']//'6.0.1']
 
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()

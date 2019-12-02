@@ -34,8 +34,6 @@ public class RetryTestTaskExtension {
     public RetryTestTaskExtension(ObjectFactory objects) {
         maxRetries = objects.property(Integer.class);
         maxFailures = objects.property(Integer.class);
-        maxRetries.convention(0);
-        maxFailures.convention(0);
     }
 
     public void setMaxRetries(int maxRetries) {
