@@ -64,12 +64,7 @@ class TestRetryPluginFuncTest extends Specification {
         and:
         successfulTest()
         when:
-        def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.root)
-                .withPluginClasspath()
-                .withArguments('test')
-                .build()
+        def result = gradleRunner(gradleVersion).build()
 
         then:
         result.task(":test").outcome == SUCCESS
@@ -94,16 +89,12 @@ class TestRetryPluginFuncTest extends Specification {
                 }
             }
         """
+
         and:
         successfulTest()
 
         when:
-        def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.root)
-                .withPluginClasspath()
-                .withArguments('test')
-                .build()
+        def result = gradleRunner(gradleVersion).build()
 
         then:
         result.task(":test").outcome == SUCCESS
@@ -134,13 +125,7 @@ class TestRetryPluginFuncTest extends Specification {
         flakyTest()
 
         when:
-        def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.root)
-                .withPluginClasspath()
-                .withArguments('test')
-                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .build()
+        def result = gradleRunner(gradleVersion).build()
 
         then:
         result.task(":test").outcome == SUCCESS
@@ -180,12 +165,7 @@ class TestRetryPluginFuncTest extends Specification {
         failedTest()
 
         when:
-        def result = GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.root)
-                .withPluginClasspath()
-                .withArguments('test')
-                .buildAndFail()
+        def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
         result.task(":test").outcome == FAILED
@@ -193,6 +173,16 @@ class TestRetryPluginFuncTest extends Specification {
 
         where:
         gradleVersion << GRADLE_VERSIONS
+    }
+
+    private GradleRunner gradleRunner(String gradleVersion) {
+        return GradleRunner.create()
+                .withGradleVersion(gradleVersion)
+                .withProjectDir(testProjectDir.root)
+                .withPluginClasspath()
+                .withArguments('test')
+                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+                .forwardOutput()
     }
 
     private void successfulTest() {
