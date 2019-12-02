@@ -39,13 +39,9 @@ class TestRetryPluginFuncTest extends Specification {
 
     def setup() {
         settingsFile = testProjectDir.newFile('settings.gradle')
-        buildFile = testProjectDir.newFile('build.gradle')
-    }
-
-    @Unroll
-    def "can apply plugin (gradle version #gradleVersion)"() {
-        given:
         settingsFile << "rootProject.name = 'hello-world'"
+
+        buildFile = testProjectDir.newFile('build.gradle')
         buildFile << """
             plugins {
                 id 'java'
@@ -54,10 +50,16 @@ class TestRetryPluginFuncTest extends Specification {
             repositories {
                 mavenCentral()
             }
+        """
+    }
+
+    @Unroll
+    def "can apply plugin (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
             dependencies {
                 testImplementation "junit:junit:4.12"
-            }
-            
+            }            
         """
         and:
         successfulTest()
@@ -79,15 +81,7 @@ class TestRetryPluginFuncTest extends Specification {
     @Unroll
     def "do not re-execute successful tests (gradle version #gradleVersion)"() {
         given:
-        settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
-            plugins {
-                id 'java'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
             dependencies {
                 testImplementation "junit:junit:4.12"
             }
@@ -121,15 +115,7 @@ class TestRetryPluginFuncTest extends Specification {
     @Unroll
     def "does not retry with all tests successful (gradle version #gradleVersion)"() {
         given:
-        settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
-            plugins {
-                id 'java'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
             dependencies {
                 testImplementation "junit:junit:4.12"
             }
@@ -177,18 +163,10 @@ class TestRetryPluginFuncTest extends Specification {
         given:
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
-            plugins {
-                id 'java'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
             dependencies {
                 testImplementation "junit:junit:4.12"
             }
             test {
-            
                 retry {
                     maxRetries = 5
                 }
@@ -197,6 +175,7 @@ class TestRetryPluginFuncTest extends Specification {
                 }
             }
         """
+
         and:
         failedTest()
 

@@ -16,8 +16,15 @@
 package org.gradle.plugins.testretry;
 
 public class RetryTestTaskExtension {
-
+    /**
+     * Max number of times to retry, 0 disabled.
+     */
     private int maxRetries;
+
+    /**
+     * After this many discrete failed tests, stop retrying.
+     */
+    private int maxFailures;
 
     public int getMaxRetries() {
         return maxRetries;
@@ -27,4 +34,11 @@ public class RetryTestTaskExtension {
         this.maxRetries = maxRetries;
     }
 
+    public int getMaxFailures() {
+        return maxFailures;
+    }
+
+    public void setMaxFailures(int maxFailures) {
+        this.maxFailures = maxFailures;
+    }
 }
