@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,30 +15,42 @@
  */
 package org.gradle.plugins.testretry;
 
+import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+
 public class RetryTestTaskExtension {
+
     /**
      * Max number of times to retry, 0 disabled.
      */
-    private int maxRetries;
+    private final Property<Integer> maxRetries;
 
     /**
      * After this many discrete failed tests, stop retrying.
      */
-    private int maxFailures;
+    private final Property<Integer> maxFailures;
 
-    public int getMaxRetries() {
-        return maxRetries;
+    @javax.inject.Inject
+    public RetryTestTaskExtension(ObjectFactory objects) {
+        maxRetries = objects.property(Integer.class);
+        maxFailures = objects.property(Integer.class);
+        maxRetries.convention(0);
+        maxFailures.convention(0);
     }
 
     public void setMaxRetries(int maxRetries) {
-        this.maxRetries = maxRetries;
-    }
-
-    public int getMaxFailures() {
-        return maxFailures;
+        this.maxRetries.set(maxRetries);
     }
 
     public void setMaxFailures(int maxFailures) {
-        this.maxFailures = maxFailures;
+        this.maxFailures.set(maxFailures);
+    }
+
+    public Property<Integer> getMaxRetries() {
+        return maxRetries;
+    }
+
+    public Property<Integer> getMaxFailures() {
+        return maxFailures;
     }
 }

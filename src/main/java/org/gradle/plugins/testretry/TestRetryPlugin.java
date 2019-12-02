@@ -20,6 +20,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 
 import java.lang.reflect.InvocationTargetException;
@@ -27,13 +28,19 @@ import java.lang.reflect.Method;
 
 public class TestRetryPlugin implements Plugin<Project> {
 
+    private final ObjectFactory objectFactory;
+
+    @javax.inject.Inject
+    public TestRetryPlugin(ObjectFactory objectFactory){
+        this.objectFactory = objectFactory;
+    }
     @Override
     public void apply(Project project) {
         project.getTasks().withType(Test.class, this::configureTestTask);
     }
 
     private void configureTestTask(Test test) {
-        RetryTestTaskExtension extension = test.getExtensions().create("retry", RetryTestTaskExtension.class);
+        RetryTestTaskExtension extension = test.getExtensions().create("retry", RetryTestTaskExtension.class, objectFactory);
         test.doFirst(t -> {
             replaceTestExecuter(test, extension);
         });
@@ -48,7 +55,7 @@ public class TestRetryPlugin implements Plugin<Project> {
             setTestExecuter.setAccessible(true);
             RetryTestListener retryTestListener = new RetryTestListener();
             test.addTestListener(retryTestListener);
-            setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test, retryTestListener, extension));
+            setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test, retryTestListener, extension.getMaxRetries().get()));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
