@@ -33,7 +33,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     private boolean lastRetry = false;
 
-    private Map<Object, TestDescriptorInternal> all = new HashMap<Object, TestDescriptorInternal>();
+    private Map<Object, TestDescriptorInternal> all = new HashMap<>();
     private List<TestDescriptorInternal> retries = new ArrayList<>();
     private boolean retry;
 
