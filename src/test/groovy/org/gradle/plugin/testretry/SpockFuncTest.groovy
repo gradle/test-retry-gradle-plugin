@@ -20,7 +20,12 @@ import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class TestRetrySpockFuncTest extends AbstractPluginFuncTest {
+class SpockFuncTest extends AbstractPluginFuncTest {
+    @Override
+    String testLanguage() {
+        'groovy'
+    }
+
     @Override
     protected String buildConfiguration() {
         return """
@@ -50,7 +55,7 @@ class TestRetrySpockFuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme
             
-            public class UnrollTests extends spock.lang.Specification {
+            class UnrollTests extends spock.lang.Specification {
                 @spock.lang.Unroll
                 def "can handle unrolled tests"() {
                     expect:

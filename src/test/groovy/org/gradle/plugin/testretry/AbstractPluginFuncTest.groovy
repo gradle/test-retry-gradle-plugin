@@ -29,6 +29,10 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 abstract class AbstractPluginFuncTest extends Specification {
+    String testLanguage() {
+        'java'
+    }
+
 //    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
 //                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
 
@@ -61,18 +65,15 @@ abstract class AbstractPluginFuncTest extends Specification {
         writeTestSource """
             package acme;
             
-            import static org.junit.Assert.*;
             import java.nio.file.*;
     
             public class FlakyAssert {
                 public static void flakyAssert() {
                     try {
                         Path marker = Paths.get("marker.file");
-                        if(Files.exists(marker)) {
-                            assertTrue(true);
-                        } else {
+                        if(!Files.exists(marker)) {
                             Files.write(marker, "mark".getBytes());
-                            assertFalse(true);
+                            throw new RuntimeException("fail me!");
                         }
                     } catch(java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
@@ -88,8 +89,7 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     void writeTestSource(String source) {
         String className = (source =~ /class\s+(\w+)\s+/)[0][1]
-        String language = source.contains(';') ? 'java' : 'groovy'
-        testProjectDir.newFile("src/test/${language}/acme/${className}.${language}") << source
+        testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
     }
 
     GradleRunner gradleRunner(String gradleVersion) {

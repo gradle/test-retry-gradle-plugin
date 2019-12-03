@@ -36,14 +36,6 @@ public class RetryTestTaskExtension {
         maxFailures = objects.property(Integer.class);
     }
 
-    public void setMaxRetries(int maxRetries) {
-        this.maxRetries.set(maxRetries);
-    }
-
-    public void setMaxFailures(int maxFailures) {
-        this.maxFailures.set(maxFailures);
-    }
-
     public Property<Integer> getMaxRetries() {
         return maxRetries;
     }
