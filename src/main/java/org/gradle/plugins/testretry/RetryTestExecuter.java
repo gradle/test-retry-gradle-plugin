@@ -15,13 +15,14 @@
  */
 package org.gradle.plugins.testretry;
 
-import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
-import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
-import org.gradle.api.internal.tasks.testing.TestExecuter;
-import org.gradle.api.internal.tasks.testing.TestResultProcessor;
+import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
+import org.gradle.api.internal.tasks.testing.*;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
+import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
+import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.internal.reflect.Instantiator;
 
 import java.util.List;
 
@@ -31,12 +32,19 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private Test testTask;
     private RetryTestListener retryTestListener;
     private final int maxRetries;
+    private final Instantiator instantiator;
+    private final ClassLoaderCache classLoaderCache;
 
-    public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate, Test test, RetryTestListener retryTestListener, int maxRetries) {
+    public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate,
+                             Test test,
+                             RetryTestListener retryTestListener,
+                             int maxRetries, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
         this.delegate = delegate;
         this.testTask = test;
         this.retryTestListener = retryTestListener;
         this.maxRetries = maxRetries;
+        this.instantiator = instantiator;
+        this.classLoaderCache = classLoaderCache;
     }
 
     @Override
@@ -63,12 +71,26 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestDescriptorInternal> retries) {
 //        JUnitTestFramework originTestFramework = (JUnitTestFramework) spec.getTestFramework();
         // TODO fix testng support
+        TestFramework testFramework = spec.getTestFramework();
+        System.out.println(testFramework);
+
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         retries.stream()
                 .filter(d -> d.getClassName() != null)
                 .forEach(d -> retriedTestFilter.includeTest(d.getClassName(), d.getName()));
-        JUnitTestFramework jUnitTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
-        return new JvmTestExecutionSpec(jUnitTestFramework,
+
+        TestFramework retryingTestFramework = testFramework;
+        if(testFramework instanceof JUnitTestFramework) {
+            retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
+        }
+        else if(testFramework instanceof JUnitPlatformTestFramework) {
+            retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
+        }
+        else if(testFramework instanceof TestNGTestFramework) {
+            retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
+        }
+
+        return new JvmTestExecutionSpec(testFramework,
             spec.getClasspath(),
             spec.getCandidateClassFiles(),
             spec.isScanForTestClasses(),
