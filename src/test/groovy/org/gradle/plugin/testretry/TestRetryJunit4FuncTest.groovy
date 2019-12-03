@@ -15,43 +15,13 @@
  */
 package org.gradle.plugin.testretry
 
-import org.gradle.testkit.runner.GradleRunner
-import org.junit.Rule
-import org.junit.rules.TemporaryFolder
-import spock.lang.Specification
-import spock.lang.Unroll
 
-import java.lang.management.ManagementFactory
+import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class TestRetryPluginFuncTest extends Specification {
-//    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
-//                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
-
-    static List<String> GRADLE_VERSIONS = ['5.0']//'6.0.1']
-
-    @Rule
-    TemporaryFolder testProjectDir = new TemporaryFolder()
-    File settingsFile
-    File buildFile
-
-    def setup() {
-        settingsFile = testProjectDir.newFile('settings.gradle')
-        settingsFile << "rootProject.name = 'hello-world'"
-
-        buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << """
-            plugins {
-                id 'java'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
-        """
-    }
+class TestRetryJunit4FuncTest extends AbstractPluginFuncTest {
 
     @Unroll
     def "can apply plugin (gradle version #gradleVersion)"() {
@@ -131,12 +101,14 @@ class TestRetryPluginFuncTest extends Specification {
         result.task(":test").outcome == SUCCESS
         result.output.contains("""\
             acme.SuccessfulTest > test PASSED
-    
-            acme.flaky.FlakyTest > test FAILED
             
-            acme.flaky.FlakyTest > test PASSED
+            acme.flaky.FlakyTest > flaky FAILED
             
-            3 tests completed, 1 failed
+            acme.flaky.FlakyTest > nonFlaky PASSED
+            
+            acme.flaky.FlakyTest > flaky PASSED
+            
+            4 tests completed, 1 failed
         """.stripIndent())
 
         where:
@@ -172,16 +144,6 @@ class TestRetryPluginFuncTest extends Specification {
 
         where:
         gradleVersion << GRADLE_VERSIONS
-    }
-
-    private GradleRunner gradleRunner(String gradleVersion) {
-        return GradleRunner.create()
-                .withGradleVersion(gradleVersion)
-                .withProjectDir(testProjectDir.root)
-                .withPluginClasspath()
-                .withArguments('test')
-                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .forwardOutput()
     }
 
     private void successfulTest() {
@@ -232,7 +194,12 @@ class TestRetryPluginFuncTest extends Specification {
 
         public class FlakyTest {
             @Test
-            public void test() throws java.io.IOException {
+            public void nonFlaky() throws java.io.IOException {
+                assertTrue(true);
+            }
+            
+            @Test
+            public void flaky() throws java.io.IOException {
                 Path marker = Paths.get("marker.file");
                 if(Files.exists(marker)) {
                     assertTrue(true);
