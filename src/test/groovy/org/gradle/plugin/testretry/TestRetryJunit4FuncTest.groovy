@@ -73,6 +73,7 @@ class TestRetryJunit4FuncTest extends AbstractPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS
     }
 
+
     @Unroll
     def "does not retry with all tests successful (gradle version #gradleVersion)"() {
         given:
@@ -109,6 +110,48 @@ class TestRetryJunit4FuncTest extends AbstractPluginFuncTest {
             acme.flaky.FlakyTest > flaky PASSED
             
             4 tests completed, 1 failed
+        """.stripIndent())
+
+        where:
+        gradleVersion << GRADLE_VERSIONS
+    }
+
+    @Unroll
+    def "does handle parameterized tests (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            dependencies {
+                testImplementation "junit:junit:4.12"
+            }
+            test {
+                retry {
+                    maxRetries = 2
+                }
+                testLogging {
+                    events "passed", "skipped", "failed"
+                }
+            }
+        """
+
+        and:
+        parameterizedTest()
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.task(":test").outcome == FAILED
+        result.output.contains("""\
+            acme.ParameterTest > test[0: test(0)=true] PASSED
+       
+            acme.ParameterTest > test[1: test(1)=false] FAILED
+
+            acme.ParameterTest > test[1: test(1)=false] FAILED
+
+            acme.ParameterTest > test[1: test(1)=false] FAILED
+                java.lang.AssertionError at ParameterTest.java:33
+                
+            4 tests completed, 3 failed
         """.stripIndent())
 
         where:
@@ -159,6 +202,47 @@ class TestRetryJunit4FuncTest extends AbstractPluginFuncTest {
             @Test
             public void test() {
                 assertEquals(6, 6);
+            }
+        }
+        """
+    }
+
+    private void parameterizedTest() {
+        testProjectDir.newFolder('src', 'test', 'java', 'acme')
+        def successfulTest = testProjectDir.newFile('src/test/java/acme/ParameterTest.java')
+        successfulTest << """
+        package acme;
+        
+        import static org.junit.Assert.assertTrue;
+
+        import java.util.Arrays;
+        import java.util.Collection;
+        
+        import org.junit.Test;
+        import org.junit.runner.RunWith;
+        import org.junit.runners.Parameterized;
+        import org.junit.runners.Parameterized.Parameters;
+        
+        @RunWith(Parameterized.class)
+        public class ParameterTest {
+            @Parameters(name = "{index}: test({0})={1}")
+            public static Iterable<Object[]> data() {
+                return Arrays.asList(new Object[][] { 
+                         { 0, true }, { 1, false }
+                   });
+            }
+            
+            private int input;
+            private boolean expected;
+            
+            public ParameterTest(int input, boolean expected) {
+                this.input = input;
+                this.expected = expected;
+            }
+            
+            @Test
+            public void test() {
+                assertTrue(expected);
             }
         }
         """
