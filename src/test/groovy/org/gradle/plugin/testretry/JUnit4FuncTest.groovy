@@ -20,7 +20,7 @@ import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
-class TestRetryJUnit4FuncTest extends AbstractPluginFuncTest {
+class JUnit4FuncTest extends AbstractPluginFuncTest {
     @Override
     protected String buildConfiguration() {
         return 'dependencies { testImplementation "junit:junit:4.12" }'
