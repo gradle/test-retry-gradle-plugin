@@ -146,7 +146,6 @@ class TestRetryPluginFuncTest extends Specification {
     @Unroll
     def "can retry failed tests (gradle version #gradleVersion)"() {
         given:
-        settingsFile << "rootProject.name = 'hello-world'"
         buildFile << """
             dependencies {
                 testImplementation "junit:junit:4.12"
