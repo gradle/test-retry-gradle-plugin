@@ -62,7 +62,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void completed(Object o, TestCompleteEvent testCompleteEvent) {
 
-        if (!lastRun() && rootTestDescriptorId.equals(o)) {
+        if (!lastRun() && o.equals(rootTestDescriptorId)) {
             return;
         }
         TestDescriptorInternal testDescriptor = all.get(o);
