@@ -88,7 +88,7 @@ publishing {
 String gradleInternalRepositoryUrl() {
     def isSnapshot = version.toString().endsWith("-SNAPSHOT")
     def repositoryQualifier =  isSnapshot ? "snapshots" : "releases"
-    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
+    return uri("https://repo.gradle.org/gradle/libs-$repositoryQualifier-local")
 }
 
 tasks.withType(Test) {
