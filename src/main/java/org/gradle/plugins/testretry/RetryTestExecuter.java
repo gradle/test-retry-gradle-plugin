@@ -31,18 +31,17 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
-    private final RetryTestListener retryTestListener;
     private final int maxRetries;
     private final Instantiator instantiator;
     private final ClassLoaderCache classLoaderCache;
 
     public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate,
                              Test test,
-                             RetryTestListener retryTestListener,
-                             int maxRetries, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
+                             int maxRetries,
+                             Instantiator instantiator,
+                             ClassLoaderCache classLoaderCache) {
         this.delegate = delegate;
         this.testTask = test;
-        this.retryTestListener = retryTestListener;
         this.maxRetries = maxRetries;
         this.instantiator = instantiator;
         this.classLoaderCache = classLoaderCache;
@@ -54,7 +53,6 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         if (maxRetries > 0) {
             delegate.execute(spec, retryTestResultProcessor);
             for(int retryCount = 0; retryCount < maxRetries && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
-                retryTestListener.reset();
                 JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
                 retryTestResultProcessor.reset();
                 if (retryCount + 1 == maxRetries) {

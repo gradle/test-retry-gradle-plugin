@@ -17,9 +17,6 @@ package org.gradle.plugin.testretry
 
 import spock.lang.Unroll
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
-
 class TestNGFuncTest extends AbstractPluginFuncTest {
     @Override
     protected String buildConfiguration() {
