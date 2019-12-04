@@ -13,7 +13,7 @@ open class TestRetryPluginCrossVersionTest(os: Os) : BuildType({
 
     steps {
         gradle {
-            tasks = "clean build"
+            tasks = "clean testAll"
             buildFile = ""
             gradleParams = "-s $useGradleInternalScansServer"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
