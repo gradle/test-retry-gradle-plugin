@@ -109,14 +109,11 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     @Unroll
     def "can apply plugin (gradle version #gradleVersion)"() {
-        given:
+        when:
         successfulTest()
 
-        when:
-        def result = gradleRunner(gradleVersion).build()
-
         then:
-        result.task(":test").outcome == SUCCESS
+        gradleRunner(gradleVersion).build()
 
         where:
         gradleVersion << GRADLE_VERSIONS
@@ -143,7 +140,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.task(":test").outcome == FAILED
         result.output.contains("2 tests completed, 2 failed")
 
         where:
@@ -172,8 +168,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then: 'Only the failed test is retried a second time'
-        result.task(":test").outcome == FAILED
-
         result.output.count('PASSED') == 1
 
         // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
@@ -204,7 +198,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.task(":test").outcome == SUCCESS
         result.output.count('PASSED') == 1
         result.output.count('FAILED') == 1
 

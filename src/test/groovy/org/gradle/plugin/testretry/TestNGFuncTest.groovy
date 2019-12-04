@@ -3,18 +3,17 @@ package org.gradle.plugin.testretry
 import spock.lang.Unroll
 
 import static org.gradle.testkit.runner.TaskOutcome.FAILED
+import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
-class JUnit5FuncTest extends AbstractPluginFuncTest {
+class TestNGFuncTest extends AbstractPluginFuncTest {
     @Override
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
-                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.5.2'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
+                testImplementation 'org.testng:testng:7.0.0'
             }
             test {
-                useJUnitPlatform()
+                useTestNG()
             }
         """
     }
@@ -37,15 +36,18 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            import org.junit.jupiter.params.ParameterizedTest;
-            import org.junit.jupiter.params.provider.ValueSource;
+            import org.testng.annotations.*;
             
-            import static org.junit.jupiter.api.Assertions.assertEquals;
+            import static org.testng.AssertJUnit.assertEquals;
             
-            class ParameterTest {
-                @ParameterizedTest
-                @ValueSource(ints = {0, 1})
-                void test(int number) {
+            public class ParameterTest {
+                @DataProvider(name = "parameters")
+                public Object[] createParameters() {
+                    return new Object[]{0, 1};
+                }
+            
+                @Test(dataProvider = "parameters")
+                public void test(int number) {
                     assertEquals(0, number);
                 }
             }
@@ -56,8 +58,8 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test(int)[1] PASSED') == 2
-        result.output.count('test(int)[2] FAILED') == 2
+        result.output.count('test[0](0) PASSED') == 2
+        result.output.count('test[1](1) FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS
@@ -68,9 +70,9 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            class SuccessfulTest {
-                @org.junit.jupiter.api.Test
-                void test() {}
+            public class SuccessfulTest {
+                @org.testng.annotations.Test
+                public void test() {}
             }
         """
     }
@@ -80,11 +82,11 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            import static org.junit.jupiter.api.Assertions.assertTrue;
+            import static org.testng.AssertJUnit.assertTrue;
     
-            class FailedTest {
-                @org.junit.jupiter.api.Test
-                void test() { 
+            public class FailedTest {
+                @org.testng.annotations.Test
+                public void test() { 
                     assertTrue(false);
                 }
             }
@@ -96,9 +98,9 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
     
-            class FlakyTest {                
-                @org.junit.jupiter.api.Test
-                void flaky() { 
+            public class FlakyTest {                
+                @org.testng.annotations.Test
+                public void flaky() { 
                     ${flakyAssert()}
                 }
             }

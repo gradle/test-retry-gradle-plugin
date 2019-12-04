@@ -70,7 +70,6 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.task(":test").outcome == FAILED
         result.output.count('unrolled[0] PASSED') == 2
         result.output.count('unrolled[1] FAILED') == 2
         result.output.count('unrolled[2] PASSED') == 2
