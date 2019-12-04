@@ -27,7 +27,7 @@ object TestRetryPluginPublishing : BuildType({
     }
 
     dependencies {
-        snapshot(RelativeId("VerifyAll")) {
+        snapshot(RelativeId("TestRetryPluginVerifyAll")) {
             onDependencyFailure = FailureAction.CANCEL
             onDependencyCancel = FailureAction.CANCEL
         }
