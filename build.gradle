@@ -24,8 +24,6 @@ repositories {
 group = 'org.gradle'
 description = 'Allow failed test to rerun to discover flaky tests'
 
-//version = "0.1.0"
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -107,4 +105,8 @@ tasks.withType(Test) {
 
 task testAll(type:Test) {
     systemProperty 'org.gradle.test.allGradleVersions', true
+}
+
+afterEvaluate { project ->
+    println "I'm building $project.name with version $project.version"
 }
