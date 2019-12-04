@@ -25,7 +25,8 @@ import spock.lang.Unroll
 import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
-    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion')
+    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion')?: '5.0'
+
     static List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
                                            '5.5.1', '5.6.4', '6.0.1']
 
