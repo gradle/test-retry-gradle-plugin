@@ -96,10 +96,13 @@ gradlePlugin {
     }
 }
 
+System.setProperty("gradle.publish.skip.namespace.check", "true")
+
 pluginBundle {
     website = 'https://github.com/gradle/test-retry-gradle-plugin'
     vcsUrl = 'https://github.com/gradle/test-retry-gradle-plugin.git'
     description = project.description
+    tags = ['test', 'flaky']
 
     mavenCoordinates {
         groupId = 'org.gradle'
