@@ -9,7 +9,10 @@ buildscript {
 }
 
 plugins {
-    id 'nebula.plugin-plugin' version '13.2.0'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id "com.gradle.plugin-publish" version "0.10.1"
+    id "nebula.release" version "13.2.1"
 }
 
 apply plugin: 'com.github.hierynomus.license'
@@ -21,12 +24,7 @@ repositories {
 group = 'org.gradle'
 description = 'Allow failed test to rerun to discover flaky tests'
 
-contacts {
-    'jkschneider@gmail.com' {
-        moniker 'Jon Schneider'
-        github 'jkschneider'
-    }
-}
+//version = "0.1.0"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -42,19 +40,31 @@ dependencies {
     testImplementation gradleTestKit()
 }
 
+buildScan {
+    termsOfServiceUrl = "https://gradle.com/terms-of-service"
+    termsOfServiceAgree = "yes"
+
+    if (!System.getenv("CI")) {
+        publishAlways()
+        tag("CI")
+    }
+}
+
+gradlePlugin {
+    plugins {
+        register("test-retry-plugin") {
+            id = "org.gradle.test-retry"
+            displayName = "Gradle test retry plugin"
+            description = project.description
+            implementationClass = "org.gradle.plugins.testretry.TestRetryPlugin"
+        }
+    }
+}
+
 pluginBundle {
     website = 'https://github.com/gradle/test-retry-gradle-plugin'
     vcsUrl = 'https://github.com/gradle/test-retry-gradle-plugin.git'
     description = project.description
-
-    plugins {
-        retryPlugin {
-            id = 'org.gradle.test-retry'
-            displayName = 'Gradle test retry plugin'
-            description = project.description
-            tags = ['testing']
-        }
-    }
 
     mavenCoordinates {
         groupId = 'org.gradle'
@@ -79,14 +89,14 @@ publishing {
             url = gradleInternalRepositoryUrl()
             credentials {
                 username = project.findProperty("artifactoryUsername")
-                    password = project.findProperty("artifactoryPassword")
+                password = project.findProperty("artifactoryPassword")
             }
         }
     }
 }
 
 String gradleInternalRepositoryUrl() {
-    def isSnapshot = version.toString().endsWith("-SNAPSHOT")
+    def isSnapshot = !gradle.startParameter.taskNames.contains('release')
     def repositoryQualifier =  isSnapshot ? "snapshots" : "releases"
     return uri("https://repo.gradle.org/gradle/libs-$repositoryQualifier-local")
 }

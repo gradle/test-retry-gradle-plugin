@@ -19,12 +19,14 @@ object TestRetryPluginPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishPluginMavenPublicationToGradleBuildInternalRepository"
+            tasks = "clean devSnapshot publishPluginMavenPublicationToGradleBuildInternalRepository"
             gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% $useGradleInternalScansServer"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
         }
     }
+
+    triggers.vcs {}
 
     dependencies {
         snapshot(RelativeId("TestRetryPluginVerifyAll")) {

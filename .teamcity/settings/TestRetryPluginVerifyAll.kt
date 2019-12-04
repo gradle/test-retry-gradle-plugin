@@ -9,8 +9,7 @@ object TestRetryPluginVerifyAll : BuildType({
     name = "Verify all"
     artifactRules = "build/reports/** => reports"
     testRetryVcs()
-    triggers.vcs {
-    }
+    triggers.vcs {}
     dependencies {
         snapshot(RelativeId("LinuxJava18")) {
             onDependencyFailure = FailureAction.CANCEL

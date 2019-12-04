@@ -12,12 +12,6 @@ if (!gradle.startParameter.systemPropertiesArgs.containsKey("disableScanPlugin")
             }
         }
     }
-    // Gradle 5 and earlier
-    rootProject {
-        pluginManager.withPlugin("com.gradle.build-scan") {
-            configureExtension(extensions.getByName("buildScan"))
-        }
-    }
 }
 
 fun configureExtension(extension: Any) {
