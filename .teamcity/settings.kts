@@ -27,27 +27,11 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 version = "2019.1"
 
 project {
+    vcsRoot(VersionedSettings_1)
+    buildType(TestRetryPluginQuickFeedback)
+//    buildType(MacOSJava18)
+//    buildType(WindowsJava18)
+    buildType(LinuxJava18)
 
-    buildType(Build)
+    buildType(TestRetryPluginPublishing)
 }
-
-object Build : BuildType({
-    name = "Build"
-
-    vcs {
-        root(DslContext.settingsRoot)
-    }
-
-    steps {
-        gradle {
-            tasks = "clean build"
-            buildFile = ""
-            gradleWrapperPath = ""
-        }
-    }
-
-    triggers {
-        vcs {
-        }
-    }
-})
