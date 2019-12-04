@@ -86,7 +86,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1: test(1)=false] FAILED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Override

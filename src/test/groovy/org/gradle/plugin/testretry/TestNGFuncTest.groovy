@@ -62,7 +62,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1](1) FAILED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Override
