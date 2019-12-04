@@ -15,10 +15,9 @@
  */
 package org.gradle.plugin.testretry
 
-import spock.lang.Ignore
 import spock.lang.Unroll
 
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
+import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 class SpockFuncTest extends AbstractPluginFuncTest {
     @Override
@@ -37,13 +36,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    @Ignore
-    def "can retry unrolled tests (gradle version #gradleVersion)"() {
+    def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test {
                 retry {
-                    maxRetries = 5
+                    maxRetries = 1
                 }
                 testLogging {
                     events "passed", "skipped", "failed"
@@ -57,7 +55,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             
             class UnrollTests extends spock.lang.Specification {
                 @spock.lang.Unroll
-                def "can handle unrolled tests"() {
+                def "unrolled"() {
                     expect:
                     result
                     
@@ -69,22 +67,13 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.task(":test").outcome == SUCCESS
-
-        result.output.contains("""\
-            acme.UnrollTests > can handle unrolled tests[0] PASSED
-
-            acme.UnrollTests > can handle unrolled tests[1] FAILED
-
-            acme.UnrollTests > can handle unrolled tests[2] PASSED
-            
-            acme.UnrollTests > can handle unrolled tests[1] FAILED
-
-            4 tests completed, 1 failed
-        """.stripIndent())
+        result.task(":test").outcome == FAILED
+        result.output.count('unrolled[0] PASSED') == 2
+        result.output.count('unrolled[1] FAILED') == 2
+        result.output.count('unrolled[2] PASSED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS

@@ -20,7 +20,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "does handle parameterized tests (gradle version #gradleVersion)"() {
+    def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test {
@@ -56,7 +56,9 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
 
         then:
         result.task(":test").outcome == FAILED
-        result.output.count('test(int)[1] PASSED') == 1
+
+        // we can't rerun just the failed parameter
+        result.output.count('test(int)[1] PASSED') == 2
         result.output.count('test(int)[2] FAILED') == 2
 
         where:

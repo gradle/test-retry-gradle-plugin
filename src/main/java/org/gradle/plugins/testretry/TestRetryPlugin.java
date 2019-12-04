@@ -48,20 +48,23 @@ public class TestRetryPlugin implements Plugin<Project> {
 
     private void configureTestTask(Test test) {
         RetryTestTaskExtension extension = test.getExtensions().create("retry", RetryTestTaskExtension.class, objectFactory);
-        test.doFirst(t -> {
-            replaceTestExecuter(test, extension);
-        });
+        test.doFirst(t -> replaceTestExecuter(test, extension));
     }
 
     private void replaceTestExecuter(Test test, RetryTestTaskExtension extension) {
         try {
-            Method getTestExecuter = Test.class.getDeclaredMethod("createTestExecuter");
-            getTestExecuter.setAccessible(true);
-            TestExecuter<JvmTestExecutionSpec> delegate = (TestExecuter<JvmTestExecutionSpec>) getTestExecuter.invoke(test);
+            Method createTestExecutor = Test.class.getDeclaredMethod("createTestExecuter");
+            createTestExecutor.setAccessible(true);
+
+            @SuppressWarnings("unchecked")
+            TestExecuter<JvmTestExecutionSpec> delegate = (TestExecuter<JvmTestExecutionSpec>) createTestExecutor.invoke(test);
+
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
+
             RetryTestListener retryTestListener = new RetryTestListener();
             test.addTestListener(retryTestListener);
+
             setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test, retryTestListener,
                     extension.getMaxRetries().getOrElse(0), instantiator, classLoaderCache));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
