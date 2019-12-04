@@ -14,7 +14,7 @@ object TestRetryPluginPublishing : BuildType({
     params {
         java8Home(Os.linux)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
-        password("ARTIFACTORY_PASSWORD", "credentialsJSON:zxx065caa16a164f80438d71035cb8bc7ecd4d06e7bfa8a9695a72c94d79f7686c4", display = ParameterDisplay.HIDDEN)
+        password("ARTIFACTORY_PASSWORD", "credentialsJSON:2b7529cd-77cd-49f4-9416-9461f6ac9018", display = ParameterDisplay.HIDDEN)
     }
 
     steps {
