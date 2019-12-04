@@ -15,10 +15,8 @@
  */
 package org.gradle.plugin.testretry
 
-import org.junit.Ignore
 import spock.lang.Unroll
 
-@Ignore
 class JUnit5FuncTest extends AbstractPluginFuncTest {
     @Override
     protected String buildConfiguration() {

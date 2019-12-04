@@ -17,8 +17,6 @@ package org.gradle.plugin.testretry
 
 import spock.lang.Unroll
 
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
-
 class SpockFuncTest extends AbstractPluginFuncTest {
     @Override
     String testLanguage() {
@@ -54,8 +52,18 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
             
             class UnrollTests extends spock.lang.Specification {
+//                @spock.lang.Unroll
+//                def "unrolled"() {
+//                    expect:
+//                    result
+//                    
+//                    where:
+//                    param << ['foo', 'bar', 'baz']
+//                    result << [true, false, true]
+//                }
+                
                 @spock.lang.Unroll
-                def "unrolled"() {
+                def "unrolled with param #param"() {
                     expect:
                     result
                     

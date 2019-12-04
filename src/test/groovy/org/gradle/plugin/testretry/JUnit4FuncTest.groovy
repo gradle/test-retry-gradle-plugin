@@ -15,10 +15,7 @@
  */
 package org.gradle.plugin.testretry
 
-
 import spock.lang.Unroll
-
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
 
 class JUnit4FuncTest extends AbstractPluginFuncTest {
     @Override
