@@ -1,6 +1,7 @@
 import jetbrains.buildServer.configs.kotlin.v2018_2.*
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.vcs
+import jetbrains.buildServer.configs.kotlin.v2018_2.ui.*
 
 /*
 The settings script is an entry point for defining a TeamCity
@@ -34,4 +35,8 @@ project {
     buildType(LinuxJava18)
     buildType(TestRetryPluginVerifyAll)
     buildType(TestRetryPluginPublishing)
+
+    expectBuildTypesOrder()
+    buildTypesOrderIds = arrayListOf(RelativeId("TestRetryPluginVerifyAll"), RelativeId("TestRetryPluginQuickFeedback"), RelativeId("LinuxJava18"), RelativeId("TestRetryPluginPublishing"))
+
 }

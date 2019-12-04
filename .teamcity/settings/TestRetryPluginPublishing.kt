@@ -4,7 +4,7 @@ import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2018_2.*
 
 object TestRetryPluginPublishing : BuildType({
-    name = "Publish"
+    name = "Publish Snapshot"
     description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
 
     artifactRules = "build/reports/** => reports"
