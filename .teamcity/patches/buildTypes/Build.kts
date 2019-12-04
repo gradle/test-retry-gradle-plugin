@@ -12,7 +12,7 @@ changeBuildType(RelativeId("Build")) {
     check(name == "Build") {
         "Unexpected name: '$name'"
     }
-    name = "Linux - Java 1.8"
+    name = "Build - Linux - Java 1.8"
 
     requirements {
         add {
