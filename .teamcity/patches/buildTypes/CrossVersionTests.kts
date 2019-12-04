@@ -13,7 +13,7 @@ in the root project, and delete the patch script.
 create(DslContext.projectId, BuildType({
     id("CrossVersionTests")
     name = "Cross Version Tests - Linux - Java 1.8"
-    description = "Testing the plugin across multiple gradle versions"
+    description = "Testing the plugin across multiple gradle versions on Linux"
 
     vcs {
         root(DslContext.settingsRoot)
