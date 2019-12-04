@@ -1,4 +1,4 @@
-import jetbrains.buildServer.configs.kotlin.v2018_2.BuildType
+import jetbrains.buildServer.configs.kotlin.v2018_2.*
 import jetbrains.buildServer.configs.kotlin.v2018_2.DslContext
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
@@ -20,15 +20,6 @@ open class TestRetryPluginCrossVersionTest(os: Os) : BuildType({
         }
     }
 
-    triggers {
-        vcs {
-            branchFilter = """
-                +:*
-                -:pull/*
-            """.trimIndent()
-        }
-    }
-
     features {
         commitStatusPublisher {
             vcsRootExtId = "${DslContext.settingsRoot.id}"
@@ -38,6 +29,13 @@ open class TestRetryPluginCrossVersionTest(os: Os) : BuildType({
                     token = "credentialsJSON:7c8c64ad-776d-4469-8400-5618da5de337"
                 }
             }
+        }
+    }
+
+    dependencies{
+        snapshot(RelativeId("VerifyAll")) {
+            onDependencyFailure = FailureAction.CANCEL
+            onDependencyCancel = FailureAction.CANCEL
         }
     }
 

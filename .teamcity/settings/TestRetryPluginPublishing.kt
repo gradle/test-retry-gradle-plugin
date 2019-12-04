@@ -3,7 +3,6 @@ import jetbrains.buildServer.configs.kotlin.v2018_2.ParameterDisplay
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2018_2.*
 
-
 object TestRetryPluginPublishing : BuildType({
     name = "Gradle Test Retry Plugin Publishing"
     description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
@@ -20,7 +19,7 @@ object TestRetryPluginPublishing : BuildType({
 
     steps {
         gradle {
-            tasks = "clean publishAllPublicationsToGradleBuildInternalRepository"
+            tasks = "clean publishPluginMavenPublicationToGradleBuildInternalRepository"
             gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% $useGradleInternalScansServer"
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             buildFile = ""
@@ -28,7 +27,7 @@ object TestRetryPluginPublishing : BuildType({
     }
 
     dependencies {
-        snapshot(RelativeId("TestRetryPluginQuickFeedback")) {
+        snapshot(RelativeId("VerifyAll")) {
             onDependencyFailure = FailureAction.CANCEL
             onDependencyCancel = FailureAction.CANCEL
         }

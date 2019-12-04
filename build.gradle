@@ -72,13 +72,23 @@ license {
     strictCheck = true
 }
 
-bintray {
-    repo = 'gradle-plugins'
-    userOrg = 'gradle'
-    websiteUrl = 'https://github.com/gradle/test-retry-gradle-plugin'
-    vcsUrl = 'https://github.com/gradle/test-retry-gradle-plugin.git'
-    issueTrackerUrl = 'https://github.com/gradle/test-retry-gradle-plugin/issues'
-    labels = ['gradle']
+publishing {
+    repositories {
+        maven {
+            name = "GradleBuildInternal"
+            url = gradleInternalRepositoryUrl()
+            credentials {
+                username = project.findProperty("artifactoryUsername")
+                    password = project.findProperty("artifactoryPassword")
+            }
+        }
+    }
+}
+
+String gradleInternalRepositoryUrl() {
+    def isSnapshot = version.toString().endsWith("-SNAPSHOT")
+    def repositoryQualifier =  isSnapshot ? "snapshots" : "releases"
+    return uri("https://repo.gradle.org/gradle/ext-$repositoryQualifier-local")
 }
 
 tasks.withType(Test) {

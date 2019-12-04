@@ -32,6 +32,6 @@ project {
 //    buildType(MacOSJava18)
 //    buildType(WindowsJava18)
     buildType(LinuxJava18)
-
+    buildType(TestRetryPluginVerifyAll)
     buildType(TestRetryPluginPublishing)
 }
