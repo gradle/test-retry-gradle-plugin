@@ -9,6 +9,11 @@ To apply the patch, change the buildType with id = 'Build'
 accordingly, and delete the patch script.
 */
 changeBuildType(RelativeId("Build")) {
+    check(name == "Build") {
+        "Unexpected name: '$name'"
+    }
+    name = "Linux - Java 1.8"
+
     requirements {
         add {
             contains("teamcity.agent.jvm.os.name", "Linux")
