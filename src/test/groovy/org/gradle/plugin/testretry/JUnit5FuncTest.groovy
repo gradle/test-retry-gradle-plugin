@@ -60,7 +60,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         result.output.count('test(int)[2] FAILED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Override

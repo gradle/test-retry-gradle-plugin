@@ -16,23 +16,20 @@
 package org.gradle.plugin.testretry
 
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.lang.management.ManagementFactory
-import java.util.stream.Collectors
-
-import static java.util.stream.Collectors.joining
-import static org.gradle.testkit.runner.TaskOutcome.FAILED
-import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 abstract class AbstractPluginFuncTest extends Specification {
-//    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
-//                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
+    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion')
+    static List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
+                                           '5.5.1', '5.6.4', '6.0.1']
 
-    static List<String> GRADLE_VERSIONS = ['6.0.1']//'5.0']
+    static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ? SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
 
     String testLanguage() {
         'java'
@@ -103,8 +100,11 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     abstract protected String buildConfiguration()
+
     abstract protected void flakyTest()
+
     abstract protected void successfulTest()
+
     abstract protected void failedTest()
 
     @Unroll
@@ -116,7 +116,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         gradleRunner(gradleVersion).build()
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Unroll
@@ -143,7 +143,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.contains("2 tests completed, 2 failed")
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Unroll
@@ -174,7 +174,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.count('FAILED') == 2 + 1 + 1
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Unroll
@@ -202,6 +202,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.count('FAILED') == 1
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 }

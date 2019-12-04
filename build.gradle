@@ -80,3 +80,11 @@ bintray {
     issueTrackerUrl = 'https://github.com/gradle/test-retry-gradle-plugin/issues'
     labels = ['gradle']
 }
+
+tasks.withType(Test) {
+    systemProperty 'org.gradle.test.currentGradleVersion', gradle.gradleVersion
+}
+
+task testAll(type:Test) {
+    systemProperty 'org.gradle.test.allGradleVersions', true
+}

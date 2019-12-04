@@ -75,7 +75,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         result.output.count('unrolled[2] PASSED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS
+        gradleVersion << TEST_GRADLE_VERSIONS
     }
 
     @Override
