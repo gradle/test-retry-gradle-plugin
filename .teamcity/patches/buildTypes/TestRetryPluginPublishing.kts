@@ -11,7 +11,7 @@ accordingly, and delete the patch script.
 changeBuildType(RelativeId("TestRetryPluginPublishing")) {
     params {
         add {
-            password("SNAPSHOT_REPO_PASSWORD", "credentialsJSON:ce6ba3e6-0b5a-4cce-ad24-09424004567b", display = ParameterDisplay.HIDDEN)
+            password("SNAPSHOT_REPO_PASSWORD", "credentialsJSON:2b7529cd-77cd-49f4-9416-9461f6ac9018", display = ParameterDisplay.HIDDEN)
         }
     }
 }
