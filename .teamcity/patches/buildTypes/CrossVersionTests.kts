@@ -26,5 +26,9 @@ create(DslContext.projectId, BuildType({
             jdkHome = "%env.JDK_18%"
         }
     }
+
+    requirements {
+        contains("teamcity.agent.jvm.os.name", "Linux")
+    }
 }))
 
