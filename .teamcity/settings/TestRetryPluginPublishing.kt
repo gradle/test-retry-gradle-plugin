@@ -15,6 +15,7 @@ object TestRetryPluginPublishing : BuildType({
         java8Home(Os.linux)
         text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
         password("ARTIFACTORY_PASSWORD", "credentialsJSON:2b7529cd-77cd-49f4-9416-9461f6ac9018", display = ParameterDisplay.HIDDEN)
+        text("systemProp.org.gradle.internal.publish.checksums.insecure", "true")
     }
 
     steps {
