@@ -19,19 +19,7 @@ open class TestRetryPluginCrossVersionTest(os: Os) : BuildType({
             param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
         }
     }
-
-    features {
-        commitStatusPublisher {
-            vcsRootExtId = "${DslContext.settingsRoot.id}"
-            publisher = github {
-                githubUrl = "https://api.github.com"
-                authType = personalToken {
-                    token = "credentialsJSON:7c8c64ad-776d-4469-8400-5618da5de337"
-                }
-            }
-        }
-    }
-
+    
     dependencies{
         snapshot(RelativeId("TestRetryPluginQuickFeedback")) {
             onDependencyFailure = FailureAction.CANCEL
