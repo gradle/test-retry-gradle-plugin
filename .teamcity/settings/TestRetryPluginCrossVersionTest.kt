@@ -33,7 +33,7 @@ open class TestRetryPluginCrossVersionTest(os: Os) : BuildType({
     }
 
     dependencies{
-        snapshot(RelativeId("VerifyAll")) {
+        snapshot(RelativeId("TestRetryPluginQuickFeedback")) {
             onDependencyFailure = FailureAction.CANCEL
             onDependencyCancel = FailureAction.CANCEL
         }
