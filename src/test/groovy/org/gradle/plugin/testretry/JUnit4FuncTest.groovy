@@ -82,7 +82,6 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.task(":test").outcome == FAILED
         result.output.count('test[0: test(0)=true] PASSED') == 1
         result.output.count('test[1: test(1)=false] FAILED') == 2
 

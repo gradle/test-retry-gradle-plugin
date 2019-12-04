@@ -86,7 +86,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         else if(testFramework instanceof JUnitPlatformTestFramework) {
             retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
             testDescriptors.forEach(d -> {
-                String strippedParameterName = d.getName().replaceAll("\\([^)]+\\)(\\[\\d+])+", "");
+                String strippedParameterName = d.getName().replaceAll("\\([^)]+](\\[\\d+])+", "");
                 retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
                 retriedTestFilter.includeTest(d.getClassName(), d.getName());
             });
@@ -94,6 +94,8 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         else if(testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
             testDescriptors.forEach(d -> {
+                String strippedParameterName = d.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
+                retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
                 retriedTestFilter.includeTest(d.getClassName(), d.getName());
             });
         }
