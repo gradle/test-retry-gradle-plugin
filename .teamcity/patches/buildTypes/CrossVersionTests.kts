@@ -13,5 +13,9 @@ create(DslContext.projectId, BuildType({
     id("CrossVersionTests")
     name = "Cross Version Tests"
     description = "Testing the plugin across multiple gradle versions"
+
+    vcs {
+        root(DslContext.settingsRoot)
+    }
 }))
 
