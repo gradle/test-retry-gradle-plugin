@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RetryTestResultProcessor implements TestResultProcessor {
 
-    private TestResultProcessor delegate;
+    private final TestResultProcessor delegate;
 
     private boolean lastRetry = false;
 
@@ -98,7 +98,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         lastRetry = true;
     }
 
-    public void setupRetry() {
+    public void reset() {
         retries.clear();
         all.clear();
         retry = true;

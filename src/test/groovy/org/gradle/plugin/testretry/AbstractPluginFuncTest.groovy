@@ -29,14 +29,14 @@ import static org.gradle.testkit.runner.TaskOutcome.FAILED
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 
 abstract class AbstractPluginFuncTest extends Specification {
-    String testLanguage() {
-        'java'
-    }
-
 //    static List<String> GRADLE_VERSIONS = ['5.0', '5.1', '5.1.1', '5.2', '5.2.1', '5.3', '5.3.1', '5.4', '5.4.1',
 //                                    '5.5', '5.5.1', '5.6', '5.6.1', '5.6.2', '5.6.3', '5.6.4', '6.0', '6.0.1']
 
-    static List<String> GRADLE_VERSIONS = ['5.0']//'6.0.1']
+    static List<String> GRADLE_VERSIONS = ['6.0.1']//'5.0']
+
+    String testLanguage() {
+        'java'
+    }
 
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -156,7 +156,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         buildFile << """
             test {
                 retry {
-                    maxRetries = 5
+                    maxRetries = 1
                 }
                 testLogging {
                     events "passed", "skipped", "failed"
@@ -166,12 +166,18 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         and:
         successfulTest()
+        failedTest()
 
         when:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunner(gradleVersion).buildAndFail()
 
-        then:
-        result.task(":test").outcome == SUCCESS
+        then: 'Only the failed test is retried a second time'
+        result.task(":test").outcome == FAILED
+
+        result.output.count('PASSED') == 1
+
+        // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
+        result.output.count('FAILED') == 2 + 1 + 1
 
         where:
         gradleVersion << GRADLE_VERSIONS

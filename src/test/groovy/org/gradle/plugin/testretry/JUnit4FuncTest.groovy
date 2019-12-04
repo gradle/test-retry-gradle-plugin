@@ -27,7 +27,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "does handle parameterized tests (gradle version #gradleVersion)"() {
+    def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test {
@@ -58,9 +58,9 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             public class ParameterTest {
                 @Parameters(name = "{index}: test({0})={1}")
                 public static Iterable<Object[]> data() {
-                    return Arrays.asList(new Object[][] { 
-                             { 0, true }, { 1, false }
-                       });
+                   return Arrays.asList(new Object[][] { 
+                         { 0, true }, { 1, false }
+                   });
                 }
                 
                 private int input;
