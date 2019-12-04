@@ -21,9 +21,9 @@ create(DslContext.projectId, BuildType({
 
     steps {
         gradle {
-            tasks = "clean build"
+            tasks = "clean testAll"
             buildFile = ""
-            gradleWrapperPath = ""
+            jdkHome = "%env.JDK_18%"
         }
     }
 }))
