@@ -38,14 +38,16 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
             import org.testng.annotations.*;
 
             public class OrderedTests {
+                @Test(dependsOnMethods = {"childTest"})
+                public void grandchildTest() {}
+
                 @Test(dependsOnMethods = {"parentTest"})
                 public void childTest() {
                     ${flakyAssert()}
                 }
 
                 @Test
-                public void parentTest() {
-                }
+                public void parentTest() {}
             }
         """
 
@@ -55,6 +57,10 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         then:
         result.output.count('childTest FAILED') == 1
         result.output.count('parentTest PASSED') == 2
+
+        // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
+        result.output.count('grandchildTest SKIPPED') == 1
+        result.output.count('grandchildTest PASSED') == 1
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
