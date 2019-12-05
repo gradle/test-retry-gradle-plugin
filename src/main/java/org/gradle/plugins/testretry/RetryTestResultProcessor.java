@@ -15,7 +15,10 @@
  */
 package org.gradle.plugins.testretry;
 
-import org.gradle.api.internal.tasks.testing.*;
+import org.gradle.api.internal.tasks.testing.TestCompleteEvent;
+import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
+import org.gradle.api.internal.tasks.testing.TestResultProcessor;
+import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.api.tasks.testing.TestResult;
 
@@ -76,14 +79,11 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void failure(Object o, Throwable throwable) {
-        if (lastRetry) {
-            delegate.failure(o, throwable);
-        } else {
-            TestDescriptorInternal testDescriptorInternal = all.get(o);
-            if (testDescriptorInternal != null) {
-                retries.add(testDescriptorInternal);
-            }
+        TestDescriptorInternal testDescriptorInternal = all.get(o);
+        if (testDescriptorInternal != null) {
+            retries.add(testDescriptorInternal);
         }
+        delegate.failure(o, throwable);
     }
 
     private boolean lastRun() {

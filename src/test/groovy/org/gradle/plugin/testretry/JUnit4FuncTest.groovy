@@ -91,9 +91,9 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            public class SuccessfulTest {
+            public class SuccessfulTests {
                 @org.junit.Test
-                public void test() {}
+                public void successTest() {}
             }
         """
     }
@@ -105,9 +105,9 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             
             import static org.junit.Assert.assertTrue;
     
-            public class FailedTest {
+            public class FailedTests {
                 @org.junit.Test
-                public void test() { 
+                public void failedTest() { 
                     assertTrue(false);
                 }
             }
@@ -119,7 +119,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
     
-            public class FlakyTest {                
+            public class FlakyTests {                
                 @org.junit.Test
                 public void flaky() { 
                     ${flakyAssert()}

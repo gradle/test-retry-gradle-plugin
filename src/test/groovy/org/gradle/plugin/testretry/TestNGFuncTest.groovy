@@ -82,9 +82,9 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            public class SuccessfulTest {
+            public class SuccessfulTests {
                 @org.testng.annotations.Test
-                public void test() {}
+                public void successTest() {}
             }
         """
     }
@@ -96,9 +96,9 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
             
             import static org.testng.AssertJUnit.assertTrue;
     
-            public class FailedTest {
+            public class FailedTests {
                 @org.testng.annotations.Test
-                public void test() { 
+                public void failedTest() { 
                     assertTrue(false);
                 }
             }
@@ -110,7 +110,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
     
-            public class FlakyTest {                
+            public class FlakyTests {                
                 @org.testng.annotations.Test
                 public void flaky() { 
                     ${flakyAssert()}
