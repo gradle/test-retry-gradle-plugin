@@ -17,10 +17,6 @@ package org.gradle.plugin.testretry
 
 import spock.lang.Unroll
 
-/**
- * TODO fix Junit5 test name extraction.
- * */
-@spock.lang.Ignore
 class JUnit5FuncTest extends AbstractPluginFuncTest {
     @Override
     protected String buildConfiguration() {
@@ -39,18 +35,6 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
     @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         writeTestSource """
             package acme;
             

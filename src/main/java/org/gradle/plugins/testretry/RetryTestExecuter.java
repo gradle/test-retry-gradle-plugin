@@ -74,35 +74,37 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestDescriptorInternal> retries) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        Stream<TestDescriptorInternal> testDescriptors = retriesWithParameterNamesUnsubstituted(spec, retries).stream()
-                .filter(d -> d.getClassName() != null);
 
         TestFramework testFramework = spec.getTestFramework();
         TestFramework retryingTestFramework = testFramework;
         if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
-            testDescriptors.forEach(d -> {
-                String strippedParameterName = d.getName().replaceAll("\\[\\d+]", "");
-                retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
-                retriedTestFilter.includeTest(d.getClassName(), d.getName());
-            });
+            retriesWithSpockParametersRemoved(spec, retries).stream()
+                    .filter(d -> d.getClassName() != null)
+                    .forEach(d -> {
+                        String strippedParameterName = d.getName().replaceAll("\\[\\d+]", "");
+                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(d.getClassName(), d.getName());
+                    });
         } else if (testFramework instanceof JUnitPlatformTestFramework) {
             retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
-            testDescriptors.forEach(d -> {
-                String strippedParameterName = d.getName().replaceAll("\\([^)]+](\\[\\d+])+", "");
-                retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
-                retriedTestFilter.includeTest(d.getClassName(), d.getName());
-            });
+            retries.stream()
+                    .filter(d -> d.getClassName() != null)
+                    .forEach(d -> {
+                        String strippedParameterName = d.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*", "");
+                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
+                    });
         } else if (testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
-            testDescriptors.forEach(d -> {
-                String strippedParameterName = d.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
-                retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
-                retriedTestFilter.includeTest(d.getClassName(), d.getName());
-            });
+            retriesWithTestNGDependentsAdded(spec, retries).stream()
+                    .filter(d -> d.getClassName() != null)
+                    .forEach(d -> {
+                        String strippedParameterName = d.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
+                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(d.getClassName(), d.getName());
+                    });
         }
 
         return new JvmTestExecutionSpec(retryingTestFramework,
@@ -118,7 +120,31 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 spec.getPreviousFailedTestClasses());
     }
 
-    private List<TestDescriptorInternal> retriesWithParameterNamesUnsubstituted(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
+    private List<TestDescriptorInternal> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
+        return retries.stream()
+                .filter(retry -> retry.getClassName() != null)
+                .flatMap(retry ->
+                        spec.getTestClassesDirs().getFiles().stream()
+                                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+                                .filter(File::exists)
+                                .findAny()
+                                .map(testClass -> {
+                                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                                        ClassReader classReader = new ClassReader(testClassIs);
+                                        TestNGClassVisitor visitor = new TestNGClassVisitor();
+                                        classReader.accept(visitor, 0);
+                                        return visitor.dependsOn(retry.getName()).stream()
+                                                .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
+                                    } catch(Throwable t) {
+                                        t.printStackTrace();
+                                        return Stream.of(retry);
+                                    }
+                                })
+                                .orElse(Stream.of(retry))
+                ).collect(Collectors.toList());
+    }
+
+    private List<TestDescriptorInternal> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
         return retries.stream()
                 .filter(retry -> retry.getClassName() != null)
                 .map(retry ->

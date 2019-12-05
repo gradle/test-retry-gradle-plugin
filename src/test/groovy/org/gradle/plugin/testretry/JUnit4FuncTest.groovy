@@ -26,18 +26,6 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         writeTestSource """
             package acme;
             

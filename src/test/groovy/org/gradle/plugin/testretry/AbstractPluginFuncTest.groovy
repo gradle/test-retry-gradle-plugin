@@ -55,6 +55,15 @@ abstract class AbstractPluginFuncTest extends Specification {
                 mavenCentral()
             }
             ${buildConfiguration()}
+
+            test {
+                retry {
+                    maxRetries = 1
+                }
+                testLogging {
+                    events "passed", "skipped", "failed"
+                }
+            }
         """
 
         testProjectDir.newFolder('src', 'test', 'java', 'acme')
@@ -123,18 +132,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     @Unroll
     def "retries failed tests (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         failedTest()
 
         when:
@@ -150,18 +147,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     @Unroll
     def "do not re-execute successful tests (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         successfulTest()
         failedTest()
 
@@ -184,18 +169,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     @Unroll
     def "stop when flaky tests successful (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 5
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         flakyTest()
 
         when:
