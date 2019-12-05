@@ -30,21 +30,39 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         """
     }
 
-    @Unroll
-    def "handles parameterized tests (gradle version #gradleVersion)"() {
+    def "handles test dependencies"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
+        writeTestSource """
+            package acme;
+
+            import org.testng.annotations.*;
+
+            public class OrderedTests {
+                @Test(dependsOnMethods = {"parentTest"})
+                public void childTest() {
+                    ${flakyAssert()}
                 }
-                testLogging {
-                    events "passed", "skipped", "failed"
+
+                @Test
+                public void parentTest() {
                 }
             }
         """
 
-        and:
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('childTest FAILED') == 1
+        result.output.count('parentTest PASSED') == 2
+
+        where:
+        gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
+    @Unroll
+    def "handles parameterized tests (gradle version #gradleVersion)"() {
+        given:
         writeTestSource """
             package acme;
             

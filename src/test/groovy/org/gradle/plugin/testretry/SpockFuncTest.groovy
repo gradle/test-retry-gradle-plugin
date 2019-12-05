@@ -36,18 +36,6 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     @Unroll
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        and:
         writeTestSource """
             package acme
             
