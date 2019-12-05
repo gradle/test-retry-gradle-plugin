@@ -34,6 +34,46 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
+    def "handles @Stepwise tests (gradle version #gradleVersion)"() {
+        given:
+        writeTestSource """
+            package acme
+            
+            @spock.lang.Stepwise
+            class StepwiseTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                def "grandchildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('childTest FAILED') == 1
+        result.output.count('parentTest PASSED') == 2
+
+        // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
+        result.output.count('grandchildTest SKIPPED') == 1
+        result.output.count('grandchildTest PASSED') == 1
+
+        where:
+        gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
+    @Unroll
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
         writeTestSource """

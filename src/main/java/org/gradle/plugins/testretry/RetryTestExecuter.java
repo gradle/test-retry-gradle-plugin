@@ -23,7 +23,12 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.plugins.testretry.visitors.SpockParameterClassVisitor;
+import org.gradle.plugins.testretry.visitors.SpockStepwiseClassVisitor;
+import org.gradle.plugins.testretry.visitors.TestNGClassVisitor;
 import org.objectweb.asm.ClassReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,6 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
+    private final Logger logger = LoggerFactory.getLogger(RetryTestExecuter.class);
 
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
@@ -82,28 +88,33 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
             retriesWithSpockParametersRemoved(spec, retries).stream()
-                    .filter(d -> d.getClassName() != null)
-                    .forEach(d -> {
-                        String strippedParameterName = d.getName().replaceAll("\\[\\d+]", "");
-                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
-                        retriedTestFilter.includeTest(d.getClassName(), d.getName());
+                    .filter(retry -> retry.getClassName() != null)
+                    .forEach(retry -> {
+                        if(isSpockStepwiseTest(spec, retry)) {
+                            retriedTestFilter.includeTestsMatching(retry.getClassName());
+                        }
+                        else {
+                            String strippedParameterName = retry.getName().replaceAll("\\[\\d+]", "");
+                            retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
+                            retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
+                        }
                     });
         } else if (testFramework instanceof JUnitPlatformTestFramework) {
             retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
             retries.stream()
-                    .filter(d -> d.getClassName() != null)
-                    .forEach(d -> {
-                        String strippedParameterName = d.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*", "");
-                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
+                    .filter(retry -> retry.getClassName() != null)
+                    .forEach(retry -> {
+                        String strippedParameterName = retry.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*", "");
+                        retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
                     });
         } else if (testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
             retriesWithTestNGDependentsAdded(spec, retries).stream()
-                    .filter(d -> d.getClassName() != null)
-                    .forEach(d -> {
-                        String strippedParameterName = d.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
-                        retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
-                        retriedTestFilter.includeTest(d.getClassName(), d.getName());
+                    .filter(retry -> retry.getClassName() != null)
+                    .forEach(retry -> {
+                        String strippedParameterName = retry.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
+                        retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
                     });
         }
 
@@ -118,6 +129,29 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 spec.getJavaForkOptions(),
                 spec.getMaxParallelForks(),
                 spec.getPreviousFailedTestClasses());
+    }
+
+    private boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestDescriptorInternal retry) {
+        if (retry.getClassName() == null) {
+            return false;
+        }
+
+        return spec.getTestClassesDirs().getFiles().stream()
+                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+                .filter(File::exists)
+                .findAny()
+                .map(testClass -> {
+                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                        ClassReader classReader = new ClassReader(testClassIs);
+                        SpockStepwiseClassVisitor visitor = new SpockStepwiseClassVisitor();
+                        classReader.accept(visitor, 0);
+                        return visitor.isStepwise();
+                    } catch(Throwable t) {
+                        logger.warn("Unable to determine if class " + retry.getClassName() + " is a Spock @Stepwise test", t);
+                        return false;
+                    }
+                })
+                .orElse(false);
     }
 
     private List<TestDescriptorInternal> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
@@ -136,7 +170,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                                         return visitor.dependsOn(retry.getName()).stream()
                                                 .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
                                     } catch(Throwable t) {
-                                        t.printStackTrace();
+                                        logger.warn("Unable to determine if class " + retry.getClassName() + " has TestNG dependent tests", t);
                                         return Stream.of(retry);
                                     }
                                 })
@@ -155,11 +189,11 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                                 .map(testClass -> {
                                     try (FileInputStream testClassIs = new FileInputStream(testClass)) {
                                         ClassReader classReader = new ClassReader(testClassIs);
-                                        SpockClassVisitor visitor = new SpockClassVisitor(retry.getName());
+                                        SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(retry.getName());
                                         classReader.accept(visitor, 0);
                                         return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
                                     } catch(Throwable t) {
-                                        t.printStackTrace();
+                                        logger.warn("Unable to determine if class " + retry.getClassName() + " contains Spock @Unroll parameterizations", t);
                                         return retry;
                                     }
                                 })
