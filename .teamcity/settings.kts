@@ -25,18 +25,72 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2019.1"
+version = "2019.2"
 
 project {
-    vcsRoot(VersionedSettings_1)
-    buildType(TestRetryPluginQuickFeedback)
-//    buildType(MacOSJava18)
-//    buildType(WindowsJava18)
-    buildType(LinuxJava18)
-    buildType(TestRetryPluginVerifyAll)
-    buildType(TestRetryPluginPublishing)
+    val quickFeedbackBuildType = buildType("Quick Feedback") {
+        steps {
+            gradle {
+                tasks = "clean build"
+                buildFile = ""
+            }
+        }
+    }
+    val crossVersionTestLinux = buildType("CrossVersionTest Linux - Java 1.8") {
+        steps {
+            gradle {
+                tasks = "clean testAll"
+                buildFile = ""
+                gradleParams = "-s $useGradleInternalScansServer"
+                param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
+            }
+        }
 
-    expectBuildTypesOrder()
-    buildTypesOrderIds = arrayListOf(RelativeId("TestRetryPluginVerifyAll"), RelativeId("TestRetryPluginQuickFeedback"), RelativeId("LinuxJava18"), RelativeId("TestRetryPluginPublishing"))
+        dependencies {
+            snapshot(quickFeedbackBuildType) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+        }
+    }
+    val verifyAllBuildType = buildType("Verify all") {
+        triggers.vcs {}
+
+        dependencies {
+            snapshot(quickFeedbackBuildType) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+            snapshot(crossVersionTestLinux) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+        }
+    }
+    buildType("Publish Snapshot") {
+        description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
+
+        params {
+            java8Home(Os.linux)
+            text("ARTIFACTORY_USERNAME", "bot-build-tool", allowEmpty = true)
+            password("ARTIFACTORY_PASSWORD", "credentialsJSON:2b7529cd-77cd-49f4-9416-9461f6ac9018", display = ParameterDisplay.HIDDEN)
+            text("systemProp.org.gradle.internal.publish.checksums.insecure", "true")
+        }
+
+        steps {
+            gradle {
+                tasks = "clean devSnapshot publishPluginMavenPublicationToGradleBuildInternalRepository"
+                gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% $useGradleInternalScansServer"
+                param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
+                buildFile = ""
+            }
+        }
+        dependencies {
+            snapshot(verifyAllBuildType) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+        }
+    }
 
 }
