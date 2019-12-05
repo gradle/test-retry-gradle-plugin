@@ -205,16 +205,36 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.count('PASSED') == 1
         result.output.count('FAILED') == 1
 
+        assertTestReportContains("FlakyTests", "flaky", 1, 1)
+
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
 
 
     def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
+        assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
+        assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
+        true
+    }
+
+    def assertHtmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         def parser = new SAXParser()
         def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, "build/reports/tests/test/classes/acme.${testClazz}.html"))
-        assert page.'**'.findAll{it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed'}.size() == expectedSuccessCount
-        assert page.'**'.findAll{it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed'}.size() == expectedFailCount
+        assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed' }.size() == expectedSuccessCount
+        assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed' }.size() == expectedFailCount
+        true
+    }
+
+    def assertXmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
+        def xml = new XmlSlurper().parse(new File(testProjectDir.root, "build/test-results/test/TEST-acme.${testClazz}.xml"))
+        // assert summary
+        xml.'**'.find{it.name() == 'testsuite' && it.@name == "acme.${testClazz}" && it.@tests == "${expectedFailCount + expectedSuccessCount}"}
+
+        // assert details
+        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.@name == testName}
+        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty()}.size() == expectedFailCount
+        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty()}.size() == expectedSuccessCount
         true
     }
 }

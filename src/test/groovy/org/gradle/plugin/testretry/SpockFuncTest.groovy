@@ -124,7 +124,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
             
             class FlakyTests extends spock.lang.Specification {
-                def "failing test"() {
+                def flaky() {
                     expect:
                     ${flakyAssert()}
                 }
