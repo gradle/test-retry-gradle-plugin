@@ -12,24 +12,35 @@ import static org.objectweb.asm.Opcodes.ASM7;
 public class TestNGClassVisitor extends ClassVisitor {
     private String currentMethod;
     private Map<String, List<String>> dependsOn = new HashMap<>();
+    private Map<String, List<String>> dependedOn = new HashMap<>();
 
     public TestNGClassVisitor() {
         super(ASM7);
     }
 
     public Set<String> dependsOn(String method) {
-        Set<String> dependsOnFlat = new HashSet<>();
-        dependsOnFlat.add(method);
+        Set<String> dependentChain = new HashSet<>();
+        dependentChain.add(method);
 
         List<String> search = Collections.singletonList(method);
         while (!search.isEmpty()) {
             search = search.stream()
                 .flatMap(upstream -> dependsOn.getOrDefault(upstream, Collections.emptyList()).stream())
-                .filter(upstream -> !dependsOnFlat.contains(upstream))
+                .filter(upstream -> !dependentChain.contains(upstream))
                 .collect(Collectors.toList());
-            dependsOnFlat.addAll(search);
+            dependentChain.addAll(search);
         }
-        return dependsOnFlat;
+
+        search = Collections.singletonList(method);
+        while (!search.isEmpty()) {
+            search = search.stream()
+                    .flatMap(downstream -> dependedOn.getOrDefault(downstream, Collections.emptyList()).stream())
+                    .filter(downstream -> !dependentChain.contains(downstream))
+                    .collect(Collectors.toList());
+            dependentChain.addAll(search);
+        }
+
+        return dependentChain;
     }
 
     @Override
@@ -78,6 +89,14 @@ public class TestNGClassVisitor extends ClassVisitor {
                     acc = new ArrayList<>();
                 }
                 acc.add((String) value);
+                return acc;
+            });
+
+            dependedOn.compute((String) value, (m, acc) -> {
+                if(acc == null) {
+                    acc = new ArrayList<>();
+                }
+                acc.add(currentMethod);
                 return acc;
             });
         }
