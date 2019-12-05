@@ -1,4 +1,4 @@
-package org.gradle.plugins.testretry;
+package org.gradle.plugins.testretry.visitors;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;

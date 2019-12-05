@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugins.testretry;
+package org.gradle.plugins.testretry.visitors;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -24,11 +24,14 @@ import java.util.List;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-class SpockClassVisitor extends ClassVisitor {
+/**
+ * Class visitor that identifies unparameterized test method names.
+ */
+public class SpockParameterClassVisitor extends ClassVisitor {
     private String testMethodName;
-    private SpockMethodVisitor spockMethodVisitor = new SpockMethodVisitor();
+    private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
-    public SpockClassVisitor(String testMethodName) {
+    public SpockParameterClassVisitor(String testMethodName) {
         super(ASM7);
         this.testMethodName = testMethodName;
     }
@@ -54,10 +57,10 @@ class SpockClassVisitor extends ClassVisitor {
     }
 }
 
-class SpockMethodVisitor extends MethodVisitor {
+class SpockParameterMethodVisitor extends MethodVisitor {
     private SpockFeatureMetadataAnnotationVisitor annotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
 
-    public SpockMethodVisitor() {
+    public SpockParameterMethodVisitor() {
         super(ASM7);
     }
 
