@@ -52,15 +52,15 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
             
             class UnrollTests extends spock.lang.Specification {
-//                @spock.lang.Unroll
-//                def "unrolled"() {
-//                    expect:
-//                    result
-//                    
-//                    where:
-//                    param << ['foo', 'bar', 'baz']
-//                    result << [true, false, true]
-//                }
+                @spock.lang.Unroll
+                def "unrolled"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [true, false, true]
+                }
                 
                 @spock.lang.Unroll
                 def "unrolled with param #param"() {
@@ -81,6 +81,10 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         result.output.count('unrolled[0] PASSED') == 2
         result.output.count('unrolled[1] FAILED') == 2
         result.output.count('unrolled[2] PASSED') == 2
+
+        result.output.count('unrolled with param foo PASSED') == 2
+        result.output.count('unrolled with param bar FAILED') == 2
+        result.output.count('unrolled with param baz PASSED') == 2
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
