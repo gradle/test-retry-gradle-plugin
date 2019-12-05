@@ -1,7 +1,9 @@
-import jetbrains.buildServer.configs.kotlin.v2018_2.*
+import jetbrains.buildServer.configs.kotlin.v2018_2.FailureAction
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
+import jetbrains.buildServer.configs.kotlin.v2018_2.project
+import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.schedule
 import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.vcs
-import jetbrains.buildServer.configs.kotlin.v2018_2.ui.*
+import jetbrains.buildServer.configs.kotlin.v2018_2.version
 
 /*
 The settings script is an entry point for defining a TeamCity
@@ -89,6 +91,17 @@ project {
                 onDependencyCancel = FailureAction.CANCEL
             }
         }
+
+        // publish a nightly snapshot
+        triggers.schedule {
+                schedulingPolicy = daily {
+                    hour = 2
+                }
+                branchFilter = "+:refs/head/master"
+                triggerBuild = always()
+                withPendingChangesOnly = false
+        }
+
     }
 
 }
