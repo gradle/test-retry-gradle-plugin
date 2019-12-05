@@ -15,8 +15,8 @@
  */
 package org.gradle.plugin.testretry
 
+import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
-import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -142,7 +142,7 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         then:
         result.output.contains("2 tests completed, 2 failed")
-
+        assertTestReportContains("FailedTests", "failedTest", 0, 2)
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
@@ -174,6 +174,9 @@ abstract class AbstractPluginFuncTest extends Specification {
         // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
         result.output.count('FAILED') == 2 + 1 + 1
 
+        assertTestReportContains("SuccessfulTests", "successTest", 1, 0)
+        assertTestReportContains("FailedTests", "failedTest", 0, 2)
+
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
@@ -204,5 +207,14 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
+
+    def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
+        def parser = new SAXParser()
+        def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, "build/reports/tests/test/classes/acme.${testClazz}.html"))
+        assert page.'**'.findAll{it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed'}.size() == expectedSuccessCount
+        assert page.'**'.findAll{it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed'}.size() == expectedFailCount
+        true
     }
 }

@@ -85,7 +85,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
             
-            class SuccessfulTest {
+            class SuccessfulTests {
                 @org.junit.jupiter.api.Test
                 void test() {}
             }
@@ -99,9 +99,9 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
             
             import static org.junit.jupiter.api.Assertions.assertTrue;
     
-            class FailedTest {
+            class FailedTests {
                 @org.junit.jupiter.api.Test
-                void test() { 
+                void failedTest() { 
                     assertTrue(false);
                 }
             }
@@ -113,7 +113,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme;
     
-            class FlakyTest {                
+            class FlakyTests {                
                 @org.junit.jupiter.api.Test
                 void flaky() { 
                     ${flakyAssert()}

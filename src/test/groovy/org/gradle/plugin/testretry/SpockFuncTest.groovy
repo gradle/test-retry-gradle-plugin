@@ -96,7 +96,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
             
             class SuccessfulTests extends spock.lang.Specification {
-                def "successful test"() {
+                def successTest() {
                     expect:
                     true
                 }
@@ -110,7 +110,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
             
             class FailedTests extends spock.lang.Specification {
-                def "failing test"() {
+                def failedTest() {
                     expect:
                     false
                 }
@@ -123,7 +123,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         writeTestSource """
             package acme
             
-            class FailedTests extends spock.lang.Specification {
+            class FlakyTests extends spock.lang.Specification {
                 def "failing test"() {
                     expect:
                     ${flakyAssert()}

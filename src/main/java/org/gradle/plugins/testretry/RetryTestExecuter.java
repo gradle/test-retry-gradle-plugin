@@ -64,6 +64,11 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 }
                 delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
             }
+            if(retryTestResultProcessor.getRetries().isEmpty()) {
+                // all flaky tests have passed at one point.
+                // Do not fail the task but keep warning of test failures
+                testTask.setIgnoreFailures(true);
+            }
         } else {
             delegate.execute(spec, testResultProcessor);
         }
