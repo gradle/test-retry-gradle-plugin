@@ -1,12 +1,12 @@
 /**
  * Copyright 2019 Gradle, Inc.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,12 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.objectweb.asm.ClassReader;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -52,7 +56,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor);
         if (maxRetries > 0) {
             delegate.execute(spec, retryTestResultProcessor);
-            for(int retryCount = 0; retryCount < maxRetries && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
+            for (int retryCount = 0; retryCount < maxRetries && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
                 JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
                 retryTestResultProcessor.reset();
                 if (retryCount + 1 == maxRetries) {
@@ -68,28 +72,26 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     @SuppressWarnings("ConstantConditions")
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestDescriptorInternal> retries) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        Stream<TestDescriptorInternal> testDescriptors = retries.stream()
+        Stream<TestDescriptorInternal> testDescriptors = retriesWithParameterNamesUnsubstituted(spec, retries).stream()
                 .filter(d -> d.getClassName() != null);
 
         TestFramework testFramework = spec.getTestFramework();
         TestFramework retryingTestFramework = testFramework;
-        if(testFramework instanceof JUnitTestFramework) {
+        if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
             testDescriptors.forEach(d -> {
                 String strippedParameterName = d.getName().replaceAll("\\[\\d+]", "");
                 retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
                 retriedTestFilter.includeTest(d.getClassName(), d.getName());
             });
-        }
-        else if(testFramework instanceof JUnitPlatformTestFramework) {
+        } else if (testFramework instanceof JUnitPlatformTestFramework) {
             retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
             testDescriptors.forEach(d -> {
                 String strippedParameterName = d.getName().replaceAll("\\([^)]+](\\[\\d+])+", "");
                 retriedTestFilter.includeTest(d.getClassName(), strippedParameterName);
                 retriedTestFilter.includeTest(d.getClassName(), d.getName());
             });
-        }
-        else if(testFramework instanceof TestNGTestFramework) {
+        } else if (testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
             testDescriptors.forEach(d -> {
                 String strippedParameterName = d.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
@@ -99,16 +101,39 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
 
         return new JvmTestExecutionSpec(retryingTestFramework,
-            spec.getClasspath(),
-            spec.getCandidateClassFiles(),
-            spec.isScanForTestClasses(),
-            spec.getTestClassesDirs(),
-            spec.getPath(),
-            spec.getIdentityPath(),
-            spec.getForkEvery(),
-            spec.getJavaForkOptions(),
-            spec.getMaxParallelForks(),
-            spec.getPreviousFailedTestClasses());
+                spec.getClasspath(),
+                spec.getCandidateClassFiles(),
+                spec.isScanForTestClasses(),
+                spec.getTestClassesDirs(),
+                spec.getPath(),
+                spec.getIdentityPath(),
+                spec.getForkEvery(),
+                spec.getJavaForkOptions(),
+                spec.getMaxParallelForks(),
+                spec.getPreviousFailedTestClasses());
+    }
+
+    private List<TestDescriptorInternal> retriesWithParameterNamesUnsubstituted(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
+        return retries.stream()
+                .filter(retry -> retry.getClassName() != null)
+                .map(retry ->
+                        spec.getTestClassesDirs().getFiles().stream()
+                                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+                                .filter(File::exists)
+                                .findAny()
+                                .map(testClass -> {
+                                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                                        ClassReader classReader = new ClassReader(testClassIs);
+                                        SpockClassVisitor visitor = new SpockClassVisitor(retry.getName());
+                                        classReader.accept(visitor, 0);
+                                        return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
+                                    } catch(Throwable t) {
+                                        t.printStackTrace();
+                                        return retry;
+                                    }
+                                })
+                                .orElse(retry)
+                ).collect(Collectors.toList());
     }
 
     @Override
