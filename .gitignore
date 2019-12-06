@@ -1,3 +1,4 @@
+.teamcity/target
 .idea
 build/
 .gradle/

@@ -32,7 +32,7 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
 
         vcs {
             root(DslContext.settingsRoot)
-            checkoutMode = CheckoutMode.ON_SERVER
+            checkoutMode = CheckoutMode.ON_AGENT
         }
     }.apply(init)
 

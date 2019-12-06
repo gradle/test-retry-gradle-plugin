@@ -80,7 +80,7 @@ project {
         steps {
             gradle {
                 tasks = "clean devSnapshot publishPluginMavenPublicationToGradleBuildInternalRepository"
-                gradleParams = "-PartifactoryUsername=%ARTIFACTORY_USERNAME% -PartifactoryPassword=%ARTIFACTORY_PASSWORD% $useGradleInternalScansServer"
+                gradleParams = "-PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
                 param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                 buildFile = ""
             }
