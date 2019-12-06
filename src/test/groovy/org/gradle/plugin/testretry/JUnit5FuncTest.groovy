@@ -18,6 +18,11 @@ package org.gradle.plugin.testretry
 import spock.lang.Unroll
 
 class JUnit5FuncTest extends AbstractPluginFuncTest {
+
+    String reportedTestName(String testName) {
+        testName + "()"
+    }
+
     @Override
     protected String buildConfiguration() {
         return """
@@ -71,7 +76,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
             
             class SuccessfulTests {
                 @org.junit.jupiter.api.Test
-                void test() {}
+                void successTest() {}
             }
         """
     }

@@ -36,6 +36,8 @@ abstract class AbstractPluginFuncTest extends Specification {
         'java'
     }
 
+    String reportedTestPostFix = ""
+
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
     File settingsFile
@@ -139,7 +141,7 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         then:
         result.output.contains("2 tests completed, 2 failed")
-        assertTestReportContains("FailedTests", "failedTest", 0, 2)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
@@ -159,8 +161,8 @@ abstract class AbstractPluginFuncTest extends Specification {
         // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
         result.output.count('FAILED') == 2 + 1 + 1
 
-        assertTestReportContains("SuccessfulTests", "successTest", 1, 0)
-        assertTestReportContains("FailedTests", "failedTest", 0, 2)
+        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
@@ -178,17 +180,20 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.count('PASSED') == 1
         result.output.count('FAILED') == 1
 
-        assertTestReportContains("FlakyTests", "flaky", 1, 1)
+        assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
 
-
     def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         true
+    }
+
+    def reportedTestName(String testName) {
+        testName
     }
 
     def assertHtmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
