@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <project>
   <modelVersion>4.0.0</modelVersion>
-  <name>GradleTestRetryPlugin Config DSL Script</name>
-  <groupId>GradleTestRetryPlugin</groupId>
-  <artifactId>GradleTestRetryPlugin_dsl</artifactId>
+  <name>GradlePlugins_GradleTestRetryPlugin Config DSL Script</name>
+  <groupId>GradlePlugins_GradleTestRetryPlugin</groupId>
+  <artifactId>GradlePlugins_GradleTestRetryPlugin_dsl</artifactId>
   <version>1.0-SNAPSHOT</version>
 
   <parent>
