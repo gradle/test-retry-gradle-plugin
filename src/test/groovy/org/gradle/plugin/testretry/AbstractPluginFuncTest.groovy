@@ -119,55 +119,10 @@ abstract class AbstractPluginFuncTest extends Specification {
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
 
         and: "build operations are as expected"
-        def operations = buildOperations()
-        def allTestExecutionOperations = operations.all(ExecuteTestBuildOperationType)
-
-        // assert fired build operations
-        def index = 0
-
-
-        allTestExecutionOperations[index].displayName == "Gradle Test Run :test"
-
-        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
-
-        if (withSyntesizedTestSuites()) {
-            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            allTestExecutionOperations[index].displayName == 'Gradle suite'
-
-            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            allTestExecutionOperations[index].displayName == 'Gradle test'
-        }
-        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index].displayName == 'acme.FailedTests'
-
-        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index++].displayName == reportedTestName('failedTest')
-
-        allTestExecutionOperations[0].children[1] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
-
-
-        if (withSyntesizedTestSuites()) {
-            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            allTestExecutionOperations[index].displayName == 'Gradle suite'
-
-            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            allTestExecutionOperations[index].displayName == 'Gradle test'
-        }
-
-        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index].displayName == 'acme.FailedTests'
-
-        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        allTestExecutionOperations[index].displayName == reportedTestName('failedTest')
+        assertBuildOperations('acme.FailedTests', 'failedTest', 2, 1, 1)
 
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
-    }
-
-    boolean withSyntesizedTestSuites() {
-        false
     }
 
     @Unroll
@@ -206,10 +161,69 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
 
+        and: "build operations are as expected"
+        assertBuildOperations('acme.FlakyTests', 'flaky', 2, 1, 0)
+
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
 
+    def assertBuildOperations(String className, String testName, int totalTestCount, int failedTestCountRun1, int failedTestCountRun2) {
+        def operations = buildOperations()
+        def allTestExecutionOperations = operations.all(ExecuteTestBuildOperationType)
+
+        // assert fired build operations
+        def index = 0
+
+        assert allTestExecutionOperations[index].displayName == "Gradle Test Run :test"
+        assert allTestExecutionOperations[index].result.result.testCount == totalTestCount
+        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1 + failedTestCountRun2
+            
+        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
+
+        if (withSyntesizedTestSuites()) {
+            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            assert allTestExecutionOperations[index].displayName == 'Gradle suite'
+
+            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            assert allTestExecutionOperations[index].displayName == 'Gradle test'
+        }
+        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName == className
+        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1
+        assert allTestExecutionOperations[index].result.result.testCount == 1
+
+        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName == reportedTestName(testName)
+        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1
+        assert allTestExecutionOperations[index++].result.result.testCount == 1
+
+        assert allTestExecutionOperations[0].children[1] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
+
+        if (withSyntesizedTestSuites()) {
+            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            assert allTestExecutionOperations[index].displayName == 'Gradle suite'
+
+            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            assert allTestExecutionOperations[index].displayName == 'Gradle test'
+        }
+
+        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName == className
+
+        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        assert allTestExecutionOperations[index].displayName == reportedTestName(testName)
+        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun2
+        assert allTestExecutionOperations[index++].result.result.testCount == 1
+
+        true
+    }
+
+    boolean withSyntesizedTestSuites() {
+        false
+    }
 
     String flakyAssert() {
         return "acme.FlakyAssert.flakyAssert();"
