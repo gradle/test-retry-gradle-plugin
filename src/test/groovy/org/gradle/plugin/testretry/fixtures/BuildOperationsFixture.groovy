@@ -20,8 +20,6 @@ import org.gradle.api.specs.Spec
 import org.gradle.api.specs.Specs
 import org.gradle.internal.logging.events.StyledTextOutputEvent
 import org.gradle.internal.operations.BuildOperationType
-import org.gradle.internal.operations.trace.BuildOperationRecord
-import org.gradle.internal.operations.trace.BuildOperationTree
 
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.regex.Pattern
@@ -32,62 +30,27 @@ import java.util.regex.Pattern
  * */
 class BuildOperationsFixture {
 
-    private final String path
-
     private BuildOperationTree operations
 
     BuildOperationsFixture(String path) {
-        operations = org.gradle.internal.operations.trace.BuildOperationTrace.read(path)
-    }
-
-    @SuppressWarnings("GrUnnecessaryPublicModifier")
-    public <T extends BuildOperationType<?, ?>> BuildOperationRecord root(Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.satisfyAll()) {
-        def detailsType = BuildOperationTypes.detailsType(type)
-        def roots = operations.roots.findAll {
-            it.detailsType && detailsType.isAssignableFrom(it.detailsType) && predicate.isSatisfiedBy(it)
-        }
-        assert roots.size() == 1
-        return roots[0]
-    }
-
-    @SuppressWarnings("GrUnnecessaryPublicModifier")
-    public <T extends BuildOperationType<?, ?>> BuildOperationRecord first(Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.satisfyAll()) {
-        def detailsType = BuildOperationTypes.detailsType(type)
-        operations.records.values().find {
-            it.detailsType && detailsType.isAssignableFrom(it.detailsType) && predicate.isSatisfiedBy(it)
-        }
+        operations = BuildOperationTree.read(path)
     }
 
     @SuppressWarnings("GrUnnecessaryPublicModifier")
     public <T extends BuildOperationType<?, ?>> List<BuildOperationRecord> all(Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.satisfyAll()) {
         def detailsType = BuildOperationTypes.detailsType(type)
         operations.records.values().findAll {
-            it.detailsType && detailsType.isAssignableFrom(it.detailsType) && predicate.isSatisfiedBy(it)
+            def clazz = tryLoadClazz(it)
+            it.detailsClassName && clazz && detailsType.isAssignableFrom(clazz)
         }.toList()
     }
 
-    @SuppressWarnings("GrUnnecessaryPublicModifier")
-    public <T extends BuildOperationType<?, ?>> void none(Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.satisfyAll()) {
-        assert all(type, predicate).isEmpty()
-    }
-
-    @SuppressWarnings("GrUnnecessaryPublicModifier")
-    public <T extends BuildOperationType<?, ?>> BuildOperationRecord only(Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.satisfyAll()) {
-        def records = all(type, predicate)
-        assert records.size() == 1
-        records.first()
-    }
-
-    BuildOperationRecord first(String displayName) {
-        first(Pattern.compile(Pattern.quote(displayName)))
-    }
-
-    BuildOperationRecord first(Pattern displayName) {
-        operations.records.values().find { it.displayName ==~ displayName }
-    }
-
-    List<BuildOperationRecord> all(String displayName) {
-        all(Pattern.compile(Pattern.quote(displayName)))
+    private Class<?> tryLoadClazz(BuildOperationRecord it) {
+        try {
+            return getClass().getClassLoader().loadClass(it.detailsClassName)
+        }catch(Exception e) {
+            return null;
+        }
     }
 
     List<BuildOperationRecord> all(Pattern displayName) {
@@ -96,17 +59,6 @@ class BuildOperationsFixture {
 
     BuildOperationRecord only(String displayName) {
         only(Pattern.compile(Pattern.quote(displayName)))
-    }
-
-    List<BuildOperationRecord> parentsOf(BuildOperationRecord child) {
-        def parents = []
-        def parentId = child.parentId
-        while (parentId != null) {
-            def parent = operations.records.get(parentId)
-            parents.add(0, parent)
-            parentId = parent.parentId
-        }
-        parents
     }
 
     BuildOperationRecord only(Pattern displayName) {
@@ -124,23 +76,6 @@ class BuildOperationsFixture {
         assert records.size() == 0
     }
 
-    Map<String, ?> result(String displayName) {
-        first(displayName).result
-    }
-
-    String failure(String displayName) {
-        first(displayName).failure
-    }
-
-    boolean hasOperation(String displayName) {
-        first(displayName) != null
-    }
-
-    @SuppressWarnings("GrUnnecessaryPublicModifier")
-    public <T extends BuildOperationType<?, ?>> boolean hasOperation(Class<T> type) {
-        first(type) != null
-    }
-
     @SuppressWarnings(["GrMethodMayBeStatic", "GrUnnecessaryPublicModifier"])
     public <T extends BuildOperationType<?, ?>> List<BuildOperationRecord> search(BuildOperationRecord parent, Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.SATISFIES_ALL) {
         def detailsType = BuildOperationTypes.detailsType(type)
@@ -148,14 +83,6 @@ class BuildOperationsFixture {
             it.detailsType && detailsType.isAssignableFrom(it.detailsType)
         }
         search(parent, Specs.intersect(typeSpec, predicate))
-    }
-
-    @SuppressWarnings(["GrMethodMayBeStatic", "GrUnnecessaryPublicModifier"])
-    public <T extends BuildOperationType<?, ?>> List<BuildOperationRecord> children(BuildOperationRecord parent, Class<T> type, Spec<? super BuildOperationRecord> predicate = Specs.SATISFIES_ALL) {
-        Spec<BuildOperationRecord> parentSpec = {
-            it.parentId == parent.id
-        }
-        return search(parent, type, Specs.intersect(parentSpec, predicate))
     }
 
     @SuppressWarnings("GrMethodMayBeStatic")
@@ -179,15 +106,6 @@ class BuildOperationsFixture {
             search.addAll(operation.children)
             operation = search.poll()
         }
-    }
-
-    void orderedSerialSiblings(BuildOperationRecord... expectedOrder) {
-        def expectedOrderList = expectedOrder.toList()
-        assert expectedOrder*.parentId.unique().size() == 1
-        def startTimeOrdered = expectedOrderList.sort(false) { it.startTime }
-        assert expectedOrderList == startTimeOrdered
-        def endTimeOrdered = expectedOrderList.sort(false) { it.endTime }
-        assert endTimeOrdered == startTimeOrdered
     }
 
     static class TimePoint implements Comparable<TimePoint> {
