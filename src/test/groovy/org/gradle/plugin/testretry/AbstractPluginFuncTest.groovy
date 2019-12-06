@@ -178,7 +178,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         assert allTestExecutionOperations[index].displayName == "Gradle Test Run :test"
         assert allTestExecutionOperations[index].result.result.testCount == totalTestCount
         assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1 + failedTestCountRun2
-            
+
         assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
         assert allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
 

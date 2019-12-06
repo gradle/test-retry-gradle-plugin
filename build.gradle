@@ -39,6 +39,7 @@ dependencies {
     testImplementation 'com.netflix.nebula:nebula-test:latest.release'
     testImplementation "org.codehaus.groovy:groovy-all:2.5.7"
     testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
+    testImplementation "com.google.guava:guava:28.1-android"
     testImplementation gradleTestKit()
     testImplementation "net.sourceforge.nekohtml:nekohtml:1.9.14"
 }
