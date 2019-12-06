@@ -16,19 +16,19 @@
 package org.gradle.plugin.testretry
 
 import org.cyberneko.html.parsers.SAXParser
+import org.gradle.api.internal.tasks.testing.operations.ExecuteTestBuildOperationType
+import org.gradle.plugin.testretry.fixtures.BuildOperationsFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import java.lang.management.ManagementFactory
-
 abstract class AbstractPluginFuncTest extends Specification {
-    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion')?: '5.0'
+    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
 
     static List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
-                                           '5.5.1', '5.6.4', '6.0.1']
+                                                     '5.5.1', '5.6.4', '6.0.1']
 
     static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ? SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
 
@@ -92,33 +92,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         """
     }
 
-    String flakyAssert() {
-        return "acme.FlakyAssert.flakyAssert();"
-    }
-
-    void writeTestSource(String source) {
-        String className = (source =~ /class\s+(\w+)\s+/)[0][1]
-        testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
-    }
-
-    GradleRunner gradleRunner(String gradleVersion) {
-        return GradleRunner.create()
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
-            .withArguments('test')
-            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-            .forwardOutput()
-    }
-
-    abstract protected String buildConfiguration()
-
-    abstract protected void flakyTest()
-
-    abstract protected void successfulTest()
-
-    abstract protected void failedTest()
-
     @Unroll
     def "can apply plugin (gradle version #gradleVersion)"() {
         when:
@@ -141,9 +114,60 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         then:
         result.output.contains("2 tests completed, 2 failed")
+
+        and: 'reports are as expected'
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
+
+        and: "build operations are as expected"
+        def operations = buildOperations()
+        def allTestExecutionOperations = operations.all(ExecuteTestBuildOperationType)
+
+        // assert fired build operations
+        def index = 0
+
+
+        allTestExecutionOperations[index].displayName == "Gradle Test Run :test"
+
+        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
+
+        if (withSyntesizedTestSuites()) {
+            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            allTestExecutionOperations[index].displayName == 'Gradle suite'
+
+            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            allTestExecutionOperations[index].displayName == 'Gradle test'
+        }
+        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index].displayName == 'acme.FailedTests'
+
+        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index++].displayName == reportedTestName('failedTest')
+
+        allTestExecutionOperations[0].children[1] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
+
+
+        if (withSyntesizedTestSuites()) {
+            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            allTestExecutionOperations[index].displayName == 'Gradle suite'
+
+            allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+            allTestExecutionOperations[index].displayName == 'Gradle test'
+        }
+
+        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index].displayName == 'acme.FailedTests'
+
+        allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
+        allTestExecutionOperations[index].displayName == reportedTestName('failedTest')
+
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
+    boolean withSyntesizedTestSuites() {
+        false
     }
 
     @Unroll
@@ -186,6 +210,49 @@ abstract class AbstractPluginFuncTest extends Specification {
         gradleVersion << TEST_GRADLE_VERSIONS
     }
 
+
+    String flakyAssert() {
+        return "acme.FlakyAssert.flakyAssert();"
+    }
+
+    void writeTestSource(String source) {
+        String className = (source =~ /class\s+(\w+)\s+/)[0][1]
+        testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
+    }
+
+    GradleRunner gradleRunner(String gradleVersion) {
+        return GradleRunner.create()
+            .withGradleVersion(gradleVersion)
+            .withProjectDir(testProjectDir.root)
+            .withPluginClasspath()
+            .withArguments('test', traceFileArgument())
+            .forwardOutput()
+    }
+
+    private String traceFileArgument() {
+        return "-Dorg.gradle.internal.operations.trace=${tracePath()}"
+    }
+
+    private String tracePath() {
+        new File(testProjectDir.root, 'ops').absolutePath
+    }
+
+    abstract protected String buildConfiguration()
+
+    abstract protected void flakyTest()
+
+    abstract protected void successfulTest()
+
+    abstract protected void failedTest()
+
+
+    private BuildOperationsFixture buildOperations() {
+        def operations = new BuildOperationsFixture(tracePath())
+        // we only want one root test event
+        operations.only("Gradle Test Run :test")
+        operations
+    }
+
     def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
@@ -207,12 +274,12 @@ abstract class AbstractPluginFuncTest extends Specification {
     def assertXmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         def xml = new XmlSlurper().parse(new File(testProjectDir.root, "build/test-results/test/TEST-acme.${testClazz}.xml"))
         // assert summary
-        xml.'**'.find{it.name() == 'testsuite' && it.@name == "acme.${testClazz}" && it.@tests == "${expectedFailCount + expectedSuccessCount}"}
+        xml.'**'.find { it.name() == 'testsuite' && it.@name == "acme.${testClazz}" && it.@tests == "${expectedFailCount + expectedSuccessCount}" }
 
         // assert details
-        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.@name == testName}
-        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty()}.size() == expectedFailCount
-        assert xml.'**'.findAll{it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty()}.size() == expectedSuccessCount
+        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.@name == testName }
+        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty() }.size() == expectedFailCount
+        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty() }.size() == expectedSuccessCount
         true
     }
 }
