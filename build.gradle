@@ -152,3 +152,11 @@ task testAll(type:Test) {
 afterEvaluate { project ->
     println "I'm building $project.name with version $project.version"
 }
+
+tasks.named("final") {
+    dependsOn tasks.named("publishPlugins")
+}
+
+tasks.named("candidate") {
+    dependsOn tasks.named("publishPlugins")
+}
