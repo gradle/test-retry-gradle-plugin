@@ -106,7 +106,7 @@ project {
     }
 
     subProject("Release") {
-        this@project.buildType("Development") {
+        buildType("Development") {
             description =
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
             params {
