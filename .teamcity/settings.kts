@@ -105,7 +105,7 @@ project {
 
     }
 
-    val releaseBuildType = buildType("Release") {
+    subProject("Release") {
         this@project.buildType("Development") {
             description =
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"

@@ -18,6 +18,23 @@ fun ParametrizedWithType.java8Home(os: Os) {
 
 const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan.init.gradle.kts"
 
+/**
+ * Creates a new subproject with the given name, automatically deriving the [Project.id] from the name.
+ *
+ * Using this method also implicitly ensures that subprojects are ordered by creation order.
+ */
+fun Project.subProject(projectName: String, init: Project.() -> Unit): Project {
+    val parent = this
+    val subProject = subProject {
+        name = projectName
+        id = RelativeId(name.toId(stripRootProject(parent.id.toString())))
+    }.apply(init)
+
+    this.subProjectsOrder += subProject.id!!
+
+    return subProject
+}
+
 fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildType {
     val buildType = buildType {
         name = buildTypeName
