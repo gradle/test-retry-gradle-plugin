@@ -122,7 +122,7 @@ project {
             steps {
                 gradle {
                     tasks =
-                        "clean :candidate -test"
+                        "clean candidate -x test"
                     gradleParams =
                         "-Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net"
                 }
