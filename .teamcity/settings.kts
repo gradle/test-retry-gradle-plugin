@@ -124,7 +124,7 @@ project {
                     tasks =
                         "clean candidate -x test"
                     gradleParams =
-                        "-Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net"
+                        "-Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net, -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken%"
                 }
             }
             dependencies {
