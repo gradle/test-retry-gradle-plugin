@@ -1,4 +1,5 @@
 import jetbrains.buildServer.configs.kotlin.v2018_2.FailureAction
+import jetbrains.buildServer.configs.kotlin.v2018_2.ParameterDisplay
 import jetbrains.buildServer.configs.kotlin.v2018_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2018_2.project
 import jetbrains.buildServer.configs.kotlin.v2018_2.triggers.schedule
@@ -103,5 +104,37 @@ project {
         }
 
     }
+
+    val releaseBuildType = buildType("Release") {
+        this@project.buildType("Development") {
+            description =
+                "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
+            params {
+                checkbox(
+                    "env.ORG_GRADLE_PROJECT_pluginPublishDevelopmentVersion",
+                    "false",
+                    label = "Deploy Timestamped Version",
+                    display = ParameterDisplay.PROMPT,
+                    checked = "true",
+                    unchecked = "false"
+                )
+            }
+            steps {
+                gradle {
+                    tasks =
+                        ":publishPlugins"
+                    gradleParams =
+                        "-Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net"
+                }
+            }
+            dependencies {
+                snapshot(verifyAllBuildType) {
+                    onDependencyFailure = FailureAction.CANCEL
+                    onDependencyCancel = FailureAction.CANCEL
+                }
+            }
+        }
+    }
+
 
 }
