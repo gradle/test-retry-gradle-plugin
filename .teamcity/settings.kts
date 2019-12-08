@@ -110,21 +110,15 @@ project {
             description =
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
             params {
-                checkbox(
-                    "env.ORG_GRADLE_PROJECT_pluginPublishDevelopmentVersion",
-                    "false",
-                    label = "Deploy Timestamped Version",
-                    display = ParameterDisplay.PROMPT,
-                    checked = "true",
-                    unchecked = "false"
-                )
+                select("releaseScope", "", label = "releaseScope", description = "The scope of the release",
+                    options = listOf("major", "minor", "bugfix"))
             }
             steps {
                 gradle {
                     tasks =
                         "clean candidate -x test"
                     gradleParams =
-                        "-Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken%"
+                        "-Prelease.scope=%releaseScope% -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dgradle.portal.url=https://plugins.grdev.net -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken%"
                 }
             }
             dependencies {
