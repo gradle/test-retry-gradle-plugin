@@ -111,7 +111,7 @@ project {
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
             params {
                 select("releaseScope", "", label = "releaseScope", description = "The scope of the release",
-                    display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "bugfix"))
+                    display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch"))
             }
             steps {
                 gradle {
