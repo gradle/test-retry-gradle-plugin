@@ -31,6 +31,8 @@ abstract class AbstractPluginFuncTest extends Specification {
                                                      '5.5.1', '5.6.4', '6.0.1']
 
     static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ? SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
+    List<File> pluginClasspath
+    File pluginJarFile
 
     String testLanguage() {
         'java'
@@ -44,6 +46,7 @@ abstract class AbstractPluginFuncTest extends Specification {
     File buildFile
 
     def setup() {
+        pluginClasspath = Arrays.asList(new File(System.getProperty('org.gradle.plugin.path')))
         settingsFile = testProjectDir.newFile('settings.gradle')
         settingsFile << "rootProject.name = 'hello-world'"
 
@@ -238,7 +241,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         return GradleRunner.create()
             .withGradleVersion(gradleVersion)
             .withProjectDir(testProjectDir.root)
-            .withPluginClasspath()
+            .withPluginClasspath(pluginClasspath)
             .withArguments('test', traceFileArgument())
             .forwardOutput()
     }
