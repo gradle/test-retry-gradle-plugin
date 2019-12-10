@@ -1,11 +1,11 @@
 /*
- * Copyright 2019 Gradle, Inc.
+ * Copyright 2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,12 +27,12 @@ import spock.lang.Unroll
 import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
-    static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
+    static final String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
 
-    static List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
+    static final List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
                                                      '5.5.1', '5.6.4', '6.0.1']
 
-    static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
+    static final List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
             SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
 
     List<File> pluginClasspath
@@ -268,10 +268,11 @@ abstract class AbstractPluginFuncTest extends Specification {
             .withArguments('test', traceFileArgument())
             .forwardOutput()
 
-        if(debug)
+        if(debug) {
             runner = runner.withPluginClasspath()
-        else
+        } else {
             runner = runner.withPluginClasspath(pluginClasspath)
+        }
 
         return runner
     }
