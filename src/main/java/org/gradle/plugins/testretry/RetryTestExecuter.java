@@ -42,40 +42,49 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
     private final int maxRetries;
+    private final int maxFailures;
     private final Instantiator instantiator;
     private final ClassLoaderCache classLoaderCache;
 
     public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate,
                              Test test,
                              int maxRetries,
-                             Instantiator instantiator,
+                             int maxFailures, Instantiator instantiator,
                              ClassLoaderCache classLoaderCache) {
         this.delegate = delegate;
         this.testTask = test;
         this.maxRetries = maxRetries;
+        this.maxFailures = maxFailures;
         this.instantiator = instantiator;
         this.classLoaderCache = classLoaderCache;
     }
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
-        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor);
+        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor, maxFailures);
+        int totalFailures = 0;
+
         if (maxRetries > 0) {
+            // initial run, collecting failures that will need to be retried on subsequent attempts
             delegate.execute(spec, retryTestResultProcessor);
-            for (int retryCount = 0; retryCount < maxRetries && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
+
+            for (int retryCount = 0; retryCount < maxRetries && totalFailures < maxFailures && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
                 JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
                 retryTestResultProcessor.reset();
                 if (retryCount + 1 == maxRetries) {
                     retryTestResultProcessor.lastRetry();
                 }
                 delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
+                totalFailures += retryTestResultProcessor.getRetries().size();
             }
+
             if(retryTestResultProcessor.getRetries().isEmpty()) {
                 // all flaky tests have passed at one point.
-                // Do not fail the task but keep warning of test failures
+                // do not fail the task but keep warning of test failures
                 testTask.setIgnoreFailures(true);
             }
         } else {
+            // since we aren't retrying at all, allow test execution to proceed as normal
             delegate.execute(spec, testResultProcessor);
         }
     }

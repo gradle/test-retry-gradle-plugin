@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugin.testretry.fixtures;
+package org.gradle.plugins.testretry.fixtures;
 
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
-class SerializedOperationFinish implements SerializedOperation {
+class SerializedOperationStart implements SerializedOperation {
 
     final long id;
+    final Long parentId;
+    final String displayName;
 
-    final long endTime;
+    final long startTime;
 
-    final Object result;
-    final String resultClassName;
+    final Object details;
+    final String detailsClassName;
 
-    final String failureMsg;
-
-    SerializedOperationFinish(Map<String, ?> map) {
+    SerializedOperationStart(Map<String, ?> map) {
         this.id = ((Integer) map.get("id")).longValue();
-        this.endTime = (Long) map.get("endTime");
-        this.result = map.get("result");
-        this.resultClassName = (String) map.get("resultClassName");
-        this.failureMsg = (String) map.get("failure");
+        Integer parentId = (Integer) map.get("parentId");
+        this.parentId = parentId == null ? null : parentId.longValue();
+        this.displayName = (String) map.get("displayName");
+        this.startTime = (Long) map.get("startTime");
+        this.details = map.get("details");
+        this.detailsClassName = (String) map.get("detailsClassName");
     }
 
     @Override
@@ -44,18 +46,18 @@ class SerializedOperationFinish implements SerializedOperation {
 
         // Order is optimised for humans looking at the log.
 
+        map.put("displayName", displayName);
+
+        if (details != null) {
+            map.put("details", details);
+            map.put("detailsClassName", detailsClassName);
+        }
+
         map.put("id", id);
-
-        if (result != null) {
-            map.put("result", result);
-            map.put("resultClassName", resultClassName);
+        if (parentId != null) {
+            map.put("parentId", parentId);
         }
-
-        if (failureMsg != null) {
-            map.put("failure", failureMsg);
-        }
-
-        map.put("endTime", endTime);
+        map.put("startTime", startTime);
 
         return map.build();
     }

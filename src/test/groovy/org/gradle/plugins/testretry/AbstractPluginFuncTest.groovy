@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugin.testretry
+package org.gradle.plugins.testretry
 
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.api.internal.tasks.testing.operations.ExecuteTestBuildOperationType
-import org.gradle.plugin.testretry.fixtures.BuildOperationsFixture
+import org.gradle.plugins.testretry.fixtures.BuildOperationsFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
     static String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
@@ -30,15 +32,14 @@ abstract class AbstractPluginFuncTest extends Specification {
     static List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
                                                      '5.5.1', '5.6.4', '6.0.1']
 
-    static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ? SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
+    static List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
+            SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
+
     List<File> pluginClasspath
-    File pluginJarFile
 
     String testLanguage() {
         'java'
     }
-
-    String reportedTestPostFix = ""
 
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -93,6 +94,27 @@ abstract class AbstractPluginFuncTest extends Specification {
                 }
             }
         """
+    }
+
+    def "retries stop after max failures is reached"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 3
+                    maxFailures = 2
+                }
+            }
+        """
+
+        when:
+        failedTest()
+
+        then:
+        def result = gradleRunner(CURRENT_GRADLE_VERSION).buildAndFail()
+
+        // 1 initial + 2 retries + 1 overall task FAILED + 1 build FAILED
+        result.output.count('FAILED') == 1 + 2 + 1 + 1
     }
 
     @Unroll
@@ -238,12 +260,20 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     GradleRunner gradleRunner(String gradleVersion) {
-        return GradleRunner.create()
+        def debug = ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0
+        def runner = GradleRunner.create()
+            .withDebug(debug)
             .withGradleVersion(gradleVersion)
             .withProjectDir(testProjectDir.root)
-            .withPluginClasspath(pluginClasspath)
             .withArguments('test', traceFileArgument())
             .forwardOutput()
+
+        if(debug)
+            runner = runner.withPluginClasspath()
+        else
+            runner = runner.withPluginClasspath(pluginClasspath)
+
+        return runner
     }
 
     private String traceFileArgument() {

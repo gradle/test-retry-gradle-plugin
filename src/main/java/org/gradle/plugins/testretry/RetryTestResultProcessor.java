@@ -30,16 +30,20 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestResultProcessor delegate;
+    private final int maxFailures;
 
+    private boolean retry;
     private boolean lastRetry = false;
+
+    private int totalFailures = 0;
 
     private Map<Object, TestDescriptorInternal> all = new ConcurrentHashMap<>();
     private List<TestDescriptorInternal> retries = new CopyOnWriteArrayList<>();
-    private boolean retry;
     private Object rootTestDescriptorId;
 
-    public RetryTestResultProcessor(TestResultProcessor delegate) {
+    public RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
         this.delegate = delegate;
+        this.maxFailures = maxFailures;
     }
 
     @Override
@@ -82,12 +86,13 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         TestDescriptorInternal testDescriptorInternal = all.get(o);
         if (testDescriptorInternal != null) {
             retries.add(testDescriptorInternal);
+            totalFailures++;
         }
         delegate.failure(o, throwable);
     }
 
     private boolean lastRun() {
-        return retries.isEmpty() || lastRetry;
+        return retries.isEmpty() || lastRetry || totalFailures > maxFailures;
     }
 
     public void lastRetry() {

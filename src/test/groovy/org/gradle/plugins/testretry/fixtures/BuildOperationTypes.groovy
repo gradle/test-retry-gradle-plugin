@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugin.testretry.fixtures
+package org.gradle.plugins.testretry.fixtures
 import org.gradle.internal.operations.BuildOperationType
 
 import java.lang.reflect.ParameterizedType;

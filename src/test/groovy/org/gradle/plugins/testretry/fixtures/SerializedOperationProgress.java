@@ -13,33 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugin.testretry.fixtures;
+package org.gradle.plugins.testretry.fixtures;
 
 import com.google.common.collect.ImmutableMap;
-import org.gradle.internal.operations.BuildOperationDescriptor;
-import org.gradle.internal.operations.OperationStartEvent;
 
 import java.util.Map;
 
-import static org.gradle.internal.operations.trace.BuildOperationTrace.toSerializableModel;
 
-class SerializedOperationStart implements SerializedOperation {
+class SerializedOperationProgress implements SerializedOperation {
 
     final long id;
-    final Long parentId;
-    final String displayName;
-
-    final long startTime;
-
+    final long time;
     final Object details;
     final String detailsClassName;
 
-    SerializedOperationStart(Map<String, ?> map) {
+    SerializedOperationProgress(Map<String, ?> map) {
         this.id = ((Integer) map.get("id")).longValue();
-        Integer parentId = (Integer) map.get("parentId");
-        this.parentId = parentId == null ? null : parentId.longValue();
-        this.displayName = (String) map.get("displayName");
-        this.startTime = (Long) map.get("startTime");
+        this.time = (Long) map.get("time");
         this.details = map.get("details");
         this.detailsClassName = (String) map.get("detailsClassName");
     }
@@ -50,18 +40,13 @@ class SerializedOperationStart implements SerializedOperation {
 
         // Order is optimised for humans looking at the log.
 
-        map.put("displayName", displayName);
-
         if (details != null) {
             map.put("details", details);
             map.put("detailsClassName", detailsClassName);
         }
 
         map.put("id", id);
-        if (parentId != null) {
-            map.put("parentId", parentId);
-        }
-        map.put("startTime", startTime);
+        map.put("time", time);
 
         return map.build();
     }

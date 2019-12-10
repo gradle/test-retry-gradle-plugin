@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugin.testretry.fixtures;
+package org.gradle.plugins.testretry.fixtures;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
-class StrictMap<K, V> extends HashMap<K, V> {
+interface SerializedOperation {
 
-    public StrictMap(Map<? extends K, ? extends V> m) {
-        super(m);
-    }
+    Map<String, ?> toMap();
 
-    @Override
-    public V get(Object key) {
-        if (!containsKey(key)) {
-            throw new NoSuchElementException("No entry with key: " + key + " (keys: " + keySet() +  ")");
-        }
-
-        return super.get(key);
-    }
 }
