@@ -16,8 +16,6 @@
 package org.gradle.plugins.testretry
 
 import org.cyberneko.html.parsers.SAXParser
-import org.gradle.api.internal.tasks.testing.operations.ExecuteTestBuildOperationType
-import org.gradle.plugins.testretry.fixtures.BuildOperationsFixture
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -35,8 +33,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     static final Set<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
             SUPPORTED_GRADLE_VERSIONS + CURRENT_GRADLE_VERSION : [CURRENT_GRADLE_VERSION]
 
-    List<File> pluginClasspath
-
     String testLanguage() {
         'java'
     }
@@ -47,7 +43,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     File buildFile
 
     def setup() {
-        pluginClasspath = Arrays.asList(new File(System.getProperty('org.gradle.plugin.path')))
         settingsFile = testProjectDir.newFile('settings.gradle')
         settingsFile << "rootProject.name = 'hello-world'"
 
@@ -143,9 +138,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         and: 'reports are as expected'
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
 
-        and: "build operations are as expected"
-        assertBuildOperations('acme.FailedTests', 'failedTest', 2, 1, 1)
-
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
     }
@@ -186,68 +178,8 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
 
-        and: "build operations are as expected"
-        assertBuildOperations('acme.FlakyTests', 'flaky', 2, 1, 0)
-
         where:
         gradleVersion << TEST_GRADLE_VERSIONS
-    }
-
-    def assertBuildOperations(String className, String testName, int totalTestCount, int failedTestCountRun1, int failedTestCountRun2) {
-        def operations = buildOperations()
-        def allTestExecutionOperations = operations.all(ExecuteTestBuildOperationType)
-
-        // assert fired build operations
-        def index = 0
-
-        assert allTestExecutionOperations[index].displayName == "Gradle Test Run :test"
-        assert allTestExecutionOperations[index].result.result.testCount == totalTestCount
-        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1 + failedTestCountRun2
-
-        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
-
-        if (withSyntesizedTestSuites()) {
-            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            assert allTestExecutionOperations[index].displayName == 'Gradle suite'
-
-            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            assert allTestExecutionOperations[index].displayName == 'Gradle test'
-        }
-        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName == className
-        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1
-        assert allTestExecutionOperations[index].result.result.testCount == 1
-
-        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName == reportedTestName(testName)
-        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun1
-        assert allTestExecutionOperations[index++].result.result.testCount == 1
-
-        assert allTestExecutionOperations[0].children[1] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName ==~ 'Gradle Test Executor \\d+'
-
-        if (withSyntesizedTestSuites()) {
-            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            assert allTestExecutionOperations[index].displayName == 'Gradle suite'
-
-            assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-            assert allTestExecutionOperations[index].displayName == 'Gradle test'
-        }
-
-        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName == className
-
-        assert allTestExecutionOperations[index++].children[0] == allTestExecutionOperations[index]
-        assert allTestExecutionOperations[index].displayName == reportedTestName(testName)
-        assert allTestExecutionOperations[index].result.result.failedTestCount == failedTestCountRun2
-        assert allTestExecutionOperations[index++].result.result.testCount == 1
-
-        true
-    }
-
-    boolean withSyntesizedTestSuites() {
-        false
     }
 
     String flakyAssert() {
@@ -260,30 +192,13 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     GradleRunner gradleRunner(String gradleVersion) {
-        def debug = ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0
-        def runner = GradleRunner.create()
-            .withDebug(debug)
+        return GradleRunner.create()
+            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .withGradleVersion(gradleVersion)
             .withProjectDir(testProjectDir.root)
-            .withArguments('test', traceFileArgument())
-            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+            .withArguments('test', '-s')
+            .withPluginClasspath()
             .forwardOutput()
-
-        if(debug) {
-            runner = runner.withPluginClasspath()
-        } else {
-            runner = runner.withPluginClasspath(pluginClasspath)
-        }
-
-        return runner
-    }
-
-    private String traceFileArgument() {
-        return "-Dorg.gradle.internal.operations.trace=${tracePath()}"
-    }
-
-    private String tracePath() {
-        new File(testProjectDir.root, 'ops').absolutePath
     }
 
     abstract protected String buildConfiguration()
@@ -293,14 +208,6 @@ abstract class AbstractPluginFuncTest extends Specification {
     abstract protected void successfulTest()
 
     abstract protected void failedTest()
-
-
-    private BuildOperationsFixture buildOperations() {
-        def operations = new BuildOperationsFixture(tracePath())
-        // we only want one root test event
-        operations.only("Gradle Test Run :test")
-        operations
-    }
 
     def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)

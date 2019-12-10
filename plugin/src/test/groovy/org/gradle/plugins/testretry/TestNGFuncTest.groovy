@@ -142,8 +142,4 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
             }
         """
     }
-
-    boolean withSyntesizedTestSuites() {
-        true;
-    }
 }
