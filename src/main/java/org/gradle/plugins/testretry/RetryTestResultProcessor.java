@@ -40,6 +40,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     private Map<Object, TestDescriptorInternal> all = new ConcurrentHashMap<>();
     private List<TestDescriptorInternal> retries = new CopyOnWriteArrayList<>();
     private Object rootTestDescriptorId;
+    private boolean rootFired;
 
     public RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
         this.delegate = delegate;
@@ -48,7 +49,8 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal testDescriptorInternal, TestStartEvent testStartEvent) {
-        if (testDescriptorInternal.isRoot()) {
+        if (!rootFired) {
+            rootFired = true;
             if (retry) {
                 return;
             } else {
@@ -103,6 +105,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         retries.clear();
         all.clear();
         retry = true;
+        rootFired = false;
     }
 
     public List<TestDescriptorInternal> getRetries() {

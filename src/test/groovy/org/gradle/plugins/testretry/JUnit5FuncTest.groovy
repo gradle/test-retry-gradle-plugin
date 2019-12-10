@@ -49,7 +49,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
             import static org.junit.jupiter.api.Assertions.assertEquals;
             
             class ParameterTest {
-                @ParameterizedTest
+                @ParameterizedTest(name = "test(int)[{index}]")
                 @ValueSource(ints = {0, 1})
                 void test(int number) {
                     assertEquals(0, number);

@@ -29,11 +29,11 @@ import java.lang.management.ManagementFactory
 abstract class AbstractPluginFuncTest extends Specification {
     static final String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
 
-    static final List<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
+    static final Set<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
                                                      '5.5.1', '5.6.4', '6.0.1']
 
-    static final List<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
-            SUPPORTED_GRADLE_VERSIONS : [CURRENT_GRADLE_VERSION]
+    static final Set<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
+            SUPPORTED_GRADLE_VERSIONS + CURRENT_GRADLE_VERSION : [CURRENT_GRADLE_VERSION]
 
     List<File> pluginClasspath
 
