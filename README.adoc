@@ -1,8 +1,10 @@
-= Test Retry Gradle Plugin
+image:https://img.shields.io/github/license/micrometer-metrics/micrometer["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
+
+== Test Retry Gradle Plugin
 
 A standalone (i.e. not part of Gradle Enterprise) Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
 
-== Configuring
+=== Configuring
 
 The plugin will decorate each `Test` task with an extension. Any all-build or cross-task configuration is achieved via Gradle’s existing constructs (e.g. `tasks.withType()`, `allprojects {}`).
 
@@ -23,28 +25,28 @@ test {
 <1> Max number of times to retry. A value of 0 effectively disables retrying.
 <2> After this many discrete failed tests, stop retrying failures
 
-== Retry mechanics
+=== Retry mechanics
 
 The retry mechanism is conceptually analogous to re-running the task again but using test selection (e.g. `--tests`) to select only the tests that failed. That is, all tests are executed, then the failed tests are retried. The (hopefully reducing) set of failed tests continues to be retried until there are no failures left, or `maxRetries`/`maxFailures` is reached.
 
 The `maxRetries`/`maxFailures` properties define thresholds for how many failed tests are allowed before retry is disabled. This is intended to be used to avoid the overhead of retrying when there is a catastrophic failure causing many tests to fail (e.g. problem in a test base class, database dependency unavailable), with the assumption that they would just fail again on further retry.
 
-=== Parameterized tests
+==== Parameterized tests
 
 In a few cases, test selection for testing frameworks limits the granularity at which tests can be retried. In each case, this plugin retries at worst at method level. For JUnit5 `@ParameterizedTest`, TestNG `@Test(dataProvider = "...")`, and Spock `@Unroll` tests the plugin will retry the entire method with all parameters including those that initially passed.
 
-=== Test dependencies
+==== Test dependencies
 
 The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn = { … })` tests.
 
 * Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
-== Reporting
+=== Reporting
 
 The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
 
-== Developing
+=== Developing
 
 Release by running `./gradlew final` which will automatically select the next minor release version, tag the repository, publish the binary to Bintray, and publish the plugin to the Gradle plugin portal. To perform a major version release, `./gradlew final -Prelease.scope=major`. To release a patch, `./gradlew final -Prelease.scope=patch`.
 
