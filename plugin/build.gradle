@@ -76,7 +76,7 @@ pluginBundle {
 }
 
 license {
-    header = file('gradle/licenseHeader.txt')
+    header = rootProject.file('gradle/licenseHeader.txt')
     exclude '**/*.tokens'
     mapping {
         // style used by gradle/gradle
