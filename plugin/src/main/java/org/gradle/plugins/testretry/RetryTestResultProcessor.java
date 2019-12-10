@@ -22,10 +22,14 @@ import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.api.tasks.testing.TestResult;
 
-import java.util.List;
-import java.util.Map;
+import javax.annotation.Nonnull;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toCollection;
+import static java.util.stream.Collectors.toList;
 
 public class RetryTestResultProcessor implements TestResultProcessor {
 
@@ -39,6 +43,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     private Map<Object, TestDescriptorInternal> all = new ConcurrentHashMap<>();
     private List<TestDescriptorInternal> retries = new CopyOnWriteArrayList<>();
+    private List<TestDescriptorNameOnly> expectedRetries = Collections.emptyList();
     private Object rootTestDescriptorId;
     private boolean rootFired;
 
@@ -49,6 +54,8 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal testDescriptorInternal, TestStartEvent testStartEvent) {
+        expectedRetries.remove(TestDescriptorNameOnly.fromTestDescriptorInternal(testDescriptorInternal));
+
         if (!rootFired) {
             rootFired = true;
             if (retry) {
@@ -101,7 +108,9 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         lastRetry = true;
     }
 
-    public void reset() {
+    public void nextRetry() {
+        expectedRetries = retries.stream().map(TestDescriptorNameOnly::fromTestDescriptorInternal)
+                .collect(toCollection(ArrayList::new));
         retries.clear();
         all.clear();
         retry = true;
@@ -110,5 +119,47 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
     public List<TestDescriptorInternal> getRetries() {
         return retries;
+    }
+
+    public List<TestDescriptorNameOnly> getExpectedRetries() {
+        return expectedRetries;
+    }
+
+    public static class TestDescriptorNameOnly {
+        private final String className;
+
+        @Nonnull
+        private final String name;
+
+        private TestDescriptorNameOnly(String className, String name) {
+            this.className = className;
+            this.name = name;
+        }
+
+        static TestDescriptorNameOnly fromTestDescriptorInternal(TestDescriptorInternal testDescriptorInternal) {
+            return new TestDescriptorNameOnly(testDescriptorInternal.getClassName(), testDescriptorInternal.getName());
+        }
+
+        public String getClassName() {
+            return className;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TestDescriptorNameOnly that = (TestDescriptorNameOnly) o;
+            return Objects.equals(className, that.className) &&
+                    name.equals(that.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(className, name);
+        }
     }
 }

@@ -70,12 +70,19 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
             for (int retryCount = 0; retryCount < maxRetries && totalFailures < maxFailures && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
                 JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
-                retryTestResultProcessor.reset();
+                retryTestResultProcessor.nextRetry();
                 if (retryCount + 1 == maxRetries) {
                     retryTestResultProcessor.lastRetry();
                 }
                 delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
                 totalFailures += retryTestResultProcessor.getRetries().size();
+
+                if(!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
+                    throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+                            retryTestResultProcessor.getExpectedRetries().stream()
+                                .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                                .collect(Collectors.joining("\n", "\n", "\n")));
+                }
             }
 
             if(retryTestResultProcessor.getRetries().isEmpty()) {
