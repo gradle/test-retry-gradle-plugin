@@ -77,9 +77,9 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         writeTestSource """
             package acme;
-            
+
             import java.nio.file.*;
-    
+
             public class FlakyAssert {
                 public static void flakyAssert() {
                     try {
@@ -266,6 +266,7 @@ abstract class AbstractPluginFuncTest extends Specification {
             .withGradleVersion(gradleVersion)
             .withProjectDir(testProjectDir.root)
             .withArguments('test', traceFileArgument())
+            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .forwardOutput()
 
         if(debug) {
