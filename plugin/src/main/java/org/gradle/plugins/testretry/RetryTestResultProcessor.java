@@ -26,10 +26,8 @@ import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toCollection;
-import static java.util.stream.Collectors.toList;
 
 public class RetryTestResultProcessor implements TestResultProcessor {
 
@@ -150,8 +148,12 @@ public class RetryTestResultProcessor implements TestResultProcessor {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
             TestDescriptorNameOnly that = (TestDescriptorNameOnly) o;
             return Objects.equals(className, that.className) &&
                     name.equals(that.name);
