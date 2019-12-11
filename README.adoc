@@ -46,6 +46,18 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
 
+=== IDE Support
+
+We tested the test retry plugin with idea and eclipse. Each test execution delegated to Gradle is reported discretely as we do for the test reports.
+
+:imagesdir: docs/images
+
+image::idea-test-retry-reporting.png[Idea test reporting,350,350, align="center", title=Idea test retry reporting]
+
+image::eclipse-test-retry-reporting.png[Eclipse test reporting,350,350, align="center", title=Idea test retry reporting]
+
+Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`
+
 === Developing
 
 Release by running `./gradlew final` which will automatically select the next minor release version, tag the repository, publish the binary to Bintray, and publish the plugin to the Gradle plugin portal. To perform a major version release, `./gradlew final -Prelease.scope=major`. To release a patch, `./gradlew final -Prelease.scope=patch`.
