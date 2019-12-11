@@ -49,18 +49,18 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 * Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
-== Reporting
+== Effect on Reporting
 
 The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
 
 
-=== Gradle build scans
+=== In Gradle build scans
 
 Gradle build scans show each invocation of a test with its outcome:
 
 image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="center", title=Gradle build scans plugin reporting retried tests]
 
-=== IDEs
+=== In IDEs
 
 The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org]. For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
@@ -81,7 +81,7 @@ Netbeans only shows the last execution of a test.
 
 image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
-=== CI server
+=== On CI servers
 
 The plugin has been tested with the reporting of link:url[TeamCity, https://www.jetbrains.com/teamcity] and link:url[Jenkins, https://www.jenkins.io].
 
