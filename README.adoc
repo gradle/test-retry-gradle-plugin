@@ -1,5 +1,7 @@
 image:https://img.shields.io/github/license/micrometer-metrics/micrometer["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
 
+:imagesdir: docs/images
+
 == Test Retry Gradle Plugin
 
 A standalone (i.e. not part of Gradle Enterprise) Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
@@ -46,23 +48,38 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
 
-=== IDE Support
+
+==== Gradle build scans
+
+Gradle build scans support show each invocation of a test with the according outcome
+
+image::build-scans-test-retry-reporting.png[Build Scans test reporting,450,300, align="center", title=Gradle build scans plugin reporting retried tests]
+
+==== IDEs
 
 We tested the test retry plugin with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
 
 For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
-:imagesdir: docs/images
+image::idea-test-retry-reporting.png[Idea test reporting,450,300, align="center", title=Idea test retry reporting]
 
-image::idea-test-retry-reporting.png[Idea test reporting,350,350, align="center", title=Idea test retry reporting]
+image::eclipse-test-retry-reporting.png[Eclipse test reporting,450,300, align="center", title=Eclipse test retry reporting]
 
-image::eclipse-test-retry-reporting.png[Eclipse test reporting,350,350, align="center", title=Idea test retry reporting]
+Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`.
 
-Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`
-
-image::netbeans-test-retry-reporting.png[Eclipse test reporting,350,350, align="center", title=Idea test retry reporting]
+image::netbeans-test-retry-reporting.png[Netbeans test reporting,450,300, align="center", title=Netbeans test retry reporting]
 
 Netbeans seems to only show the last execution of a test.
+
+==== CI server
+
+We tested the integration of the test retry plugin with the test reporting of link:url[Teamcity, https://www.jetbrains.com/teamcity].
+
+Flaky tests (tests being executed multiple times but with different results) are detected by the ci server and marked as flaky.
+Furthermore teamcity lists each test that was executed and how often it was run in the build.
+
+image::teamcity-test-retry-reporting.png[Teamcity test reporting,450,300, align="center", title=Teamcity test retry reporting including flaky test detection]
+
 
 === Developing
 
