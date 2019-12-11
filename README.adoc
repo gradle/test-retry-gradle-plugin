@@ -51,47 +51,46 @@ The approach to reporting is to simply report each execution discretely, as oppo
 
 ==== Gradle build scans
 
-Gradle build scans support show each invocation of a test with the according outcome
+Gradle build scans show each invocation of a test with its outcome:
 
 image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="center", title=Gradle build scans plugin reporting retried tests]
 
 ==== IDEs
 
-We tested the test retry plugin with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
+The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org]. For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
 ===== Idea
 
-For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
-
 image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
+
+Running tests with no Gradle delegation causes tests to not be retried, as expected.
 
 ===== Eclipse
 
 image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
-Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`.
+Running tests with no Gradle delegation causes tests to not be retried, as expected.
 
 ===== Netbeans
 image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
-Netbeans seems to only show the last execution of a test.
+Netbeans only shows the last execution of a test.
 
 ==== CI server
 
-We tested the integration of the test retry plugin with the test reporting of link:url[Teamcity, https://www.jetbrains.com/teamcity] and  link:url[Jenkins, https://www.jenkins.io].
+The plugin has been tested with the reporting of link:url[TeamCity, https://www.jetbrains.com/teamcity] and link:url[Jenkins, https://www.jenkins.io].
 
-===== Teamcity
-Flaky tests (tests being executed multiple times but with different results) are detected by the ci server and marked as flaky.
-Teamcity lists each test that was executed and how often it was run in the build.
+===== TeamCity
+Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
+TeamCity lists each test that was executed and how often it was run in the build.
 
-image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=Teamcity test retry reporting including flaky test detection]
+image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
 
 ===== Jenkins
 
-Jenkins reports each test execution discretely as expected
+Jenkins reports each test execution discretely as expected.
 
 image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
-
 
 === Developing
 
