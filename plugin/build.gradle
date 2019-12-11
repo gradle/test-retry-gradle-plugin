@@ -9,8 +9,6 @@ plugins {
     id 'codenarc'
 }
 
-apply plugin: 'com.github.hierynomus.license'
-
 repositories {
     jcenter()
 }
