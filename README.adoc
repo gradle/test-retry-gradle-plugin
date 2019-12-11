@@ -53,7 +53,7 @@ The approach to reporting is to simply report each execution discretely, as oppo
 
 Gradle build scans support show each invocation of a test with the according outcome
 
-image::build-scans-test-retry-reporting.png[Build Scans test reporting,450,300, align="center", title=Gradle build scans plugin reporting retried tests]
+image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="center", title=Gradle build scans plugin reporting retried tests]
 
 ==== IDEs
 
@@ -61,13 +61,13 @@ We tested the test retry plugin with link:url[Idea, https://www.jetbrains.com/id
 
 For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
-image::idea-test-retry-reporting.png[Idea test reporting,450,300, align="center", title=Idea test retry reporting]
+image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
 
-image::eclipse-test-retry-reporting.png[Eclipse test reporting,450,300, align="center", title=Eclipse test retry reporting]
+image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
 Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`.
 
-image::netbeans-test-retry-reporting.png[Netbeans test reporting,450,300, align="center", title=Netbeans test retry reporting]
+image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
 Netbeans seems to only show the last execution of a test.
 
@@ -78,7 +78,7 @@ We tested the integration of the test retry plugin with the test reporting of li
 Flaky tests (tests being executed multiple times but with different results) are detected by the ci server and marked as flaky.
 Furthermore teamcity lists each test that was executed and how often it was run in the build.
 
-image::teamcity-test-retry-reporting.png[Teamcity test reporting,450,300, align="center", title=Teamcity test retry reporting including flaky test detection]
+image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=Teamcity test retry reporting including flaky test detection]
 
 
 === Developing
