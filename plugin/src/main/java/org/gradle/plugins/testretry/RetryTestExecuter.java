@@ -109,7 +109,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                         if(isSpockStepwiseTest(spec, retry)) {
                             retriedTestFilter.includeTestsMatching(retry.getClassName());
                         } else {
-                            String strippedParameterName = retry.getName().replaceAll("\\[\\d+]", "");
+                            String strippedParameterName = retry.getName().replaceAll("\\[\\d+]$", "");
                             retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
                             retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
                         }
@@ -119,7 +119,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             retries.stream()
                     .filter(retry -> retry.getClassName() != null)
                     .forEach(retry -> {
-                        String strippedParameterName = retry.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*", "");
+                        String strippedParameterName = retry.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
                         retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
                     });
         } else if (testFramework instanceof TestNGTestFramework) {
@@ -127,7 +127,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             retriesWithTestNGDependentsAdded(spec, retries).stream()
                     .filter(retry -> retry.getClassName() != null)
                     .forEach(retry -> {
-                        String strippedParameterName = retry.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+", "");
+                        String strippedParameterName = retry.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
                         retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
                         retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
                     });
