@@ -48,7 +48,9 @@ The approach to reporting is to simply report each execution discretely, as oppo
 
 === IDE Support
 
-We tested the test retry plugin with idea and eclipse. Each test execution delegated to Gradle is reported discretely as we do for the test reports.
+We tested the test retry plugin with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
+
+For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
 :imagesdir: docs/images
 
@@ -57,6 +59,10 @@ image::idea-test-retry-reporting.png[Idea test reporting,350,350, align="center"
 image::eclipse-test-retry-reporting.png[Eclipse test reporting,350,350, align="center", title=Idea test retry reporting]
 
 Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`
+
+image::netbeans-test-retry-reporting.png[Eclipse test reporting,350,350, align="center", title=Idea test retry reporting]
+
+Netbeans seems to only show the last execution of a test.
 
 === Developing
 
