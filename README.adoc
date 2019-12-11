@@ -59,26 +59,38 @@ image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="c
 
 We tested the test retry plugin with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
 
+===== Idea
+
 For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
 
 image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
+
+===== Eclipse
 
 image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
 Running tests with no gradle delegation obviously isn't affected by the `test-retry-plugin`.
 
+===== Netbeans
 image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
 Netbeans seems to only show the last execution of a test.
 
 ==== CI server
 
-We tested the integration of the test retry plugin with the test reporting of link:url[Teamcity, https://www.jetbrains.com/teamcity].
+We tested the integration of the test retry plugin with the test reporting of link:url[Teamcity, https://www.jetbrains.com/teamcity] and  link:url[Jenkins, https://www.jenkins.io].
 
+===== Teamcity
 Flaky tests (tests being executed multiple times but with different results) are detected by the ci server and marked as flaky.
-Furthermore teamcity lists each test that was executed and how often it was run in the build.
+Teamcity lists each test that was executed and how often it was run in the build.
 
 image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=Teamcity test retry reporting including flaky test detection]
+
+===== Jenkins
+
+Jenkins reports each test execution discretely as expected
+
+image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
 
 
 === Developing
