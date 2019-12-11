@@ -9,7 +9,7 @@ image:https://img.shields.io/github/license/micrometer-metrics/micrometer["GitHu
 
 toc::[]
 
-A standalone (i.e. not part of Gradle Enterprise) Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
+A Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
 
 == Configuring
 
