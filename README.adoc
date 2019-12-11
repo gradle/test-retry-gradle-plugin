@@ -61,20 +61,21 @@ The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], 
 
 ===== Idea
 
-image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
-
 Running tests with no Gradle delegation causes tests to not be retried, as expected.
+
+image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
 
 ===== Eclipse
 
-image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
-
 Running tests with no Gradle delegation causes tests to not be retried, as expected.
 
-===== Netbeans
-image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
+image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
+
+===== Netbeans
 Netbeans only shows the last execution of a test.
+
+image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
 ==== CI server
 
