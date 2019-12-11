@@ -92,6 +92,11 @@ license {
 }
 
 publishing {
+    publications {
+        pluginMaven(MavenPublication) {
+            artifactId = 'test-retry-gradle-plugin'
+        }
+    }
     repositories {
         maven {
             name = "GradleBuildInternalSnapshots"
