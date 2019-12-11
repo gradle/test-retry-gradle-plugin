@@ -1,3 +1,6 @@
+:toc:
+:toc-placement!:
+
 image:https://img.shields.io/github/license/micrometer-metrics/micrometer["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
 
 :imagesdir: docs/images
@@ -5,6 +8,8 @@ image:https://img.shields.io/github/license/micrometer-metrics/micrometer["GitHu
 == Test Retry Gradle Plugin
 
 A standalone (i.e. not part of Gradle Enterprise) Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
+
+toc::[]
 
 === Configuring
 
