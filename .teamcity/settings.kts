@@ -119,6 +119,7 @@ project {
                 gradle {
                     tasks =
                         "clean final -x test"
+                    buildFile = ""
                     gradleParams =
                         "-s $useGradleInternalScansServer -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken% %pluginPortalPublishingFlags%"
                 }
