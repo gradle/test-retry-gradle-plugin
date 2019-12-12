@@ -11,7 +11,7 @@
 
 plugins {
     java
-    id("org.gradle.test-retry") version "0.2.0"
+//    id("org.gradle.test-retry") version "0.2.0"
 }
 
 repositories {
@@ -26,7 +26,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    retry {
-        maxRetries.set(2)
-    }
+//    retry {
+//        maxRetries.set(2)
+//    }
 }

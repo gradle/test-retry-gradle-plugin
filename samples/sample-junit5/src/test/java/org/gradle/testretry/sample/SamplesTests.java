@@ -14,4 +14,9 @@ class SamplesTests {
     void flaky() {
         flakyAssert();
     }
+
+    @Test
+    void failing() {
+        fail();
+    }
 }
