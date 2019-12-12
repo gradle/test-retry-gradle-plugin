@@ -113,6 +113,28 @@ Jenkins reports each test execution discretely as expected.
 
 image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
 
+== Supported Test Framework Versions
+
+Other minor versions are likely to work as well, but are not tested.
+
+[%header,cols=2*]
+|===
+|Framework
+|Minimum Version Tested
+
+|JUnit4
+|4.12
+
+|JUnit5
+|5.5.2
+
+|Spock
+|1.3-groovy-2.5
+
+|TestNG
+|7.0.0
+|===
+
 == Developing
 
 Release by running `./gradlew final` which will automatically select the next minor release version, tag the repository, publish the binary to Bintray, and publish the plugin to the Gradle plugin portal. To perform a major version release, `./gradlew final -Prelease.scope=major`. To release a patch, `./gradlew final -Prelease.scope=patch`.
