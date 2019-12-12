@@ -5,7 +5,7 @@
 > Task :processTestResources NO-SOURCE
 > Task :testClasses
 
-> Task :test
+> Task :test FAILED
 
 org.gradle.testretry.sample.SamplesTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SamplesTests.java:20
@@ -20,8 +20,6 @@ org.gradle.testretry.sample.SamplesTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SamplesTests.java:20
 
 6 tests completed, 4 failed
-
-> Task :test FAILED
 
 FAILURE: Build failed with an exception.
 
