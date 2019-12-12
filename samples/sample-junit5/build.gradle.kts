@@ -1,6 +1,17 @@
+//buildscript {
+//    repositories {
+//        mavenLocal()
+//    }
+//    dependencies {
+//        classpath("org.gradle:test-retry-gradle-plugin:VERSION")
+//    }
+//}
+
+//apply(plugin = "org.gradle.test-retry")
+
 plugins {
     java
-    id("org.gradle.test-retry") version "0.1.0"
+    id("org.gradle.test-retry") version "0.2.0"
 }
 
 repositories {
@@ -15,7 +26,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-//    retry {
-//        maxRetries = 2
-//    }
+    retry {
+        maxRetries.set(2)
+    }
 }

@@ -52,7 +52,7 @@ shadowJar.configure {
 }
 
 tasks.getByName("jar").enabled = false
-tasks.getByName("jar").dependsOn(tasks.getByName("shadowJar"))
+tasks.getByName("jar").dependsOn(shadowJar)
 
 gradlePlugin {
     plugins {
@@ -99,6 +99,9 @@ publishing {
     publications {
         create<MavenPublication>("plugin") {
             artifactId = "test-retry-gradle-plugin"
+            artifact(shadowJar.get()) {
+                classifier = null
+            }
         }
     }
     repositories {

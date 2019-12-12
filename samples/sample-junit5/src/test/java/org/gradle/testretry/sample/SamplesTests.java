@@ -10,8 +10,8 @@ class SamplesTests {
     void successful() {
     }
 
-//    @Test
-//    void flaky() {
-//        flakyAssert();
-//    }
+    @Test
+    void flaky() {
+        flakyAssert();
+    }
 }

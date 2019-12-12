@@ -32,6 +32,22 @@ test {
 <1> Max number of times to retry. A value of 0 effectively disables retrying.
 <2> After this many discrete failed tests, stop retrying failures
 
+In the Gradle Kotlin DSL:
+
+.build.gradle.kts
+[source,kotlin]
+----
+plugins {
+    id("org.gradle.test-retry") version "VERSION"
+}
+
+tasks.test {
+    retry {
+        maxRetries.set(N)
+    }
+}
+----
+
 == Retry mechanics
 
 The retry mechanism is conceptually analogous to re-running the task again but using test selection (e.g. `--tests`) to select only the tests that failed. That is, all tests are executed, then the failed tests are retried. The (hopefully reducing) set of failed tests continues to be retried until there are no failures left, or `maxRetries`/`maxFailures` is reached.
