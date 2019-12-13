@@ -15,6 +15,10 @@ dependencies {
 }
 
 tasks.test {
+    doFirst {
+        file("marker.file").delete()
+    }
+
     useJUnitPlatform()
     retry {
         maxRetries.set(2)
