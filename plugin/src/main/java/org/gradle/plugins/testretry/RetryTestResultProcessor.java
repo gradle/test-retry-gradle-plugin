@@ -109,6 +109,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     public void nextRetry() {
         expectedRetries = retries.stream().map(TestDescriptorNameOnly::fromTestDescriptorInternal)
                 .collect(toCollection(ArrayList::new));
+        totalFailures = 0;
         retries.clear();
         all.clear();
         retry = true;

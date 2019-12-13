@@ -121,7 +121,7 @@ abstract class AbstractPluginFuncTest extends Specification {
             test {
                 retry {
                     maxRetries = 3
-                    maxFailures = 2
+                    maxFailures = 0
                 }
             }
         """
@@ -132,8 +132,8 @@ abstract class AbstractPluginFuncTest extends Specification {
         then:
         def result = gradleRunner(CURRENT_GRADLE_VERSION).buildAndFail()
 
-        // 1 initial + 2 retries + 1 overall task FAILED + 1 build FAILED
-        result.output.count('FAILED') == 1 + 2 + 1 + 1
+        // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
+        result.output.count('FAILED') == 1 + 0 + 1 + 1
     }
 
     @Unroll
