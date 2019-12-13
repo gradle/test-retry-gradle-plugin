@@ -24,13 +24,15 @@ plugins {
 
 test {
     retry {
-        maxRetries = N <1>
-        maxFailures = N <2>
+        failOnPassedAfterRetry = ? // defaults to false <1>
+        maxRetries = N <2>
+        maxFailures = N <3>
     }
 }
 ----
-<1> Max number of times to retry. A value of 0 effectively disables retrying.
-<2> After this many discrete failed tests in a given round, stop retrying.
+<1> If true, the test task will still fail if flaky tests succeed on retry. This mode helps to identify flaky tests as distinct from always failing tests, while not allowing flaky tests to pass the build.
+<2> Max number of times to retry. A value of 0 effectively disables retrying.
+<3> After this many discrete failed tests in a given round, stop retrying.
 
 In the Gradle Kotlin DSL:
 
