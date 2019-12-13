@@ -91,6 +91,41 @@ abstract class AbstractPluginFuncTest extends Specification {
         """
     }
 
+    def "default maxRetries is 0, effectively disabling retrying (gradle version #gradleVersion)"() {
+        when:
+        // overwrite build file with no test.retry configuration at all to test default
+        buildFile.newWriter().withWriter { w ->
+            w << """
+            plugins {
+                id 'groovy'
+                id 'org.gradle.test-retry'
+            }
+            repositories {
+                mavenCentral()
+            }
+            ${buildConfiguration()}
+
+            test {
+                testLogging {
+                    events "passed", "skipped", "failed"
+                }
+            }
+        """
+        }
+
+        flakyTest()
+
+        then:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        expect:
+        // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
+        result.output.count('FAILED') == 1 + 0 + 1 + 1
+
+        where:
+        gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
     def "kotlin extension configuration (gradle version #gradleVersion)"() {
         given:
         buildFile.delete()
