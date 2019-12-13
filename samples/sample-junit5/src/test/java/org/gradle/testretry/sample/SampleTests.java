@@ -2,17 +2,17 @@ package org.gradle.testretry.sample;
 
 import org.junit.jupiter.api.Test;
 
-import static org.gradle.testretry.sample.FlakyAssert.flakyAssert;
 import static org.junit.jupiter.api.Assertions.fail;
 
-class SamplesTests {
+class SampleTests {
     @Test
     void successful() {
+        new Sample().otherFunctionality();
     }
 
     @Test
     void flaky() {
-        flakyAssert();
+        new Sample().functionality();
     }
 
     @Test

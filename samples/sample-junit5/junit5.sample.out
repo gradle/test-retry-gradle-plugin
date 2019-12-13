@@ -1,22 +1,22 @@
-> Task :compileJava NO-SOURCE
+> Task :compileJava
 > Task :processResources NO-SOURCE
-> Task :classes UP-TO-DATE
+> Task :classes
 > Task :compileTestJava
 > Task :processTestResources NO-SOURCE
 > Task :testClasses
 
 > Task :test FAILED
 
-org.gradle.testretry.sample.SamplesTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SamplesTests.java:20
 
-org.gradle.testretry.sample.SamplesTests > flaky() FAILED
+org.gradle.testretry.sample.SampleTests > flaky() FAILED
     java.lang.RuntimeException at SamplesTests.java:15
 
-org.gradle.testretry.sample.SamplesTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SamplesTests.java:20
 
-org.gradle.testretry.sample.SamplesTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SamplesTests.java:20
 
 6 tests completed, 4 failed
