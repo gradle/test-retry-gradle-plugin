@@ -5,8 +5,3 @@ rootProject.name = 'test-retry-plugin'
 
 include 'plugin'
 include 'sample-tests'
-
-['junit5'].each { sample ->
-    include "sample-$sample"
-    project(":sample-$sample").projectDir = new File(rootProject.projectDir, "samples/sample-$sample")
-}
