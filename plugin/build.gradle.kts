@@ -120,6 +120,10 @@ tasks.named<Test>("test") {
     systemProperty("org.gradle.test.gradleVersions", gradle.gradleVersion)
 }
 
-tasks.register<Test>("testAll") {
+tasks.register<Test>("testGradleReleases") {
     systemProperty("org.gradle.test.gradleVersions", org.gradle.plugins.build.GradleVersionData.getGradleReleases().joinToString("|"))
+}
+
+tasks.register<Test>("testGradleNightlies") {
+    systemProperty("org.gradle.test.gradleVersions", org.gradle.plugins.build.GradleVersionData.getNightlyVersions().joinToString("|"))
 }

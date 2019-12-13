@@ -45,13 +45,30 @@ project {
             }
         }
     }
-    val crossVersionTestLinux = buildType("CrossVersionTest Linux - Java 1.8") {
+    val crossVersionTestLinux = buildType("CrossVersionTest Gradle Releases Linux - Java 1.8") {
         steps {
             gradle {
-                tasks = "clean testAll"
+                tasks = "clean testGradleReleases"
                 buildFile = ""
                 gradleParams = "-s $useGradleInternalScansServer"
                 param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
+            }
+        }
+
+        dependencies {
+            snapshot(quickFeedbackBuildType) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+        }
+    }
+
+    val nightliesTestLinux = buildType("CrossVersionTest Gradle Nightlies Linux - Java 1.8") {
+        steps {
+            gradle {
+                tasks = "clean testGradleNightlies"
+                buildFile = ""
+                gradleParams = "-s $useGradleInternalScansServer"
             }
         }
 
@@ -71,6 +88,10 @@ project {
                 onDependencyCancel = FailureAction.CANCEL
             }
             snapshot(crossVersionTestLinux) {
+                onDependencyFailure = FailureAction.CANCEL
+                onDependencyCancel = FailureAction.CANCEL
+            }
+            snapshot(nightliesTestLinux) {
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }

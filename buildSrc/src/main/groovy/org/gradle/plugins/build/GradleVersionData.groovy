@@ -1,9 +1,23 @@
 package org.gradle.plugins.build
 
+import groovy.json.JsonSlurper;
 class GradleVersionData {
 
+    static List<String> getNightlyVersions() {
+        def releaseNightly = getLatestReleaseNightly()
+        releaseNightly ? [releaseNightly] + getLatestNightly() : [getLatestNightly()]
+    }
+
+    private static String getLatestNightly() {
+        new JsonSlurper().parse(new URL("https://services.gradle.org/versions/nightly")).version
+    }
+
+    private static String getLatestReleaseNightly() {
+        new JsonSlurper().parse(new URL("https://services.gradle.org/versions/release-nightly")).version
+    }
+
     static List<String> getGradleReleases() {
-        def allReleases = new groovy.json.JsonSlurper().parse(new URL("https://services.gradle.org/versions/all"))
+        def allReleases = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/all"))
         return allReleases.findAll {!it.nigthly && !it.snapshot }       // filter out snapshots and nightlies
             .findAll{!it.rcFor || it.activeRc}                          // filter out inactive rcs
             .inject([]) {releasesToTest, currentEntry ->   // filter out obsolete milestones
