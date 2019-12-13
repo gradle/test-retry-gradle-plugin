@@ -130,7 +130,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
         @Nonnull
         private final String name;
 
-        private TestDescriptorNameOnly(String className, String name) {
+        private TestDescriptorNameOnly(String className, @Nonnull String name) {
             this.className = className;
             this.name = name;
         }
@@ -143,6 +143,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
             return className;
         }
 
+        @Nonnull
         public String getName() {
             return name;
         }

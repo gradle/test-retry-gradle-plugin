@@ -43,18 +43,22 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final Test testTask;
     private final int maxRetries;
     private final int maxFailures;
+    private final boolean failOnPassedAfterRetry;
     private final Instantiator instantiator;
     private final ClassLoaderCache classLoaderCache;
 
     public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate,
                              Test test,
                              int maxRetries,
-                             int maxFailures, Instantiator instantiator,
+                             int maxFailures,
+                             boolean failOnPassedAfterRetry,
+                             Instantiator instantiator,
                              ClassLoaderCache classLoaderCache) {
         this.delegate = delegate;
         this.testTask = test;
         this.maxRetries = maxRetries;
         this.maxFailures = maxFailures;
+        this.failOnPassedAfterRetry = failOnPassedAfterRetry;
         this.instantiator = instantiator;
         this.classLoaderCache = classLoaderCache;
     }
@@ -85,7 +89,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 }
             }
 
-            if(retryTestResultProcessor.getRetries().isEmpty()) {
+            if(retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
                 // all flaky tests have passed at one point.
                 // do not fail the task but keep warning of test failures
                 testTask.setIgnoreFailures(true);

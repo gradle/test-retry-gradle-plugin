@@ -145,6 +145,29 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     @Unroll
+    def "optionally fail when flaky tests are detected (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    failOnPassedAfterRetry = true
+                }
+            }
+        """
+
+        when:
+        flakyTest()
+
+        then:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+        // 1 initial + 1 retries + 1 overall task FAILED + 1 build FAILED
+        result.output.count('FAILED') == 1 + 0 + 1 + 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "retries stop after max failures is reached (gradle version #gradleVersion)"() {
         given:
         buildFile << """

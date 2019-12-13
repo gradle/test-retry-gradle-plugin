@@ -62,7 +62,9 @@ public class TestRetryPlugin implements Plugin<Project> {
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
             setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test,
-                    extension.getMaxRetries().getOrElse(0), extension.getMaxFailures().getOrElse(Integer.MAX_VALUE),
+                    extension.getMaxRetries().getOrElse(0),
+                    extension.getMaxFailures().getOrElse(Integer.MAX_VALUE),
+                    extension.getFailOnPassedAfterRetry().getOrElse(false),
                     instantiator, classLoaderCache));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
