@@ -91,6 +91,30 @@ abstract class AbstractPluginFuncTest extends Specification {
         """
     }
 
+    def "kotlin extension configuration (gradle version #gradleVersion)"() {
+        given:
+        buildFile.delete()
+        buildFile = testProjectDir.newFile('build.gradle.kts')
+        buildFile << """
+            plugins {
+                java
+                id("org.gradle.test-retry") version "0.2.0"
+            }
+            
+            tasks.test {
+                retry {
+                    maxRetries.set(2)
+                }
+            }
+        """
+
+        expect:
+        gradleRunner(gradleVersion).build()
+
+        where:
+        gradleVersion << TEST_GRADLE_VERSIONS
+    }
+
     def "retries stop after max failures is reached"() {
         given:
         buildFile << """
