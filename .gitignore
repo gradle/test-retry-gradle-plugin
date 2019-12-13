@@ -1,5 +1,6 @@
 .teamcity/target
 .idea
 build/
+!*/src/**/build
 .gradle/
 gradle.properties

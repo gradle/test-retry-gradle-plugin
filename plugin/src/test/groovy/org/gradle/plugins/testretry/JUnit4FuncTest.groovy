@@ -28,34 +28,34 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         given:
         writeTestSource """
             package acme;
-            
+
             import static org.junit.Assert.assertTrue;
-    
+
             import java.util.Arrays;
             import java.util.Collection;
-            
+
             import org.junit.Test;
             import org.junit.runner.RunWith;
             import org.junit.runners.Parameterized;
             import org.junit.runners.Parameterized.Parameters;
-            
+
             @RunWith(Parameterized.class)
             public class ParameterTest {
                 @Parameters(name = "{index}: test({0})={1}")
                 public static Iterable<Object[]> data() {
-                   return Arrays.asList(new Object[][] { 
+                   return Arrays.asList(new Object[][] {
                          { 0, true }, { 1, false }
                    });
                 }
-                
+
                 private int input;
                 private boolean expected;
-                
+
                 public ParameterTest(int input, boolean expected) {
                     this.input = input;
                     this.expected = expected;
                 }
-                
+
                 @Test
                 public void test() {
                     assertTrue(expected);
@@ -71,14 +71,14 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1: test(1)=false] FAILED') == 2
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Override
     protected void successfulTest() {
         writeTestSource """
             package acme;
-            
+
             public class SuccessfulTests {
                 @org.junit.Test
                 public void successTest() {}
@@ -90,12 +90,12 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     protected void failedTest() {
         writeTestSource """
             package acme;
-            
+
             import static org.junit.Assert.assertTrue;
-    
+
             public class FailedTests {
                 @org.junit.Test
-                public void failedTest() { 
+                public void failedTest() {
                     assertTrue(false);
                 }
             }
@@ -106,10 +106,10 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     protected void flakyTest() {
         writeTestSource """
             package acme;
-    
-            public class FlakyTests {                
+
+            public class FlakyTests {
                 @org.junit.Test
-                public void flaky() { 
+                public void flaky() {
                     ${flakyAssert()}
                 }
             }

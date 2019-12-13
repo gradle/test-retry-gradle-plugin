@@ -25,13 +25,7 @@ import spock.lang.Unroll
 import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
-    static final String CURRENT_GRADLE_VERSION = System.getProperty('org.gradle.test.currentGradleVersion') ?: '5.0'
-
-    static final Set<String> SUPPORTED_GRADLE_VERSIONS = ['5.0', '5.1.1', '5.2.1', '5.3.1', '5.4.1',
-                                                     '5.5.1', '5.6.4', '6.0.1']
-
-    static final Set<String> TEST_GRADLE_VERSIONS = Boolean.getBoolean("org.gradle.test.allGradleVersions").booleanValue() ?
-            SUPPORTED_GRADLE_VERSIONS + CURRENT_GRADLE_VERSION : [CURRENT_GRADLE_VERSION]
+    static final Set<String> GRADLE_VERSIONS_UNDER_TEST = resolveTestedGradleVersions()
 
     String testLanguage() {
         'java'
@@ -123,7 +117,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         result.output.count('FAILED') == 1 + 0 + 1 + 1
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     def "kotlin extension configuration (gradle version #gradleVersion)"() {
@@ -135,7 +129,7 @@ abstract class AbstractPluginFuncTest extends Specification {
                 java
                 id("org.gradle.test-retry") version "0.2.0"
             }
-            
+
             tasks.test {
                 retry {
                     maxRetries.set(2)
@@ -147,10 +141,11 @@ abstract class AbstractPluginFuncTest extends Specification {
         gradleRunner(gradleVersion).build()
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "retries stop after max failures is reached"() {
+    @Unroll
+    def "retries stop after max failures is reached (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test {
@@ -165,10 +160,12 @@ abstract class AbstractPluginFuncTest extends Specification {
         failedTest()
 
         then:
-        def result = gradleRunner(CURRENT_GRADLE_VERSION).buildAndFail()
-
+        def result = gradleRunner(gradleVersion).buildAndFail()
         // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
         result.output.count('FAILED') == 1 + 0 + 1 + 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -180,7 +177,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         gradleRunner(gradleVersion).build()
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -198,7 +195,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -220,7 +217,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -238,7 +235,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     String flakyAssert() {
@@ -296,5 +293,14 @@ abstract class AbstractPluginFuncTest extends Specification {
         assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty() }.size() == expectedFailCount
         assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty() }.size() == expectedSuccessCount
         true
+    }
+
+    static private List<String> resolveTestedGradleVersions() {
+        def explicitGradleVersions = System.getProperty('org.gradle.test.gradleVersions')
+        if(explicitGradleVersions) {
+            return Arrays.asList(explicitGradleVersions.split("\\|"))
+        } else {
+            return "5.0" // least supported gradle version
+        }
     }
 }

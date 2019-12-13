@@ -42,12 +42,12 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         given:
         writeTestSource """
             package acme;
-            
+
             import org.junit.jupiter.params.ParameterizedTest;
             import org.junit.jupiter.params.provider.ValueSource;
-            
+
             import static org.junit.jupiter.api.Assertions.assertEquals;
-            
+
             class ParameterTest {
                 @ParameterizedTest(name = "test(int)[{index}]")
                 @ValueSource(ints = {0, 1})
@@ -66,14 +66,14 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         result.output.count('test(int)[2] FAILED') == 2
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Override
     protected void successfulTest() {
         writeTestSource """
             package acme;
-            
+
             class SuccessfulTests {
                 @org.junit.jupiter.api.Test
                 void successTest() {}
@@ -85,12 +85,12 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
     protected void failedTest() {
         writeTestSource """
             package acme;
-            
+
             import static org.junit.jupiter.api.Assertions.assertTrue;
-    
+
             class FailedTests {
                 @org.junit.jupiter.api.Test
-                void failedTest() { 
+                void failedTest() {
                     assertTrue(false);
                 }
             }
@@ -101,10 +101,10 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
     protected void flakyTest() {
         writeTestSource """
             package acme;
-    
-            class FlakyTests {                
+
+            class FlakyTests {
                 @org.junit.jupiter.api.Test
-                void flaky() { 
+                void flaky() {
                     ${flakyAssert()}
                 }
             }

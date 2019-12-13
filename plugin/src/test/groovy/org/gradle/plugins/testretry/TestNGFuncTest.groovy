@@ -63,7 +63,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('grandchildTest PASSED') == 1
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -71,17 +71,17 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         given:
         writeTestSource """
             package acme;
-            
+
             import org.testng.annotations.*;
-            
+
             import static org.testng.AssertJUnit.assertEquals;
-            
+
             public class ParameterTest {
                 @DataProvider(name = "parameters")
                 public Object[] createParameters() {
                     return new Object[]{0, 1};
                 }
-            
+
                 @Test(dataProvider = "parameters")
                 public void test(int number) {
                     assertEquals(0, number);
@@ -98,14 +98,14 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1](1) FAILED') == 2
 
         where:
-        gradleVersion << TEST_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Override
     protected void successfulTest() {
         writeTestSource """
             package acme;
-            
+
             public class SuccessfulTests {
                 @org.testng.annotations.Test
                 public void successTest() {}
@@ -117,12 +117,12 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
     protected void failedTest() {
         writeTestSource """
             package acme;
-            
+
             import static org.testng.AssertJUnit.assertTrue;
-    
+
             public class FailedTests {
                 @org.testng.annotations.Test
-                public void failedTest() { 
+                public void failedTest() {
                     assertTrue(false);
                 }
             }
@@ -133,10 +133,10 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
     protected void flakyTest() {
         writeTestSource """
             package acme;
-    
-            public class FlakyTests {                
+
+            public class FlakyTests {
                 @org.testng.annotations.Test
-                public void flaky() { 
+                public void flaky() {
                     ${flakyAssert()}
                 }
             }

@@ -116,10 +116,10 @@ publishing {
     }
 }
 
-tasks.withType<Test>() {
-    systemProperty("org.gradle.test.currentGradleVersion", gradle.gradleVersion)
+tasks.named<Test>("test") {
+    systemProperty("org.gradle.test.gradleVersions", gradle.gradleVersion)
 }
 
 tasks.register<Test>("testAll") {
-    systemProperty("org.gradle.test.allGradleVersions", true)
+    systemProperty("org.gradle.test.gradleVersions", org.gradle.plugins.build.GradleVersionData.getGradleReleases().joinToString("|"))
 }
