@@ -1,5 +1,6 @@
 import java.net.URI
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.gradle.plugins.build.GradleVersionData
 
 plugins {
     java
@@ -121,9 +122,9 @@ tasks.named<Test>("test") {
 }
 
 tasks.register<Test>("testGradleReleases") {
-    systemProperty("org.gradle.test.gradleVersions", org.gradle.plugins.build.GradleVersionData.getGradleReleases().joinToString("|"))
+    systemProperty("org.gradle.test.gradleVersions", GradleVersionData.getReleasedVersions().joinToString("|"))
 }
 
 tasks.register<Test>("testGradleNightlies") {
-    systemProperty("org.gradle.test.gradleVersions", org.gradle.plugins.build.GradleVersionData.getNightlyVersions().joinToString("|"))
+    systemProperty("org.gradle.test.gradleVersions", GradleVersionData.getNightlyVersions().joinToString("|"))
 }
