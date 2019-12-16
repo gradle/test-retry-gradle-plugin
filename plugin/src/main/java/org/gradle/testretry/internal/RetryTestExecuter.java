@@ -50,9 +50,9 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
         // Can't rely on plugin defaults as feature is unavailable on Gradle 5.0
-        @SuppressWarnings("UnstableApiUsage") int maxRetries = extension.getMaxRetries().getOrElse(DEFAULT_MAX_RETRIES);
-        @SuppressWarnings("UnstableApiUsage") int maxFailures = extension.getMaxFailures().getOrElse(DEFAULT_MAX_FAILURES);
-        @SuppressWarnings("UnstableApiUsage") boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+        int maxRetries = extension.getMaxRetries().getOrElse(DEFAULT_MAX_RETRIES);
+        int maxFailures = extension.getMaxFailures().getOrElse(DEFAULT_MAX_FAILURES);
+        boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
 
         if (maxRetries <= 0) {
             delegate.execute(spec, testResultProcessor);

@@ -21,7 +21,6 @@ import org.gradle.testretry.TestRetryTaskExtension;
 
 import javax.inject.Inject;
 
-@SuppressWarnings("UnstableApiUsage")
 public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
 
     public static final int DEFAULT_MAX_RETRIES = 0;

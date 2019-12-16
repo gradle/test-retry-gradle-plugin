@@ -23,7 +23,6 @@ import org.gradle.api.tasks.testing.Test;
  * <p>
  * This extension is added with the name 'retry' to all {@link Test} tasks.
  */
-@SuppressWarnings("UnstableApiUsage")
 public interface TestRetryTaskExtension {
 
     /**
