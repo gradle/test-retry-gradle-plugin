@@ -21,7 +21,7 @@ import org.gradle.testretry.TestRetryTaskExtension;
 
 import javax.inject.Inject;
 
-final class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
+class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
 
     private final Property<Boolean> failOnPassedAfterRetry;
     private final Property<Integer> maxRetries;
