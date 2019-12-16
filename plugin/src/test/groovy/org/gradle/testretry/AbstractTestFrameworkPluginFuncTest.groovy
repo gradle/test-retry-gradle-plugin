@@ -19,66 +19,6 @@ import spock.lang.Unroll
 
 abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTest {
 
-    String testLanguage() {
-        'java'
-    }
-
-    String reportedTestName(String testName) {
-        testName
-    }
-
-    abstract protected String buildConfiguration()
-
-    abstract protected void flakyTest()
-
-    abstract protected void successfulTest()
-
-    abstract protected void failedTest()
-
-    def setup() {
-        buildFile << """
-            plugins {
-                id 'groovy'
-                id 'org.gradle.test-retry'
-            }
-
-            repositories {
-                mavenCentral()
-            }
-
-            ${buildConfiguration()}
-
-            test {
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        testProjectDir.newFolder('src', 'test', 'java', 'acme')
-        testProjectDir.newFolder('src', 'test', 'groovy', 'acme')
-
-        writeTestSource """
-            package acme;
-
-            import java.nio.file.*;
-
-            public class FlakyAssert {
-                public static void flakyAssert() {
-                    try {
-                        Path marker = Paths.get("marker.file");
-                        if(!Files.exists(marker)) {
-                            Files.write(marker, "mark".getBytes());
-                            throw new RuntimeException("fail me!");
-                        }
-                    } catch(java.io.IOException e) {
-                        throw new java.io.UncheckedIOException(e);
-                    }
-                }
-            }
-        """
-    }
-
     @Unroll
     def "has no effect when all tests pass (gradle version #gradleVersion)"() {
         when:

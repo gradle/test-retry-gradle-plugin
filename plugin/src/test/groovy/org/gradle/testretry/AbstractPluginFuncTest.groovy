@@ -28,20 +28,111 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
 
-    String testLanguage() {
-        'java'
-    }
-
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
+
     File settingsFile
+
     File buildFile
 
     def setup() {
         settingsFile = testProjectDir.newFile('settings.gradle')
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile = testProjectDir.newFile('build.gradle')
+        buildFile << baseBuildScript()
+
+        testProjectDir.newFolder('src', 'test', 'java', 'acme')
+        testProjectDir.newFolder('src', 'test', 'groovy', 'acme')
+
+        writeTestSource """
+            package acme;
+
+            import java.nio.file.*;
+
+            public class FlakyAssert {
+                public static void flakyAssert() {
+                    try {
+                        Path marker = Paths.get("build/marker.file");
+                        if(!Files.exists(marker)) {
+                            Files.write(marker, "mark".getBytes());
+                            throw new RuntimeException("fail me!");
+                        }
+                    } catch(java.io.IOException e) {
+                        throw new java.io.UncheckedIOException(e);
+                    }
+                }
+            }
+        """
     }
+
+    String baseBuildScript() {
+        """
+            plugins {
+                id 'groovy'
+                id 'org.gradle.test-retry'
+            }
+
+            repositories {
+                mavenCentral()
+            }
+
+            ${buildConfiguration()}
+
+            test {
+                testLogging {
+                    events "passed", "skipped", "failed"
+                }
+            }
+        """
+    }
+
+    String testLanguage() {
+        'java'
+    }
+
+    protected String buildConfiguration() {
+        return 'dependencies { testImplementation "junit:junit:4.12" }'
+    }
+
+    protected void successfulTest() {
+        writeTestSource """
+            package acme;
+
+            public class SuccessfulTests {
+                @org.junit.Test
+                public void successTest() {}
+            }
+        """
+    }
+
+    protected void failedTest() {
+        writeTestSource """
+            package acme;
+
+            import static org.junit.Assert.assertTrue;
+
+            public class FailedTests {
+                @org.junit.Test
+                public void failedTest() {
+                    assertTrue(false);
+                }
+            }
+        """
+    }
+
+    protected void flakyTest() {
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests {
+                @org.junit.Test
+                public void flaky() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+    }
+
 
     String flakyAssert() {
         return "acme.FlakyAssert.flakyAssert();"

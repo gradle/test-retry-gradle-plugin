@@ -66,8 +66,10 @@ public class TestRetryPlugin implements Plugin<Project> {
             setDefaults(extension);
         }
 
+        test.getInputs().property("retry.failOnPassedAfterRetry", extension.getFailOnPassedAfterRetry());
+
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(t -> replaceTestExecuter(test, extension));
+        replaceTestExecuter(test, extension);
     }
 
     private void setDefaults(TestRetryTaskExtension extension) {
@@ -95,18 +97,11 @@ public class TestRetryPlugin implements Plugin<Project> {
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
 
-            // Can't rely on plugin defaults as feature is unavailable on Gradle 5.0
-            int maxRetries = extension.getMaxRetries().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_MAX_RETRIES);
-            int maxFailures = extension.getMaxFailures().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_MAX_FAILURES);
-            boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
-
             setTestExecuter.invoke(task, new RetryTestExecuter(
                 task,
+                extension,
                 delegate,
-                new RetryTestFrameworkGenerator(classLoaderCache, instantiator),
-                maxRetries,
-                maxFailures,
-                failOnPassedAfterRetry
+                new RetryTestFrameworkGenerator(classLoaderCache, instantiator)
             ));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
