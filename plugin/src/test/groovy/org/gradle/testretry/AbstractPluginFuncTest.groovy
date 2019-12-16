@@ -27,7 +27,7 @@ import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
 
-    static final Set<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
+    static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
 
     String testLanguage() {
         'java'

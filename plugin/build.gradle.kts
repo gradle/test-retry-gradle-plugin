@@ -1,6 +1,7 @@
 import java.net.URI
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
+import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 
 plugins {
     java
@@ -122,9 +123,9 @@ tasks.named<Test>("test") {
 }
 
 tasks.register<Test>("testGradleReleases") {
-    systemProperty("org.gradle.test.gradleVersions", GradleVersionData.getReleasedVersions().joinToString("|"))
+    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getReleasedVersions))
 }
 
 tasks.register<Test>("testGradleNightlies") {
-    systemProperty("org.gradle.test.gradleVersions", GradleVersionData.getNightlyVersions().joinToString("|"))
+    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getNightlyVersions))
 }
