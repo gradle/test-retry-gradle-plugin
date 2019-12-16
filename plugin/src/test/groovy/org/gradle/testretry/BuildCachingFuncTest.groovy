@@ -45,31 +45,6 @@ class BuildCachingFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "modifying plugin implementation classloader doesn't invalidate (gradle version #gradleVersion)"() {
-        given:
-        successfulTest()
-        buildFile << """
-            test.retry.maxRetries = 1
-        """
-
-        when:
-        gradleRunner(gradleVersion)
-            .withArguments("--build-cache", "test")
-            .build()
-
-        buildFile.text = buildFile.text.replace("plugins {", "plugins {\n id 'org.gradle.hello-world' version '0.2'")
-        def result = gradleRunner(gradleVersion)
-            .withArguments("--build-cache", "clean", "test")
-            .build()
-
-        then:
-        result.task(":test").outcome == TaskOutcome.FROM_CACHE
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
     def "maxRetries and maxFailures are not treated as inputs (gradle version #gradleVersion)"() {
         given:
         successfulTest()
