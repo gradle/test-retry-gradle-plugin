@@ -50,6 +50,7 @@ shadowJar.configure {
         include(dependency("org.ow2.asm:asm"))
     }
     relocate("org.objectweb.asm", "org.gradle.testretry.org.objectweb.asm")
+    @Suppress("DEPRECATION")
     classifier = ""
 }
 
