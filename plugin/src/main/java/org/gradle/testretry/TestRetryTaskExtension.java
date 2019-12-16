@@ -58,7 +58,7 @@ public interface TestRetryTaskExtension {
      * <p>
      * The count applies to each round of test execution.
      * For example, if maxFailures is 5 and 4 tests initially fail and then 3 again on retry,
-     * this will not be considered too many failures and retrying will continue (if maxRetries > 1).
+     * this will not be considered too many failures and retrying will continue (if maxRetries {@literal >} 1).
      * If 5 or more tests were to fail initially then no retry would be attempted.
      * <p>
      * This setting defaults to {@code 0}, which results in no limit.
