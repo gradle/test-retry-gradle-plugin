@@ -17,6 +17,7 @@ package org.gradle.plugins.testretry
 
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -25,7 +26,8 @@ import spock.lang.Unroll
 import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
-    static final Set<String> GRADLE_VERSIONS_UNDER_TEST = resolveTestedGradleVersions()
+
+    static final Set<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
 
     String testLanguage() {
         'java'
@@ -271,13 +273,15 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     GradleRunner gradleRunner(String gradleVersion) {
-        return GradleRunner.create()
-            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-            .withGradleVersion(gradleVersion)
-            .withProjectDir(testProjectDir.root)
-            .withArguments('test', '-s')
-            .withPluginClasspath()
-            .forwardOutput()
+        GradleRunner.create()
+                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+                .withProjectDir(testProjectDir.root)
+                .withArguments('test', '-s')
+                .withPluginClasspath()
+                .forwardOutput()
+                .tap {
+                    gradleVersion == GradleVersion.current().toString() ? null : it.withGradleVersion(gradleVersion)
+                }
     }
 
     abstract protected String buildConfiguration()
@@ -318,12 +322,12 @@ abstract class AbstractPluginFuncTest extends Specification {
         true
     }
 
-    static private List<String> resolveTestedGradleVersions() {
+    static private List<String> gradleVersionsUnderTest() {
         def explicitGradleVersions = System.getProperty('org.gradle.test.gradleVersions')
-        if(explicitGradleVersions) {
+        if (explicitGradleVersions) {
             return Arrays.asList(explicitGradleVersions.split("\\|"))
         } else {
-            return "5.0" // least supported gradle version
+            [GradleVersion.current().toString()]
         }
     }
 }
