@@ -16,6 +16,14 @@ evaluationDependsOn("plugin")
 
 val publishPlugins = tasks.findByPath(":plugin:publishPlugins")
 
+tasks.named("releaseCheck") {
+    doFirst {
+        if(!JavaVersion.current().isJava8) {
+            throw GradleException("Plugin releases should use Java 8.")
+        }
+    }
+}
+
 tasks.named("final") {
     dependsOn(publishPlugins)
 }
