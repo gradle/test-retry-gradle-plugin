@@ -66,7 +66,7 @@ class SpockParameterMethodVisitor extends MethodVisitor {
 
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        if(descriptor.contains("org/spockframework/runtime/model/FeatureMetadata")) {
+        if (descriptor.contains("org/spockframework/runtime/model/FeatureMetadata")) {
             return annotationVisitor;
         }
         return null;
@@ -80,11 +80,11 @@ class SpockParameterMethodVisitor extends MethodVisitor {
 /**
  * Looking for signatures like:
  * org/spockframework/runtime/model/FeatureMetadata;(
- *   line=15,
- *   name="unrolled with param #param",
- *   ordinal=0,
- *   blocks={...},
- *   parameterNames={"param", "result"}
+ * line=15,
+ * name="unrolled with param #param",
+ * ordinal=0,
+ * blocks={...},
+ * parameterNames={"param", "result"}
  * )
  */
 class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
@@ -96,7 +96,7 @@ class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
 
     @Override
     public void visit(String name, Object value) {
-        if("name".equals(name)) {
+        if ("name".equals(name)) {
             testMethodPatterns.add((String) value);
         }
     }
