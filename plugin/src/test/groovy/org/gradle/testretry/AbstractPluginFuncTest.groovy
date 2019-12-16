@@ -121,6 +121,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
     def "kotlin extension configuration (gradle version #gradleVersion)"() {
         given:
         buildFile.delete()
