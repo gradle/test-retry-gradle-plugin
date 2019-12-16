@@ -21,7 +21,6 @@ import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import spock.lang.Unroll
 
 import java.lang.management.ManagementFactory
 
@@ -41,226 +40,7 @@ abstract class AbstractPluginFuncTest extends Specification {
     def setup() {
         settingsFile = testProjectDir.newFile('settings.gradle')
         settingsFile << "rootProject.name = 'hello-world'"
-
         buildFile = testProjectDir.newFile('build.gradle')
-        buildFile << """
-            plugins {
-                id 'groovy'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
-            ${buildConfiguration()}
-
-            test {
-                retry {
-                    maxRetries = 1
-                }
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        testProjectDir.newFolder('src', 'test', 'java', 'acme')
-        testProjectDir.newFolder('src', 'test', 'groovy', 'acme')
-
-        writeTestSource """
-            package acme;
-
-            import java.nio.file.*;
-
-            public class FlakyAssert {
-                public static void flakyAssert() {
-                    try {
-                        Path marker = Paths.get("marker.file");
-                        if(!Files.exists(marker)) {
-                            Files.write(marker, "mark".getBytes());
-                            throw new RuntimeException("fail me!");
-                        }
-                    } catch(java.io.IOException e) {
-                        throw new java.io.UncheckedIOException(e);
-                    }
-                }
-            }
-        """
-    }
-
-    @Unroll
-    def "default maxRetries is 0, effectively disabling retrying (gradle version #gradleVersion)"() {
-        when:
-        // overwrite build file with no test.retry configuration at all to test default
-        buildFile.text = """
-            plugins {
-                id 'groovy'
-                id 'org.gradle.test-retry'
-            }
-            repositories {
-                mavenCentral()
-            }
-            ${buildConfiguration()}
-
-            test {
-                testLogging {
-                    events "passed", "skipped", "failed"
-                }
-            }
-        """
-
-        flakyTest()
-
-        then:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-
-        expect:
-        // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
-        result.output.count('FAILED') == 1 + 0 + 1 + 1
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "kotlin extension configuration (gradle version #gradleVersion)"() {
-        given:
-        buildFile.delete()
-        buildFile = testProjectDir.newFile('build.gradle.kts')
-        buildFile << """
-            plugins {
-                java
-                id("org.gradle.test-retry") version "0.2.0"
-            }
-
-            tasks.test {
-                retry {
-                    maxRetries.set(2)
-                }
-            }
-        """
-
-        expect:
-        gradleRunner(gradleVersion).build()
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "optionally fail when flaky tests are detected (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test {
-                retry {
-                    failOnPassedAfterRetry = true
-                }
-            }
-        """
-
-        when:
-        flakyTest()
-
-        then:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-        // 1 initial + 1 retries + 1 overall task FAILED + 1 build FAILED
-        result.output.count('FAILED') == 1 + 0 + 1 + 1
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "retries stop after max failures is reached (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test {
-                retry {
-                    maxRetries = 3
-                    maxFailures = 0
-                }
-            }
-        """
-
-        when:
-        failedTest()
-
-        then:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-        // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
-        result.output.count('FAILED') == 1 + 0 + 1 + 1
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "can apply plugin (gradle version #gradleVersion)"() {
-        when:
-        successfulTest()
-
-        then:
-        gradleRunner(gradleVersion).build()
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "retries failed tests (gradle version #gradleVersion)"() {
-        given:
-        failedTest()
-
-        when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-
-        then:
-        result.output.contains("2 tests completed, 2 failed")
-
-        and: 'reports are as expected'
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "do not re-execute successful tests (gradle version #gradleVersion)"() {
-        given:
-        successfulTest()
-        failedTest()
-
-        when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-
-        then: 'Only the failed test is retried a second time'
-        result.output.count('PASSED') == 1
-
-        // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
-        result.output.count('FAILED') == 2 + 1 + 1
-
-        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "stop when flaky tests successful (gradle version #gradleVersion)"() {
-        given:
-        flakyTest()
-
-        when:
-        def result = gradleRunner(gradleVersion).build()
-
-        then:
-        result.output.count('PASSED') == 1
-        result.output.count('FAILED') == 1
-
-        assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     String flakyAssert() {
@@ -285,21 +65,13 @@ abstract class AbstractPluginFuncTest extends Specification {
             }
     }
 
-    abstract protected String buildConfiguration()
-
-    abstract protected void flakyTest()
-
-    abstract protected void successfulTest()
-
-    abstract protected void failedTest()
-
     def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         true
     }
 
-    def reportedTestName(String testName) {
+    String reportedTestName(String testName) {
         testName
     }
 

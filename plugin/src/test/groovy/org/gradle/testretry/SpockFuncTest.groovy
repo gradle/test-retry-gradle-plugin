@@ -17,25 +17,15 @@ package org.gradle.testretry
 
 import spock.lang.Unroll
 
-class SpockFuncTest extends AbstractPluginFuncTest {
-    @Override
-    String testLanguage() {
-        'groovy'
-    }
-
-    @Override
-    protected String buildConfiguration() {
-        return """
-            dependencies {
-                testImplementation "org.codehaus.groovy:groovy-all:2.5.8"
-                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
-            }
-        """
-    }
+class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme
 
@@ -70,12 +60,16 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         result.output.count('grandchildTest PASSED') == 1
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme
 
@@ -115,7 +109,22 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         result.output.count('unrolled with param baz PASSED') == 2
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Override
+    String testLanguage() {
+        'groovy'
+    }
+
+    @Override
+    protected String buildConfiguration() {
+        return """
+            dependencies {
+                testImplementation "org.codehaus.groovy:groovy-all:2.5.8"
+                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
+            }
+        """
     }
 
     @Override

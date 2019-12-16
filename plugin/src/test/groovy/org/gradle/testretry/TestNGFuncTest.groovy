@@ -17,21 +17,15 @@ package org.gradle.testretry
 
 import spock.lang.Unroll
 
-class TestNGFuncTest extends AbstractPluginFuncTest {
-    @Override
-    protected String buildConfiguration() {
-        return """
-            dependencies {
-                testImplementation 'org.testng:testng:7.0.0'
-            }
-            test {
-                useTestNG()
-            }
-        """
-    }
+class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
-    def "handles test dependencies"() {
+    @Unroll
+    def "handles test dependencies (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme;
 
@@ -63,12 +57,16 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('grandchildTest PASSED') == 1
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme;
 
@@ -98,7 +96,19 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1](1) FAILED') == 2
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Override
+    protected String buildConfiguration() {
+        return """
+            dependencies {
+                testImplementation 'org.testng:testng:7.0.0'
+            }
+            test {
+                useTestNG()
+            }
+        """
     }
 
     @Override

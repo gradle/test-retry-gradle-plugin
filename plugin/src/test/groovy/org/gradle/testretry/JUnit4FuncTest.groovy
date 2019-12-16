@@ -17,15 +17,15 @@ package org.gradle.testretry
 
 import spock.lang.Unroll
 
-class JUnit4FuncTest extends AbstractPluginFuncTest {
-    @Override
-    protected String buildConfiguration() {
-        return 'dependencies { testImplementation "junit:junit:4.12" }'
-    }
+class JUnit4FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme;
 
@@ -71,7 +71,12 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1: test(1)=false] FAILED') == 2
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Override
+    protected String buildConfiguration() {
+        return 'dependencies { testImplementation "junit:junit:4.12" }'
     }
 
     @Override

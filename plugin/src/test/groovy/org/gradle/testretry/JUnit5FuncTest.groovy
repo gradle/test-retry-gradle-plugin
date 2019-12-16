@@ -17,29 +17,15 @@ package org.gradle.testretry
 
 import spock.lang.Unroll
 
-class JUnit5FuncTest extends AbstractPluginFuncTest {
-
-    String reportedTestName(String testName) {
-        testName + "()"
-    }
-
-    @Override
-    protected String buildConfiguration() {
-        return """
-            dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
-                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.5.2'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
-            }
-            test {
-                useJUnitPlatform()
-            }
-        """
-    }
+class JUnit5FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
         writeTestSource """
             package acme;
 
@@ -66,7 +52,25 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         result.output.count('test(int)[2] FAILED') == 2
 
         where:
-        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    String reportedTestName(String testName) {
+        testName + "()"
+    }
+
+    @Override
+    protected String buildConfiguration() {
+        return """
+            dependencies {
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.5.2'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
+            }
+            test {
+                useJUnitPlatform()
+            }
+        """
     }
 
     @Override
