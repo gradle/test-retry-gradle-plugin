@@ -16,9 +16,7 @@
 package org.gradle.testretry.internal;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
-import org.gradle.api.internal.tasks.testing.DefaultTestDescriptor;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
-import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
@@ -80,35 +78,40 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor, maxFailures);
 
-        // initial run, collecting failures that will need to be retried on subsequent attempts
-        delegate.execute(spec, retryTestResultProcessor);
-        int totalFailures = retryTestResultProcessor.getRetries().size();
+        int retryCount = 0;
+        JvmTestExecutionSpec testExecutionSpec = spec;
 
-        for (int retryCount = 0; retryCount < maxRetries && (maxFailures <= 0 || totalFailures < maxFailures) && !retryTestResultProcessor.getRetries().isEmpty(); ++retryCount) {
-            JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
-            retryTestResultProcessor.nextRetry();
-            if (retryCount + 1 == maxRetries) {
-                retryTestResultProcessor.lastRetry();
+        while (true) {
+            delegate.execute(testExecutionSpec, retryTestResultProcessor);
+            RetryTestResultProcessor.RoundResult result = retryTestResultProcessor.getResult();
+
+            if (!result.nonRetriedTests.isEmpty()) {
+                failWithNonRetriedTests(result);
+                return;
             }
-            delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
-            totalFailures = retryTestResultProcessor.getRetries().size();
 
-            if (!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
-                throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
-                    retryTestResultProcessor.getExpectedRetries().stream()
-                        .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
-                        .collect(Collectors.joining("\n", "\n", "\n")));
+            if (result.failedTests.isEmpty()) {
+                if (retryCount > 0 && !failOnPassedAfterRetry) {
+                    testTask.setIgnoreFailures(true);
+                }
+                break;
+            } else if (result.lastRound) {
+                break;
+            } else {
+                testExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, result.failedTests);
+                retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
-        }
-
-        if (retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
-            // all flaky tests have passed at one point.
-            // do not fail the task but keep warning of test failures
-            testTask.setIgnoreFailures(true);
         }
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestDescriptorInternal> retries) {
+    private static void failWithNonRetriedTests(RetryTestResultProcessor.RoundResult result) {
+        throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+            result.nonRetriedTests.stream()
+                .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                .collect(Collectors.joining("\n", "\n", "\n")));
+    }
+
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestName> retries) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
 
         TestFramework testFramework = spec.getTestFramework();
@@ -159,7 +162,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         );
     }
 
-    private boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestDescriptorInternal retry) {
+    private boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestName retry) {
         if (retry.getClassName() == null) {
             return false;
         }
@@ -182,7 +185,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             .orElse(false);
     }
 
-    private List<TestDescriptorInternal> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
+    private List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestName> retries) {
         return retries.stream()
             .filter(retry -> retry.getClassName() != null)
             .flatMap(retry ->
@@ -196,7 +199,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                             TestNGClassVisitor visitor = new TestNGClassVisitor();
                             classReader.accept(visitor, 0);
                             return visitor.dependsOn(retry.getName()).stream()
-                                .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
+                                .map(method -> new TestName(retry.getClassName(), method));
                         } catch (Throwable t) {
                             logger.warn("Unable to determine if class " + retry.getClassName() + " has TestNG dependent tests", t);
                             return Stream.of(retry);
@@ -206,7 +209,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             ).collect(Collectors.toList());
     }
 
-    private List<TestDescriptorInternal> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
+    private List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, List<TestName> retries) {
         return retries.stream()
             .filter(retry -> retry.getClassName() != null)
             .map(retry ->
@@ -219,7 +222,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                             ClassReader classReader = new ClassReader(testClassIs);
                             SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(retry.getName());
                             classReader.accept(visitor, 0);
-                            return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
+                            return new TestName(retry.getClassName(), visitor.getTestMethodName());
                         } catch (Throwable t) {
                             logger.warn("Unable to determine if class " + retry.getClassName() + " contains Spock @Unroll parameterizations", t);
                             return retry;

@@ -20,34 +20,26 @@ import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
-import org.gradle.api.tasks.testing.TestResult;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static java.util.stream.Collectors.toCollection;
 
 public class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestResultProcessor delegate;
+
     private final int maxFailures;
+    private boolean lastRetry;
 
-    private boolean retry;
-    private boolean lastRetry = false;
-
-    private int totalFailures = 0;
-
-    private Map<Object, TestDescriptorInternal> all = new ConcurrentHashMap<>();
-    private List<TestDescriptorInternal> retries = new CopyOnWriteArrayList<>();
-    private List<TestDescriptorNameOnly> expectedRetries = Collections.emptyList();
+    private Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
+    private List<TestName> failedTests = new CopyOnWriteArrayList<>();
+    private List<TestName> nonExecutedFailedTests = Collections.emptyList();
     private Object rootTestDescriptorId;
-    private boolean rootFired;
 
     public RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
         this.delegate = delegate;
@@ -55,119 +47,77 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     @Override
-    public void started(TestDescriptorInternal testDescriptorInternal, TestStartEvent testStartEvent) {
-        expectedRetries.remove(TestDescriptorNameOnly.fromTestDescriptorInternal(testDescriptorInternal));
+    public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
+        nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
 
-        if (!rootFired) {
-            rootFired = true;
-            if (retry) {
-                return;
-            } else {
-                rootTestDescriptorId = testDescriptorInternal.getId();
-                all.put(testDescriptorInternal.getId(), testDescriptorInternal);
+        if (rootTestDescriptorId == null) {
+            rootTestDescriptorId = descriptor.getId();
+            activeDescriptorsById.put(descriptor.getId(), descriptor);
+            delegate.started(descriptor, testStartEvent);
+        } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
+            if (!descriptor.isComposite()) {
+                activeDescriptorsById.put(descriptor.getId(), descriptor);
             }
-        }
-        if (!testDescriptorInternal.isComposite()) {
-            all.put(testDescriptorInternal.getId(), testDescriptorInternal);
-        }
-
-        delegate.started(testDescriptorInternal, testStartEvent);
-    }
-
-    @Override
-    public void completed(Object o, TestCompleteEvent testCompleteEvent) {
-        if (!lastRun() && o.equals(rootTestDescriptorId)) {
-            return;
-        }
-        TestDescriptorInternal testDescriptor = all.get(o);
-        if (testDescriptor != null && retries.contains(testDescriptor)) {
-            delegate.completed(o, new TestCompleteEvent(testCompleteEvent.getEndTime(), TestResult.ResultType.FAILURE));
-        } else {
-            delegate.completed(o, testCompleteEvent);
+            delegate.started(descriptor, testStartEvent);
         }
     }
 
     @Override
-    public void output(Object o, TestOutputEvent testOutputEvent) {
-        delegate.output(o, testOutputEvent);
+    public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
+        activeDescriptorsById.remove(testId);
+
+        if (!testId.equals(rootTestDescriptorId) || lastRun()) {
+            delegate.completed(testId, testCompleteEvent);
+        }
     }
 
     @Override
-    public void failure(Object o, Throwable throwable) {
-        TestDescriptorInternal testDescriptorInternal = all.get(o);
-        if (testDescriptorInternal != null) {
-            retries.add(testDescriptorInternal);
-            totalFailures++;
+    public void output(Object testId, TestOutputEvent testOutputEvent) {
+        delegate.output(testId, testOutputEvent);
+    }
+
+    @Override
+    public void failure(Object testId, Throwable throwable) {
+        TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
+        if (descriptor != null) {
+            failedTests.add(new TestName(descriptor.getClassName(), descriptor.getName()));
         }
-        delegate.failure(o, throwable);
+        delegate.failure(testId, throwable);
     }
 
     private boolean lastRun() {
-        return retries.isEmpty() || lastRetry || (maxFailures > 0 && totalFailures >= maxFailures);
+        return failedTests.isEmpty() || lastRetry || (maxFailures > 0 && failedTests.size() >= maxFailures);
     }
 
-    public void lastRetry() {
-        lastRetry = true;
+    public RoundResult getResult() {
+        return new RoundResult(copy(failedTests), copy(nonExecutedFailedTests), lastRun());
     }
 
-    public void nextRetry() {
-        expectedRetries = retries.stream().map(TestDescriptorNameOnly::fromTestDescriptorInternal)
-                .collect(toCollection(ArrayList::new));
-        totalFailures = 0;
-        retries.clear();
-        all.clear();
-        retry = true;
-        rootFired = false;
+    @NotNull
+    private List<TestName> copy(List<TestName> nonExecutedFailedTests) {
+        return nonExecutedFailedTests.isEmpty() ? Collections.emptyList() : new ArrayList<>(nonExecutedFailedTests);
     }
 
-    public List<TestDescriptorInternal> getRetries() {
-        return retries;
+    public void reset(boolean lastRetry) {
+        if (lastRun()) {
+            throw new IllegalStateException("processor has completed");
+        }
+        nonExecutedFailedTests = new ArrayList<>(failedTests);
+        failedTests.clear();
+        activeDescriptorsById.clear();
+        this.lastRetry = lastRetry;
     }
 
-    public List<TestDescriptorNameOnly> getExpectedRetries() {
-        return expectedRetries;
-    }
+    static final class RoundResult {
 
-    public static class TestDescriptorNameOnly {
-        private final String className;
+        final List<TestName> failedTests;
+        final List<TestName> nonRetriedTests;
+        final boolean lastRound;
 
-        @Nonnull
-        private final String name;
-
-        private TestDescriptorNameOnly(String className, @Nonnull String name) {
-            this.className = className;
-            this.name = name;
-        }
-
-        static TestDescriptorNameOnly fromTestDescriptorInternal(TestDescriptorInternal testDescriptorInternal) {
-            return new TestDescriptorNameOnly(testDescriptorInternal.getClassName(), testDescriptorInternal.getName());
-        }
-
-        public String getClassName() {
-            return className;
-        }
-
-        @Nonnull
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            TestDescriptorNameOnly that = (TestDescriptorNameOnly) o;
-            return Objects.equals(className, that.className) &&
-                    name.equals(that.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(className, name);
+        public RoundResult(List<TestName> failedTests, List<TestName> nonRetriedTests, boolean lastRound) {
+            this.failedTests = failedTests;
+            this.nonRetriedTests = nonRetriedTests;
+            this.lastRound = lastRound;
         }
     }
 }
