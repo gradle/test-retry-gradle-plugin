@@ -41,7 +41,7 @@ project {
             gradle {
                 tasks = "clean build"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
         }
     }
@@ -50,7 +50,7 @@ project {
             gradle {
                 tasks = "clean testGradleReleases"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
                 param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
             }
         }
@@ -68,7 +68,7 @@ project {
             gradle {
                 tasks = "clean testGradleNightlies"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
         }
 
@@ -105,7 +105,7 @@ project {
             steps {
                 gradle {
                     tasks = "clean devSnapshot publishPluginMavenPublicationToGradleBuildInternalSnapshotsRepository -x test"
-                    gradleParams = "-s $useGradleInternalScansServer -PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
+                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                     buildFile = ""
                 }
@@ -138,8 +138,7 @@ project {
             }
             steps {
                 gradle {
-                    tasks =
-                        "clean final -x test"
+                    tasks = "clean final -x test"
                     buildFile = ""
                     gradleParams =
                         "-s $useGradleInternalScansServer -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken% %pluginPortalPublishingFlags%"
