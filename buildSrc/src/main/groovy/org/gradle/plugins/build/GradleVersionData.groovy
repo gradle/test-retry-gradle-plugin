@@ -27,9 +27,9 @@ class GradleVersionData {
                 .findAll { it.major >= 5 } // only 5.0 and above
                 .inject([] as List<VersionNumber>) { releasesToTest, version -> // only test against latest patch versions
                     if (!releasesToTest.any { it.major == version.major && it.minor == version.minor }) {
-                        return releasesToTest + version
+                        releasesToTest + version
                     } else {
-                        return releasesToTest
+                        releasesToTest
                     }
                 }
                 .collect { it.toString() }
