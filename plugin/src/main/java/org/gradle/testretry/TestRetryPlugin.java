@@ -49,7 +49,7 @@ public class TestRetryPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
-        project.getTasks().withType(Test.class, this::configureTestTask);
+        project.getTasks().withType(Test.class).configureEach(this::configureTestTask);
     }
 
     private void configureTestTask(Test test) {

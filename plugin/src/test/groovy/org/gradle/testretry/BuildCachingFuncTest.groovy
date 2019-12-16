@@ -118,7 +118,7 @@ class BuildCachingFuncTest extends AbstractPluginFuncTest {
             .withArguments("--build-cache", "test")
             .build()
 
-        buildFile.text = baseBuildScript() - "id 'org.gradle.test-retry'"
+        buildFile.text = baseBuildScriptWithoutPlugin()
 
         def result = gradleRunner(gradleVersion)
             .withArguments("--build-cache", "clean", "test")

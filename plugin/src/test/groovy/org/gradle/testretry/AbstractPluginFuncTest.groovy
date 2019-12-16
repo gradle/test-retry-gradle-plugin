@@ -78,12 +78,16 @@ abstract class AbstractPluginFuncTest extends Specification {
 
             ${buildConfiguration()}
 
-            test {
+            tasks.named("test").configure {
                 testLogging {
                     events "passed", "skipped", "failed"
                 }
             }
         """
+    }
+
+    String baseBuildScriptWithoutPlugin() {
+        baseBuildScript() - "id 'org.gradle.test-retry'"
     }
 
     String testLanguage() {
