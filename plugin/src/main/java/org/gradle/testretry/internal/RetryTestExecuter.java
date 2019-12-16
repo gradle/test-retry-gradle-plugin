@@ -112,10 +112,26 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     }
 
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestName> retries) {
-        DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
+        return new JvmTestExecutionSpec(
+            createRetryingTestFramework(spec, testTask, retries),
+            spec.getClasspath(),
+            spec.getCandidateClassFiles(),
+            spec.isScanForTestClasses(),
+            spec.getTestClassesDirs(),
+            spec.getPath(),
+            spec.getIdentityPath(),
+            spec.getForkEvery(),
+            spec.getJavaForkOptions(),
+            spec.getMaxParallelForks(),
+            spec.getPreviousFailedTestClasses()
+        );
+    }
 
+    private TestFramework createRetryingTestFramework(JvmTestExecutionSpec spec, Test testTask, List<TestName> retries) {
+        DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         TestFramework testFramework = spec.getTestFramework();
-        TestFramework retryingTestFramework = testFramework;
+
+        TestFramework retryingTestFramework;
         if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
             retriesWithSpockParametersRemoved(spec, retries).stream()
@@ -146,20 +162,11 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                     retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
                     retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
                 });
+        } else {
+            throw new UnsupportedOperationException("Unknown test framework: " + testFramework);
         }
 
-        return new JvmTestExecutionSpec(retryingTestFramework,
-            spec.getClasspath(),
-            spec.getCandidateClassFiles(),
-            spec.isScanForTestClasses(),
-            spec.getTestClassesDirs(),
-            spec.getPath(),
-            spec.getIdentityPath(),
-            spec.getForkEvery(),
-            spec.getJavaForkOptions(),
-            spec.getMaxParallelForks(),
-            spec.getPreviousFailedTestClasses()
-        );
+        return retryingTestFramework;
     }
 
     private boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestName retry) {
