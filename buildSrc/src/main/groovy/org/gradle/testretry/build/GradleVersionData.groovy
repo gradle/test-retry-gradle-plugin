@@ -23,16 +23,16 @@ class GradleVersionData {
             .findAll { !it.nightly && !it.snapshot } // filter out snapshots and nightlies
             .findAll { !it.rcFor || it.activeRc } // filter out inactive rcs
             .findAll { !it.milestoneFor } // filter out milestones
-            .collect { VersionNumber.parse(it.version as String) }
-            .findAll { it.major >= 5 } // only 5.0 and above
-            .inject([] as List<VersionNumber>) { releasesToTest, version -> // only test against latest patch versions
-                if (!releasesToTest.any { it.major == version.major && it.minor == version.minor }) {
+            .<String, VersionNumber, String>collectEntries { [(it.version): VersionNumber.parse(it.version as String)] }
+            .findAll { it.value.major >= 5 } // only 5.0 and above
+            .inject([] as List<Map.Entry<String, VersionNumber>>) { releasesToTest, version -> // only test against latest patch versions
+                if (!releasesToTest.any { it.value.major == version.value.major && it.value.minor == version.value.minor }) {
                     releasesToTest + version
                 } else {
                     releasesToTest
                 }
             }
-            .collect { it.toString() }
+            .collect { it.key.toString() }
     }
 
 }
