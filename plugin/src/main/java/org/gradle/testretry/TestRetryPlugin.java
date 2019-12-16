@@ -24,6 +24,7 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.RetryTestExecuter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -35,7 +36,7 @@ public class TestRetryPlugin implements Plugin<Project> {
     private final ClassLoaderCache classLoaderCache;
 
     @javax.inject.Inject
-    public TestRetryPlugin(ObjectFactory objectFactory, Instantiator instantiator, ClassLoaderCache classLoaderCache){
+    public TestRetryPlugin(ObjectFactory objectFactory, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
         this.objectFactory = objectFactory;
         this.instantiator = instantiator;
         this.classLoaderCache = classLoaderCache;

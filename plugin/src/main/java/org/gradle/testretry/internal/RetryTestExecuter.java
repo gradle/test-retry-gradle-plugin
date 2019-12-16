@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry;
+package org.gradle.testretry.internal;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.*;
@@ -23,9 +23,9 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.testretry.visitors.SpockParameterClassVisitor;
-import org.gradle.testretry.visitors.SpockStepwiseClassVisitor;
-import org.gradle.testretry.visitors.TestNGClassVisitor;
+import org.gradle.testretry.internal.visitors.SpockParameterClassVisitor;
+import org.gradle.testretry.internal.visitors.SpockStepwiseClassVisitor;
+import org.gradle.testretry.internal.visitors.TestNGClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
