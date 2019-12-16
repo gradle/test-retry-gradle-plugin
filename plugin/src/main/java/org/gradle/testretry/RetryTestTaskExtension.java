@@ -21,19 +21,9 @@ import org.gradle.api.provider.Property;
 import javax.inject.Inject;
 
 public class RetryTestTaskExtension {
-    /**
-     * Whether the test task should fail when flaky tests ultimately pass.
-     */
+
     private final Property<Boolean> failOnPassedAfterRetry;
-
-    /**
-     * Max number of times to retry, 0 disabled.
-     */
     private final Property<Integer> maxRetries;
-
-    /**
-     * After this many discrete failed tests, stop retrying.
-     */
     private final Property<Integer> maxFailures;
 
     @Inject
@@ -43,14 +33,23 @@ public class RetryTestTaskExtension {
         this.maxFailures = objects.property(Integer.class);
     }
 
+    /**
+     * Whether the test task should fail when flaky tests ultimately pass.
+     */
     public Property<Boolean> getFailOnPassedAfterRetry() {
         return failOnPassedAfterRetry;
     }
 
+    /**
+     * Max number of times to retry, 0 disabled.
+     */
     public Property<Integer> getMaxRetries() {
         return maxRetries;
     }
 
+    /**
+     * After this many discrete failed tests, stop retrying.
+     */
     public Property<Integer> getMaxFailures() {
         return maxFailures;
     }
