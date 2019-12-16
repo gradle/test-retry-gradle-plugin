@@ -1,7 +1,7 @@
-import java.net.URI
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
+import java.net.URI
 
 plugins {
     java
@@ -119,7 +119,10 @@ publishing {
 }
 
 tasks.named<Test>("test") {
-    systemProperty("org.gradle.test.gradleVersions", gradle.gradleVersion)
+    systemProperty(
+        GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
+        project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
+    )
 }
 
 tasks.register<Test>("testGradleReleases") {
