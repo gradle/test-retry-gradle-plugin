@@ -125,7 +125,7 @@ abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTes
     }
 
     @Unroll
-    def "stop when flaky tests successful (gradle version #gradleVersion)"() {
+    def "stops when all tests pass (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -192,7 +192,7 @@ abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTes
             test {
                 retry {
                     maxRetries = 3
-                    maxFailures = 0
+                    maxFailures = 1
                 }
             }
         """

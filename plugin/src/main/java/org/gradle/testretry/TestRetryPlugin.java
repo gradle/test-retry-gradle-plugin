@@ -24,12 +24,15 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.DefaultTestRetryTaskExtension;
 import org.gradle.testretry.internal.RetryTestExecuter;
+import org.gradle.util.VersionNumber;
 
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@SuppressWarnings("UnstableApiUsage")
 public class TestRetryPlugin implements Plugin<Project> {
 
     private final ObjectFactory objectFactory;
@@ -49,8 +52,35 @@ public class TestRetryPlugin implements Plugin<Project> {
     }
 
     private void configureTestTask(Test test) {
-        TestRetryTaskExtension extension = test.getExtensions().create("retry", TestRetryTaskExtension.class, objectFactory);
+        VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
+
+        TestRetryTaskExtension extension;
+        if (supportsGeneratedAbstractTypeImplementations(gradleVersion)) {
+            extension = objectFactory.newInstance(TestRetryTaskExtension.class);
+        } else {
+            extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
+        }
+
+        if (supportsPropertyConventions(gradleVersion)) {
+            setDefaults(extension);
+        }
+
+        test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
         test.doFirst(t -> replaceTestExecuter(test, extension));
+    }
+
+    private void setDefaults(TestRetryTaskExtension extension) {
+        extension.getMaxRetries().convention(DefaultTestRetryTaskExtension.DEFAULT_MAX_RETRIES);
+        extension.getMaxFailures().convention(DefaultTestRetryTaskExtension.DEFAULT_MAX_FAILURES);
+        extension.getFailOnPassedAfterRetry().convention(DefaultTestRetryTaskExtension.DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+    }
+
+    private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
+        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 3 : gradleVersion.getMajor() > 5;
+    }
+
+    private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
+        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 3 : gradleVersion.getMajor() > 5;
     }
 
     private void replaceTestExecuter(Test test, TestRetryTaskExtension extension) {
@@ -63,11 +93,21 @@ public class TestRetryPlugin implements Plugin<Project> {
 
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
-            setTestExecuter.invoke(test, new RetryTestExecuter(delegate, test,
-                    extension.getMaxRetries().getOrElse(0),
-                    extension.getMaxFailures().getOrElse(Integer.MAX_VALUE),
-                    extension.getFailOnPassedAfterRetry().getOrElse(false),
-                    instantiator, classLoaderCache));
+
+            // Can't rely on plugin defaults as feature is unavailable on Gradle 5.0
+            int maxRetries = extension.getMaxRetries().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_MAX_RETRIES);
+            int maxFailures = extension.getMaxFailures().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_MAX_FAILURES);
+            boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+
+            setTestExecuter.invoke(test, new RetryTestExecuter(
+                delegate,
+                test,
+                maxRetries,
+                maxFailures,
+                failOnPassedAfterRetry,
+                instantiator,
+                classLoaderCache
+            ));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }

@@ -15,42 +15,57 @@
  */
 package org.gradle.testretry;
 
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.testing.Test;
 
-import javax.inject.Inject;
-
-public class TestRetryTaskExtension {
-
-    private final Property<Boolean> failOnPassedAfterRetry;
-    private final Property<Integer> maxRetries;
-    private final Property<Integer> maxFailures;
-
-    @Inject
-    public TestRetryTaskExtension(ObjectFactory objects) {
-        this.failOnPassedAfterRetry = objects.property(Boolean.class);
-        this.maxRetries = objects.property(Integer.class);
-        this.maxFailures = objects.property(Integer.class);
-    }
+/**
+ * Allows configuring test retry mechanics.
+ * <p>
+ * This extension is added with the name 'retry' to all {@link Test} tasks.
+ */
+@SuppressWarnings("UnstableApiUsage")
+public interface TestRetryTaskExtension {
 
     /**
-     * Whether the test task should fail when flaky tests ultimately pass.
+     * The name of the extension added to each test task.
      */
-    public Property<Boolean> getFailOnPassedAfterRetry() {
-        return failOnPassedAfterRetry;
-    }
+    String NAME = "retry";
 
     /**
-     * Max number of times to retry, 0 disabled.
+     * Whether tests that initially fails and then pass on retry should fail the test task.
+     * <p>
+     * This setting defaults to {@code false},
+     * which results in the task not failing if all tests pass on retry.
+     * <p>
+     * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
+     *
+     * @return whether tests that initially fails and then pass on retry should fail the test task
      */
-    public Property<Integer> getMaxRetries() {
-        return maxRetries;
-    }
+    Property<Boolean> getFailOnPassedAfterRetry();
 
     /**
-     * After this many discrete failed tests, stop retrying.
+     * The maximum number of times to retry an individual test.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no retries.
+     * Any value less than 1 disables retrying.
+     *
+     * @return the maximum number of times to retry an individual test
      */
-    public Property<Integer> getMaxFailures() {
-        return maxFailures;
-    }
+    Property<Integer> getMaxRetries();
+
+    /**
+     * The maximum number of test failures that are allowed before retrying is disabled.
+     * <p>
+     * The count applies to each round of test execution.
+     * For example, if maxFailures is 5 and 4 tests initially fail and then 3 again on retry,
+     * this will not be considered too many failures and retrying will continue (if maxRetries > 1).
+     * If 5 or more tests were to fail initially then no retry would be attempted.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no limit.
+     * Any value less than 1 results in no limit.
+     *
+     * @return the maximum number of test failures that are allowed before retrying is disabled
+     */
+    Property<Integer> getMaxFailures();
+
 }

@@ -16,7 +16,12 @@
 package org.gradle.testretry.internal;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
-import org.gradle.api.internal.tasks.testing.*;
+import org.gradle.api.internal.tasks.testing.DefaultTestDescriptor;
+import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
+import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
+import org.gradle.api.internal.tasks.testing.TestExecuter;
+import org.gradle.api.internal.tasks.testing.TestFramework;
+import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
@@ -68,38 +73,38 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
-        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor, maxFailures);
-        int totalFailures = 0;
-
-        if (maxRetries > 0) {
-            // initial run, collecting failures that will need to be retried on subsequent attempts
-            delegate.execute(spec, retryTestResultProcessor);
-
-            for (int retryCount = 0; retryCount < maxRetries && totalFailures < maxFailures && !retryTestResultProcessor.getRetries().isEmpty(); retryCount++) {
-                JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
-                retryTestResultProcessor.nextRetry();
-                if (retryCount + 1 == maxRetries) {
-                    retryTestResultProcessor.lastRetry();
-                }
-                delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
-                totalFailures = retryTestResultProcessor.getRetries().size();
-
-                if (!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
-                    throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
-                        retryTestResultProcessor.getExpectedRetries().stream()
-                            .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
-                            .collect(Collectors.joining("\n", "\n", "\n")));
-                }
-            }
-
-            if (retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
-                // all flaky tests have passed at one point.
-                // do not fail the task but keep warning of test failures
-                testTask.setIgnoreFailures(true);
-            }
-        } else {
-            // since we aren't retrying at all, allow test execution to proceed as normal
+        if (maxRetries <= 0) {
             delegate.execute(spec, testResultProcessor);
+            return;
+        }
+
+        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor, maxFailures);
+
+        // initial run, collecting failures that will need to be retried on subsequent attempts
+        delegate.execute(spec, retryTestResultProcessor);
+        int totalFailures = retryTestResultProcessor.getRetries().size();
+
+        for (int retryCount = 0; retryCount < maxRetries && (maxFailures <= 0 || totalFailures < maxFailures) && !retryTestResultProcessor.getRetries().isEmpty(); ++retryCount) {
+            JvmTestExecutionSpec retryJvmExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, retryTestResultProcessor.getRetries());
+            retryTestResultProcessor.nextRetry();
+            if (retryCount + 1 == maxRetries) {
+                retryTestResultProcessor.lastRetry();
+            }
+            delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
+            totalFailures = retryTestResultProcessor.getRetries().size();
+
+            if (!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
+                throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+                    retryTestResultProcessor.getExpectedRetries().stream()
+                        .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                        .collect(Collectors.joining("\n", "\n", "\n")));
+            }
+        }
+
+        if (retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
+            // all flaky tests have passed at one point.
+            // do not fail the task but keep warning of test failures
+            testTask.setIgnoreFailures(true);
         }
     }
 
