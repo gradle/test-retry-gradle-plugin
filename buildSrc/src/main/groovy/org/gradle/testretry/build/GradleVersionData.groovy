@@ -1,4 +1,4 @@
-package org.gradle.plugins.build
+package org.gradle.testretry.build
 
 import groovy.json.JsonSlurper
 import org.gradle.util.VersionNumber

@@ -1,4 +1,4 @@
-package org.gradle.plugins.testretry.samples;
+package org.gradle.testretry.samples;
 
 import org.gradle.samples.executor.ExecutionMetadata;
 import org.gradle.samples.test.normalizer.OutputNormalizer;

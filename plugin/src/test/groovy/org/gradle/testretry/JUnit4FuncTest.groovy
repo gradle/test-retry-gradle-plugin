@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugins.testretry
+package org.gradle.testretry
 
 import spock.lang.Unroll
 
@@ -71,7 +71,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1: test(1)=false] FAILED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Override

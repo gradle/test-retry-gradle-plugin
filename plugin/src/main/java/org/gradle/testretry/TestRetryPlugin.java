@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.gradle.plugins.testretry;
+package org.gradle.testretry;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;

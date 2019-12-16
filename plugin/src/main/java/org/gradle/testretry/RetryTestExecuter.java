@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugins.testretry;
+package org.gradle.testretry;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.*;
@@ -23,9 +23,9 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.plugins.testretry.visitors.SpockParameterClassVisitor;
-import org.gradle.plugins.testretry.visitors.SpockStepwiseClassVisitor;
-import org.gradle.plugins.testretry.visitors.TestNGClassVisitor;
+import org.gradle.testretry.visitors.SpockParameterClassVisitor;
+import org.gradle.testretry.visitors.SpockStepwiseClassVisitor;
+import org.gradle.testretry.visitors.TestNGClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,15 +81,15 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 delegate.execute(retryJvmExecutionSpec, retryTestResultProcessor);
                 totalFailures = retryTestResultProcessor.getRetries().size();
 
-                if(!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
+                if (!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
                     throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
                             retryTestResultProcessor.getExpectedRetries().stream()
-                                .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
-                                .collect(Collectors.joining("\n", "\n", "\n")));
+                                    .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                                    .collect(Collectors.joining("\n", "\n", "\n")));
                 }
             }
 
-            if(retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
+            if (retryTestResultProcessor.getRetries().isEmpty() && !failOnPassedAfterRetry) {
                 // all flaky tests have passed at one point.
                 // do not fail the task but keep warning of test failures
                 testTask.setIgnoreFailures(true);
@@ -110,7 +110,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             retriesWithSpockParametersRemoved(spec, retries).stream()
                     .filter(retry -> retry.getClassName() != null)
                     .forEach(retry -> {
-                        if(isSpockStepwiseTest(spec, retry)) {
+                        if (isSpockStepwiseTest(spec, retry)) {
                             retriedTestFilter.includeTestsMatching(retry.getClassName());
                         } else {
                             String strippedParameterName = retry.getName().replaceAll("\\[\\d+]$", "");
@@ -165,7 +165,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                         SpockStepwiseClassVisitor visitor = new SpockStepwiseClassVisitor();
                         classReader.accept(visitor, 0);
                         return visitor.isStepwise();
-                    } catch(Throwable t) {
+                    } catch (Throwable t) {
                         logger.warn("Unable to determine if class " + retry.getClassName() + " is a Spock @Stepwise test", t);
                         return false;
                     }
@@ -188,7 +188,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                                         classReader.accept(visitor, 0);
                                         return visitor.dependsOn(retry.getName()).stream()
                                                 .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
-                                    } catch(Throwable t) {
+                                    } catch (Throwable t) {
                                         logger.warn("Unable to determine if class " + retry.getClassName() + " has TestNG dependent tests", t);
                                         return Stream.of(retry);
                                     }
@@ -211,7 +211,7 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                                         SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(retry.getName());
                                         classReader.accept(visitor, 0);
                                         return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
-                                    } catch(Throwable t) {
+                                    } catch (Throwable t) {
                                         logger.warn("Unable to determine if class " + retry.getClassName() + " contains Spock @Unroll parameterizations", t);
                                         return retry;
                                     }

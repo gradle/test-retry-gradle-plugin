@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.plugins.testretry
+package org.gradle.testretry
 
 import spock.lang.Unroll
 
@@ -63,7 +63,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('grandchildTest PASSED') == 1
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -98,7 +98,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         result.output.count('test[1](1) FAILED') == 2
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        gradleVersion << AbstractPluginFuncTest.GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Override

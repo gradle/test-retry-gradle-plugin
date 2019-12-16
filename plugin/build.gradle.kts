@@ -1,6 +1,6 @@
 import java.net.URI
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.plugins.build.GradleVersionData
+import org.gradle.testretry.build.GradleVersionData
 
 plugins {
     java
@@ -61,7 +61,7 @@ gradlePlugin {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
-            implementationClass = "org.gradle.plugins.testretry.TestRetryPlugin"
+            implementationClass = "org.gradle.testretry.TestRetryPlugin"
         }
     }
 }

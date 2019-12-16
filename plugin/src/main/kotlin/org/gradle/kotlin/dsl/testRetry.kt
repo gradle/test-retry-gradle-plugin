@@ -18,7 +18,7 @@
 package org.gradle.kotlin.dsl
 
 import org.gradle.api.tasks.testing.Test
-import org.gradle.plugins.testretry.RetryTestTaskExtension
+import org.gradle.testretry.RetryTestTaskExtension
 
 val Test.retry: RetryTestTaskExtension
     get() = the()
