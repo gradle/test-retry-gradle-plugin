@@ -24,4 +24,4 @@ val Test.retry: RetryTestTaskExtension
     get() = the()
 
 fun Test.retry(configure: RetryTestTaskExtension.() -> Unit) =
-        extensions.configure("retry", configure)
+    extensions.configure("retry", configure)

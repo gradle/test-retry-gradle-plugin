@@ -267,6 +267,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         return "acme.FlakyAssert.flakyAssert();"
     }
 
+    @SuppressWarnings("GroovyAssignabilityCheck")
     void writeTestSource(String source) {
         String className = (source =~ /class\s+(\w+)\s+/)[0][1]
         testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
@@ -274,14 +275,14 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     GradleRunner gradleRunner(String gradleVersion) {
         GradleRunner.create()
-                .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
-                .withProjectDir(testProjectDir.root)
-                .withArguments('test', '-s')
-                .withPluginClasspath()
-                .forwardOutput()
-                .tap {
-                    gradleVersion == GradleVersion.current().toString() ? null : it.withGradleVersion(gradleVersion)
-                }
+            .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
+            .withProjectDir(testProjectDir.root)
+            .withArguments('test', '-s')
+            .withPluginClasspath()
+            .forwardOutput()
+            .tap {
+                gradleVersion == GradleVersion.current().toString() ? null : it.withGradleVersion(gradleVersion)
+            }
     }
 
     abstract protected String buildConfiguration()
@@ -302,6 +303,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         testName
     }
 
+    @SuppressWarnings("GroovyAssignabilityCheck")
     def assertHtmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
         def parser = new SAXParser()
         def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, "build/reports/tests/test/classes/acme.${testClazz}.html"))

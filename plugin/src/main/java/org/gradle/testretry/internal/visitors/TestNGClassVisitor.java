@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 public class TestNGClassVisitor extends ClassVisitor {
+
     private String currentMethod;
     private Map<String, List<String>> dependsOn = new HashMap<>();
     private Map<String, List<String>> dependedOn = new HashMap<>();
@@ -49,9 +50,9 @@ public class TestNGClassVisitor extends ClassVisitor {
         search = Collections.singletonList(method);
         while (!search.isEmpty()) {
             search = search.stream()
-                    .flatMap(downstream -> dependedOn.getOrDefault(downstream, Collections.emptyList()).stream())
-                    .filter(downstream -> !dependentChain.contains(downstream))
-                    .collect(Collectors.toList());
+                .flatMap(downstream -> dependedOn.getOrDefault(downstream, Collections.emptyList()).stream())
+                .filter(downstream -> !dependentChain.contains(downstream))
+                .collect(Collectors.toList());
             dependentChain.addAll(search);
         }
 
@@ -65,13 +66,14 @@ public class TestNGClassVisitor extends ClassVisitor {
     }
 
     class TestNGMethodVisitor extends MethodVisitor {
+
         public TestNGMethodVisitor() {
             super(ASM7);
         }
 
         @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-            if(descriptor.contains("org/testng/annotations/Test")) {
+            if (descriptor.contains("org/testng/annotations/Test")) {
                 return new TestNGTestAnnotationVisitor();
             }
             return null;
@@ -79,13 +81,14 @@ public class TestNGClassVisitor extends ClassVisitor {
     }
 
     class TestNGTestAnnotationVisitor extends AnnotationVisitor {
+
         public TestNGTestAnnotationVisitor() {
             super(ASM7);
         }
 
         @Override
         public AnnotationVisitor visitArray(String name) {
-            if("dependsOnMethods".equals(name)) {
+            if ("dependsOnMethods".equals(name)) {
                 return new TestNGTestDependsOnAnnotationVisitor();
             }
             return null;
@@ -93,6 +96,7 @@ public class TestNGClassVisitor extends ClassVisitor {
     }
 
     class TestNGTestDependsOnAnnotationVisitor extends AnnotationVisitor {
+
         public TestNGTestDependsOnAnnotationVisitor() {
             super(ASM7);
         }
@@ -100,7 +104,7 @@ public class TestNGClassVisitor extends ClassVisitor {
         @Override
         public void visit(String name, Object value) {
             dependsOn.compute(currentMethod, (m, acc) -> {
-                if(acc == null) {
+                if (acc == null) {
                     acc = new ArrayList<>();
                 }
                 acc.add((String) value);
@@ -108,7 +112,7 @@ public class TestNGClassVisitor extends ClassVisitor {
             });
 
             dependedOn.compute((String) value, (m, acc) -> {
-                if(acc == null) {
+                if (acc == null) {
                     acc = new ArrayList<>();
                 }
                 acc.add(currentMethod);

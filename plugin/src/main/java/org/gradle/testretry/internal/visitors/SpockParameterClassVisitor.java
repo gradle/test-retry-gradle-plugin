@@ -28,6 +28,7 @@ import static org.objectweb.asm.Opcodes.ASM7;
  * Class visitor that identifies unparameterized test method names.
  */
 public class SpockParameterClassVisitor extends ClassVisitor {
+
     private String testMethodName;
     private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
@@ -44,12 +45,12 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     @Override
     public void visitEnd() {
         spockMethodVisitor.getTestMethodPatterns().stream()
-                .filter(methodPattern -> {
-                    String methodPatternRegex = methodPattern.replaceAll("#\\w+", "\\\\w+");
-                    return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
-                })
-                .findFirst()
-                .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
+            .filter(methodPattern -> {
+                String methodPatternRegex = methodPattern.replaceAll("#\\w+", "\\\\w+");
+                return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
+            })
+            .findFirst()
+            .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
     }
 
     public String getTestMethodName() {
@@ -58,6 +59,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 }
 
 class SpockParameterMethodVisitor extends MethodVisitor {
+
     private SpockFeatureMetadataAnnotationVisitor annotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
 
     public SpockParameterMethodVisitor() {
@@ -88,6 +90,7 @@ class SpockParameterMethodVisitor extends MethodVisitor {
  * )
  */
 class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
+
     private List<String> testMethodPatterns = new ArrayList<>();
 
     public SpockFeatureMetadataAnnotationVisitor() {

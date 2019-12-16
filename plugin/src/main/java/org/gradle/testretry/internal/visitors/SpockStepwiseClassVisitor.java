@@ -21,6 +21,7 @@ import org.objectweb.asm.ClassVisitor;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 public class SpockStepwiseClassVisitor extends ClassVisitor {
+
     private boolean stepwise = false;
 
     public SpockStepwiseClassVisitor() {
@@ -29,7 +30,7 @@ public class SpockStepwiseClassVisitor extends ClassVisitor {
 
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        if(descriptor.contains("spock/lang/Stepwise")) {
+        if (descriptor.contains("spock/lang/Stepwise")) {
             this.stepwise = true;
         }
         return null;

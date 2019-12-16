@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
+
     private final Logger logger = LoggerFactory.getLogger(RetryTestExecuter.class);
 
     private final TestExecuter<JvmTestExecutionSpec> delegate;
@@ -47,13 +48,15 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final Instantiator instantiator;
     private final ClassLoaderCache classLoaderCache;
 
-    public RetryTestExecuter(TestExecuter<JvmTestExecutionSpec> delegate,
-                             Test test,
-                             int maxRetries,
-                             int maxFailures,
-                             boolean failOnPassedAfterRetry,
-                             Instantiator instantiator,
-                             ClassLoaderCache classLoaderCache) {
+    public RetryTestExecuter(
+        TestExecuter<JvmTestExecutionSpec> delegate,
+        Test test,
+        int maxRetries,
+        int maxFailures,
+        boolean failOnPassedAfterRetry,
+        Instantiator instantiator,
+        ClassLoaderCache classLoaderCache
+    ) {
         this.delegate = delegate;
         this.testTask = test;
         this.maxRetries = maxRetries;
@@ -83,9 +86,9 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
                 if (!retryTestResultProcessor.getExpectedRetries().isEmpty()) {
                     throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
-                            retryTestResultProcessor.getExpectedRetries().stream()
-                                    .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
-                                    .collect(Collectors.joining("\n", "\n", "\n")));
+                        retryTestResultProcessor.getExpectedRetries().stream()
+                            .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                            .collect(Collectors.joining("\n", "\n", "\n")));
                 }
             }
 
@@ -108,46 +111,47 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
             retriesWithSpockParametersRemoved(spec, retries).stream()
-                    .filter(retry -> retry.getClassName() != null)
-                    .forEach(retry -> {
-                        if (isSpockStepwiseTest(spec, retry)) {
-                            retriedTestFilter.includeTestsMatching(retry.getClassName());
-                        } else {
-                            String strippedParameterName = retry.getName().replaceAll("\\[\\d+]$", "");
-                            retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
-                            retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
-                        }
-                    });
+                .filter(retry -> retry.getClassName() != null)
+                .forEach(retry -> {
+                    if (isSpockStepwiseTest(spec, retry)) {
+                        retriedTestFilter.includeTestsMatching(retry.getClassName());
+                    } else {
+                        String strippedParameterName = retry.getName().replaceAll("\\[\\d+]$", "");
+                        retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
+                    }
+                });
         } else if (testFramework instanceof JUnitPlatformTestFramework) {
             retryingTestFramework = new JUnitPlatformTestFramework(retriedTestFilter);
             retries.stream()
-                    .filter(retry -> retry.getClassName() != null)
-                    .forEach(retry -> {
-                        String strippedParameterName = retry.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
-                        retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
-                    });
+                .filter(retry -> retry.getClassName() != null)
+                .forEach(retry -> {
+                    String strippedParameterName = retry.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
+                    retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
+                });
         } else if (testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
             retriesWithTestNGDependentsAdded(spec, retries).stream()
-                    .filter(retry -> retry.getClassName() != null)
-                    .forEach(retry -> {
-                        String strippedParameterName = retry.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
-                        retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
-                        retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
-                    });
+                .filter(retry -> retry.getClassName() != null)
+                .forEach(retry -> {
+                    String strippedParameterName = retry.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
+                    retriedTestFilter.includeTest(retry.getClassName(), strippedParameterName);
+                    retriedTestFilter.includeTest(retry.getClassName(), retry.getName());
+                });
         }
 
         return new JvmTestExecutionSpec(retryingTestFramework,
-                spec.getClasspath(),
-                spec.getCandidateClassFiles(),
-                spec.isScanForTestClasses(),
-                spec.getTestClassesDirs(),
-                spec.getPath(),
-                spec.getIdentityPath(),
-                spec.getForkEvery(),
-                spec.getJavaForkOptions(),
-                spec.getMaxParallelForks(),
-                spec.getPreviousFailedTestClasses());
+            spec.getClasspath(),
+            spec.getCandidateClassFiles(),
+            spec.isScanForTestClasses(),
+            spec.getTestClassesDirs(),
+            spec.getPath(),
+            spec.getIdentityPath(),
+            spec.getForkEvery(),
+            spec.getJavaForkOptions(),
+            spec.getMaxParallelForks(),
+            spec.getPreviousFailedTestClasses()
+        );
     }
 
     private boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestDescriptorInternal retry) {
@@ -156,68 +160,68 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
 
         return spec.getTestClassesDirs().getFiles().stream()
-                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
-                .filter(File::exists)
-                .findAny()
-                .map(testClass -> {
-                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                        ClassReader classReader = new ClassReader(testClassIs);
-                        SpockStepwiseClassVisitor visitor = new SpockStepwiseClassVisitor();
-                        classReader.accept(visitor, 0);
-                        return visitor.isStepwise();
-                    } catch (Throwable t) {
-                        logger.warn("Unable to determine if class " + retry.getClassName() + " is a Spock @Stepwise test", t);
-                        return false;
-                    }
-                })
-                .orElse(false);
+            .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+            .filter(File::exists)
+            .findAny()
+            .map(testClass -> {
+                try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                    ClassReader classReader = new ClassReader(testClassIs);
+                    SpockStepwiseClassVisitor visitor = new SpockStepwiseClassVisitor();
+                    classReader.accept(visitor, 0);
+                    return visitor.isStepwise();
+                } catch (Throwable t) {
+                    logger.warn("Unable to determine if class " + retry.getClassName() + " is a Spock @Stepwise test", t);
+                    return false;
+                }
+            })
+            .orElse(false);
     }
 
     private List<TestDescriptorInternal> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
         return retries.stream()
-                .filter(retry -> retry.getClassName() != null)
-                .flatMap(retry ->
-                        spec.getTestClassesDirs().getFiles().stream()
-                                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
-                                .filter(File::exists)
-                                .findAny()
-                                .map(testClass -> {
-                                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                                        ClassReader classReader = new ClassReader(testClassIs);
-                                        TestNGClassVisitor visitor = new TestNGClassVisitor();
-                                        classReader.accept(visitor, 0);
-                                        return visitor.dependsOn(retry.getName()).stream()
-                                                .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
-                                    } catch (Throwable t) {
-                                        logger.warn("Unable to determine if class " + retry.getClassName() + " has TestNG dependent tests", t);
-                                        return Stream.of(retry);
-                                    }
-                                })
-                                .orElse(Stream.of(retry))
-                ).collect(Collectors.toList());
+            .filter(retry -> retry.getClassName() != null)
+            .flatMap(retry ->
+                spec.getTestClassesDirs().getFiles().stream()
+                    .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+                    .filter(File::exists)
+                    .findAny()
+                    .map(testClass -> {
+                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                            ClassReader classReader = new ClassReader(testClassIs);
+                            TestNGClassVisitor visitor = new TestNGClassVisitor();
+                            classReader.accept(visitor, 0);
+                            return visitor.dependsOn(retry.getName()).stream()
+                                .map(method -> new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), method));
+                        } catch (Throwable t) {
+                            logger.warn("Unable to determine if class " + retry.getClassName() + " has TestNG dependent tests", t);
+                            return Stream.of(retry);
+                        }
+                    })
+                    .orElse(Stream.of(retry))
+            ).collect(Collectors.toList());
     }
 
     private List<TestDescriptorInternal> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, List<TestDescriptorInternal> retries) {
         return retries.stream()
-                .filter(retry -> retry.getClassName() != null)
-                .map(retry ->
-                        spec.getTestClassesDirs().getFiles().stream()
-                                .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
-                                .filter(File::exists)
-                                .findAny()
-                                .map(testClass -> {
-                                    try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                                        ClassReader classReader = new ClassReader(testClassIs);
-                                        SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(retry.getName());
-                                        classReader.accept(visitor, 0);
-                                        return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
-                                    } catch (Throwable t) {
-                                        logger.warn("Unable to determine if class " + retry.getClassName() + " contains Spock @Unroll parameterizations", t);
-                                        return retry;
-                                    }
-                                })
-                                .orElse(retry)
-                ).collect(Collectors.toList());
+            .filter(retry -> retry.getClassName() != null)
+            .map(retry ->
+                spec.getTestClassesDirs().getFiles().stream()
+                    .map(dir -> new File(dir, retry.getClassName().replace('.', '/') + ".class"))
+                    .filter(File::exists)
+                    .findAny()
+                    .map(testClass -> {
+                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                            ClassReader classReader = new ClassReader(testClassIs);
+                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(retry.getName());
+                            classReader.accept(visitor, 0);
+                            return new DefaultTestDescriptor("doesnotmatter", retry.getClassName(), visitor.getTestMethodName());
+                        } catch (Throwable t) {
+                            logger.warn("Unable to determine if class " + retry.getClassName() + " contains Spock @Unroll parameterizations", t);
+                            return retry;
+                        }
+                    })
+                    .orElse(retry)
+            ).collect(Collectors.toList());
     }
 
     @Override
