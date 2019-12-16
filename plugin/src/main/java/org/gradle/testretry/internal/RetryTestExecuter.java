@@ -19,25 +19,20 @@ import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.testretry.TestRetryTaskExtension;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.gradle.testretry.internal.DefaultTestRetryTaskExtension.DEFAULT_FAIL_ON_PASSED_AFTER_RETRY;
-import static org.gradle.testretry.internal.DefaultTestRetryTaskExtension.DEFAULT_MAX_FAILURES;
-import static org.gradle.testretry.internal.DefaultTestRetryTaskExtension.DEFAULT_MAX_RETRIES;
+final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
-public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
-
-    private final TestRetryTaskExtension extension;
+    private final TestRetryTaskExtensionAdapter extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
     private final RetryTestFrameworkGenerator retryTestFrameworkGenerator;
 
-    public RetryTestExecuter(
+    RetryTestExecuter(
         Test task,
-        TestRetryTaskExtension extension,
+        TestRetryTaskExtensionAdapter extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
         RetryTestFrameworkGenerator retryTestFrameworkGenerator
     ) {
@@ -49,10 +44,9 @@ public class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     @Override
     public void execute(JvmTestExecutionSpec spec, TestResultProcessor testResultProcessor) {
-        // Can't rely on plugin defaults as feature is unavailable on Gradle 5.0
-        int maxRetries = extension.getMaxRetries().getOrElse(DEFAULT_MAX_RETRIES);
-        int maxFailures = extension.getMaxFailures().getOrElse(DEFAULT_MAX_FAILURES);
-        boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+        int maxRetries = extension.getMaxRetries();
+        int maxFailures = extension.getMaxFailures();
+        boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
 
         if (maxRetries <= 0) {
             delegate.execute(spec, testResultProcessor);

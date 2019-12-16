@@ -37,14 +37,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class RetryTestFrameworkGenerator {
+final class RetryTestFrameworkGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryTestFrameworkGenerator.class);
 
     private final ClassLoaderCache classLoaderCache;
     private final Instantiator instantiator;
 
-    public RetryTestFrameworkGenerator(ClassLoaderCache classLoaderCache, Instantiator instantiator) {
+    RetryTestFrameworkGenerator(ClassLoaderCache classLoaderCache, Instantiator instantiator) {
         this.classLoaderCache = classLoaderCache;
         this.instantiator = instantiator;
     }

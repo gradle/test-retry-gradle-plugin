@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class RetryTestResultProcessor implements TestResultProcessor {
+final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestResultProcessor delegate;
 
@@ -41,7 +41,7 @@ public class RetryTestResultProcessor implements TestResultProcessor {
     private List<TestName> nonExecutedFailedTests = Collections.emptyList();
     private Object rootTestDescriptorId;
 
-    public RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
+    RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
         this.delegate = delegate;
         this.maxFailures = maxFailures;
     }
