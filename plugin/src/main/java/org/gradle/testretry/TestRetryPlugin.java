@@ -81,7 +81,7 @@ public class TestRetryPlugin implements Plugin<Project> {
     }
 
     private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
-        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 3 : gradleVersion.getMajor() > 5;
+        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 1 : gradleVersion.getMajor() > 5;
     }
 
     private void replaceTestExecuter(Test task, TestRetryTaskExtension extension) {
