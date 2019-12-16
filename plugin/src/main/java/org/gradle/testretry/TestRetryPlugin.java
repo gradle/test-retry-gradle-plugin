@@ -26,6 +26,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.DefaultTestRetryTaskExtension;
 import org.gradle.testretry.internal.RetryTestExecuter;
+import org.gradle.testretry.internal.RetryTestFrameworkGenerator;
 import org.gradle.util.VersionNumber;
 
 import javax.inject.Inject;
@@ -83,13 +84,13 @@ public class TestRetryPlugin implements Plugin<Project> {
         return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 3 : gradleVersion.getMajor() > 5;
     }
 
-    private void replaceTestExecuter(Test test, TestRetryTaskExtension extension) {
+    private void replaceTestExecuter(Test task, TestRetryTaskExtension extension) {
         try {
             Method createTestExecutor = Test.class.getDeclaredMethod("createTestExecuter");
             createTestExecutor.setAccessible(true);
 
             @SuppressWarnings("unchecked")
-            TestExecuter<JvmTestExecutionSpec> delegate = (TestExecuter<JvmTestExecutionSpec>) createTestExecutor.invoke(test);
+            TestExecuter<JvmTestExecutionSpec> delegate = (TestExecuter<JvmTestExecutionSpec>) createTestExecutor.invoke(task);
 
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
@@ -99,14 +100,13 @@ public class TestRetryPlugin implements Plugin<Project> {
             int maxFailures = extension.getMaxFailures().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_MAX_FAILURES);
             boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry().getOrElse(DefaultTestRetryTaskExtension.DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
 
-            setTestExecuter.invoke(test, new RetryTestExecuter(
+            setTestExecuter.invoke(task, new RetryTestExecuter(
+                task,
                 delegate,
-                test,
+                new RetryTestFrameworkGenerator(classLoaderCache, instantiator),
                 maxRetries,
                 maxFailures,
-                failOnPassedAfterRetry,
-                instantiator,
-                classLoaderCache
+                failOnPassedAfterRetry
             ));
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
