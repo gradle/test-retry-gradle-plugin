@@ -20,14 +20,14 @@ import org.gradle.api.provider.Property;
 
 import javax.inject.Inject;
 
-public class RetryTestTaskExtension {
+public class TestRetryTaskExtension {
 
     private final Property<Boolean> failOnPassedAfterRetry;
     private final Property<Integer> maxRetries;
     private final Property<Integer> maxFailures;
 
     @Inject
-    public RetryTestTaskExtension(ObjectFactory objects) {
+    public TestRetryTaskExtension(ObjectFactory objects) {
         this.failOnPassedAfterRetry = objects.property(Boolean.class);
         this.maxRetries = objects.property(Integer.class);
         this.maxFailures = objects.property(Integer.class);

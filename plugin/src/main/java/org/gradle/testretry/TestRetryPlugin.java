@@ -49,11 +49,11 @@ public class TestRetryPlugin implements Plugin<Project> {
     }
 
     private void configureTestTask(Test test) {
-        RetryTestTaskExtension extension = test.getExtensions().create("retry", RetryTestTaskExtension.class, objectFactory);
+        TestRetryTaskExtension extension = test.getExtensions().create("retry", TestRetryTaskExtension.class, objectFactory);
         test.doFirst(t -> replaceTestExecuter(test, extension));
     }
 
-    private void replaceTestExecuter(Test test, RetryTestTaskExtension extension) {
+    private void replaceTestExecuter(Test test, TestRetryTaskExtension extension) {
         try {
             Method createTestExecutor = Test.class.getDeclaredMethod("createTestExecuter");
             createTestExecutor.setAccessible(true);
