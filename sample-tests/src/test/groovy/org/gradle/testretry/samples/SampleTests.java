@@ -8,7 +8,7 @@ import org.gradle.samples.test.runner.SamplesRoot;
 import org.junit.runner.RunWith;
 
 @RunWith(GradleSamplesRunner.class)
-@SamplesRoot("../samples")
+@SamplesRoot("build/samples")
 @SamplesOutputNormalizers({FileSeparatorOutputNormalizer.class, GradleOutputNormalizer.class, FailedTestOutputNormalizer.class})
 public class SampleTests {
 
