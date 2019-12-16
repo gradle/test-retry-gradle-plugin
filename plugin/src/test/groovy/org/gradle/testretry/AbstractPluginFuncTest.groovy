@@ -87,6 +87,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         """
     }
 
+    @Unroll
     def "default maxRetries is 0, effectively disabling retrying (gradle version #gradleVersion)"() {
         when:
         // overwrite build file with no test.retry configuration at all to test default
