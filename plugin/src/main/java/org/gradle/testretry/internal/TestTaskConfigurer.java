@@ -68,7 +68,7 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        replaceTestExecuter(test, adapter);
+        test.doFirst(t -> replaceTestExecuter(test, adapter));
     }
 
     private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
