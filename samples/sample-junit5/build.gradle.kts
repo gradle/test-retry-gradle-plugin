@@ -1,7 +1,7 @@
 plugins {
     java
     jacoco
-    id("org.gradle.test-retry") version "0.2.0"
+    id("org.gradle.test-retry") version "1.0.0"
 }
 
 repositories {
