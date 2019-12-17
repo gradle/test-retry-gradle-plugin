@@ -155,19 +155,19 @@ The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], 
 
 When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
-image::idea-test-retry-reporting.png[IDEA test reporting, align="center", title=IDEA test retry reporting]
+image:idea-test-retry-reporting.png[IDEA test reporting, align="center", title=IDEA test retry reporting]
 
 ==== Eclipse
 
 When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
-image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
+image:eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
 ==== Netbeans
 
 Netbeans only shows the last execution of a test.
 
-image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
+image:netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
 
 === CI tools
 
@@ -178,10 +178,10 @@ The plugin has been tested with the reporting of link:url[TeamCity, https://www.
 Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
 TeamCity lists each test that was executed and how often it was run in the build.
 
-image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
+image:teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
 
 ==== Jenkins
 
 Jenkins reports each test execution discretely.
 
-image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
+image:jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
