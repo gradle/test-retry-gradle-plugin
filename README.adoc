@@ -6,8 +6,8 @@
 
 A Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
 
-image:https://img.shields.io/github/license/gradle/test-retry-gradle-plugin["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
 image:https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/gradle/test-retry/org.gradle.test-retry.gradle.plugin/maven-metadata.xml.svg?label=version[]
+image:https://img.shields.io/github/license/gradle/test-retry-gradle-plugin["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
 
 toc::[]
 
