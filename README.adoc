@@ -1,6 +1,7 @@
 :imagesdir: docs/images
 :toc:
 :toc-placement!:
+:figure-caption!:
 
 = Test Retry Gradle Plugin
 
