@@ -152,13 +152,13 @@ image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="c
 
 === In IDEs
 
-The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
+The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
 
-==== Idea
+==== IDEA
 
 When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
-image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
+image::idea-test-retry-reporting.png[IDEA test reporting, align="center", title=IDEA test retry reporting]
 
 ==== Eclipse
 
