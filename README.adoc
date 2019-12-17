@@ -1,19 +1,36 @@
+:imagesdir: docs/images
 :toc:
 :toc-placement!:
-
-image:https://img.shields.io/github/license/gradle/test-retry-gradle-plugin["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
-
-:imagesdir: docs/images
+:figure-caption!:
+:caption!:
 
 = Test Retry Gradle Plugin
 
+A Gradle plugin that augments Gradle’s built-in test task with the ability to retry tests that have failed.
+
+image:https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/org/gradle/test-retry/org.gradle.test-retry.gradle.plugin/maven-metadata.xml.svg?label=version["Version",link="https://plugins.gradle.org/plugin/org.gradle.test-retry"]
+image:https://img.shields.io/github/license/gradle/test-retry-gradle-plugin["GitHub license",link="https://github.com/gradle/test-retry-gradle-plugin/blob/master/LICENSE"]
+
 toc::[]
 
-A Gradle plugin that augments Gradle’s built-in Test task with the ability to retry tests that have failed for the purpose of mitigating test flakiness.
+== What it does
 
-== Configuring
+The plugin causes failed tests to be retried within the same task.
+After executing all tests, any failed tests are retried.
+The process repeats with tests that continue to fail until the maximum specified number of retries has been attempted,
+or there are no more failing tests.
 
-The plugin will decorate each `Test` task with an extension. Any all-build or cross-task configuration is achieved via Gradle’s existing constructs (e.g. `tasks.withType()`, `allprojects {}`).
+By default, all failed tests passing on retry prevents the test task from failing.
+This mode prevents _flaky_ tests from causing build failure.
+This setting can be changed so that flaky tests cause build failure, which can be used to identify flaky tests.
+
+== Usage
+
+The plugin is available from the Gradle plugin portal with ID https://plugins.gradle.org/plugin/org.gradle.test-retry[`org.gradle.test-retry`].
+It is compatible with Gradle 5.0 and later versions.
+
+By default, retrying is not enabled.
+Retrying is configured per test task via the `retry` extension added to each task by the plugin.
 
 .build.gradle
 [source,groovy]
@@ -30,107 +47,71 @@ test {
     }
 }
 ----
-Configuration options:
 
-- `maxRetries` - Maximum number of times to retry each test. The default value of 0 effectively disables retrying.
-- `maxFailures` - (Optional) After this many discrete failed tests in a given round, stop retrying. If not set, the plugin will keep executing all failing tests until they either pass or it hits `maxRetries`.
-- `failOnPassedAfterRetry` - (Optional) If true, the test task will still fail if flaky tests succeed on retry. This mode helps to identify flaky tests as distinct from always failing tests, while not allowing flaky tests to pass the build. Defaults to false, so by default if all flaky tests eventually pass, the test task will succeed.
+The extension is of the following type:
 
-In the Gradle Kotlin DSL:
-
-.build.gradle.kts
-[source,kotlin]
+[source,java]
 ----
-plugins {
-    id("org.gradle.test-retry") version "VERSION"
-}
+package org.gradle.testretry;
 
-tasks.test {
-    retry {
-        maxRetries.set(5)
-    }
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.testing.Test;
+
+/**
+ * Allows configuring test retry mechanics.
+ * <p>
+ * This extension is added with the name 'retry' to all {@link Test} tasks.
+ */
+public interface TestRetryTaskExtension {
+
+    /**
+     * Whether tests that initially fails and then pass on retry should fail the test task.
+     * <p>
+     * This setting defaults to {@code false},
+     * which results in the task not failing if all tests pass on retry.
+     * <p>
+     * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
+     *
+     * @return whether tests that initially fails and then pass on retry should fail the test task
+     */
+    Property<Boolean> getFailOnPassedAfterRetry();
+
+    /**
+     * The maximum number of times to retry an individual test.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no retries.
+     * Any value less than 1 disables retrying.
+     *
+     * @return the maximum number of times to retry an individual test
+     */
+    Property<Integer> getMaxRetries();
+
+    /**
+     * The maximum number of test failures that are allowed before retrying is disabled.
+     * <p>
+     * The count applies to each round of test execution.
+     * For example, if maxFailures is 5 and 4 tests initially fail and then 3 again on retry,
+     * this will not be considered too many failures and retrying will continue (if maxRetries {@literal >} 1).
+     * If 5 or more tests were to fail initially then no retry would be attempted.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no limit.
+     * Any value less than 1 results in no limit.
+     *
+     * @return the maximum number of test failures that are allowed before retrying is disabled
+     */
+    Property<Integer> getMaxFailures();
+
 }
 ----
 
 == Supported test frameworks
 
-The retry plugin understands how to retry JUnit 4, JUnit 5, TestNG and Spock tests.
-
-== Retry mechanics
-
-The retry mechanism is conceptually analogous to re-running the task again but using test selection (e.g. `--tests`) to select only the tests that failed. That is, all tests are executed, then the failed tests are retried. The (hopefully reducing) set of failed tests continues to be retried until there are no failures left, or `maxRetries`/`maxFailures` is reached.
-
-The `maxRetries`/`maxFailures` properties define thresholds for how many failed tests are allowed before retry is disabled.
-
-`maxFailures` is intended to be used to avoid the overhead of retrying when there is a catastrophic failure causing many tests to fail (e.g. problem in a test base class, database dependency unavailable), with the assumption that they would just fail again on further retry.
-
-=== Parameterized tests
-
-In a few cases, test selection for testing frameworks limits the granularity at which tests can be retried. In each case, this plugin retries at worst at method level. For JUnit5 `@ParameterizedTest`, TestNG `@Test(dataProvider = "...")`, and Spock `@Unroll` tests the plugin will retry the entire method with all parameters including those that initially passed.
-
-=== Test dependencies
-
-The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn = { … })` tests.
-
-* Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
-* Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
-
-== Effect on reporting
-
-The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
-
-
-=== In Gradle build scans
-
-Gradle build scans show each invocation of a test with its outcome:
-
-image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="center", title=Gradle build scans plugin reporting retried tests]
-
-=== In IDEs
-
-The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
-
-==== Idea
-
-When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
-
-image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
-
-==== Eclipse
-
-When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
-
-image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
-
-==== Netbeans
-Netbeans only shows the last execution of a test.
-
-image::netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
-
-=== On CI servers
-
-The plugin has been tested with the reporting of link:url[TeamCity, https://www.jetbrains.com/teamcity] and link:url[Jenkins, https://www.jenkins.io].
-
-==== TeamCity
-Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
-TeamCity lists each test that was executed and how often it was run in the build.
-
-image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
-
-==== Jenkins
-
-Jenkins reports each test execution discretely.
-
-image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
-
-== Supported test framework versions
-
-Other minor versions are likely to work as well, but are not tested.
+Other versions are likely to work as well, but are not tested.
 
 [%header,cols=2*]
 |===
 |Framework
-|Minimum Version Tested
+|Version Tested
 
 |JUnit4
 |4.12
@@ -145,8 +126,61 @@ Other minor versions are likely to work as well, but are not tested.
 |7.0.0
 |===
 
-== Developing
+=== Parameterized tests
 
-Release by running `./gradlew final` which will automatically select the next minor release version, tag the repository, publish the binary to Bintray, and publish the plugin to the Gradle plugin portal. To perform a major version release, `./gradlew final -Prelease.scope=major`. To release a patch, `./gradlew final -Prelease.scope=patch`.
+In a few cases, test selection for testing frameworks limits the granularity at which tests can be retried.
+In each case, this plugin retries at worst at method level.
+For JUnit5 `@ParameterizedTest`, TestNG `@Test(dataProvider = "...")`,
+and Spock `@Unroll` tests the plugin will retry the entire method with all parameters including those that initially passed.
 
-When adding new source files, run `./gradlew lF` to automatically add license headers.
+=== Test dependencies
+
+The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn = { … })` tests.
+
+* Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
+* Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
+
+== Effect on reporting
+
+=== Gradle Enterprise and build scans
+
+_TBD_.
+
+=== IDEs
+
+The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
+
+==== IDEA
+
+When delegating test execution to Gradle, each execution is reported discretely as for the test reports. Running tests without Gradle delegation causes tests to not be retried.
+
+image:idea-test-retry-reporting.png[IDEA test reporting, align="center", title=IDEA test retry reporting]
+
+==== Eclipse
+
+When delegating test execution to Gradle, each execution is reported discretely as for the test reports. Running tests without Gradle delegation causes tests to not be retried.
+
+image:eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
+
+==== Netbeans
+
+Netbeans only shows the last execution of a test.
+
+image:netbeans-test-retry-reporting.png[Netbeans test reporting, align="center", title=Netbeans test retry reporting]
+
+=== CI tools
+
+The plugin has been tested with the reporting of link:url[TeamCity, https://www.jetbrains.com/teamcity] and link:url[Jenkins, https://www.jenkins.io].
+
+==== TeamCity
+
+Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
+TeamCity lists each test that was executed and how often it was run in the build.
+
+image:teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
+
+==== Jenkins
+
+Jenkins reports each test execution discretely.
+
+image:jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
