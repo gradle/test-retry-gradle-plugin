@@ -140,11 +140,7 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 * Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
-== Effect on reporting
-
-=== Gradle Enterprise and build scans
-
-_TBD_.
+== Reporting
 
 === IDEs
 
