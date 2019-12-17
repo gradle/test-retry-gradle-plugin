@@ -142,6 +142,20 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 == Reporting
 
+=== Gradle
+
+Each execution of a test is discretely reported in the Gradle generarted xml and html reports. For a flaky test that fails in the first run and passes in the retry, both
+are reported in the test reports.
+
+image:gradle-reports-test-retry-reporting2.png[Gradle test reporting, align="center", title=Gradle Html test report]
+
+image:gradle-reports-test-retry-reporting.png[Gradle flaky test reporting, align="center", title=Flaky test reported Gradle Html test report]
+
+Similar to the Xml and Html reports, the console log will also report each individual test execution. Keep in mind that before retrying a failed test, Gradle will execute the whole test suite
+of the test task. This means the same test executed multiple times will not be grouped in the console log.
+
+image:gradle-console-test-retry-reporting.png[Gradle console reporting, align="center", title=Flaky test Gradle console output]
+
 === IDEs
 
 The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
