@@ -141,14 +141,9 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 == Effect on reporting
 
-The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
+=== Gradle Enterprise and build scans
 
-
-=== In Gradle build scans
-
-Gradle build scans show each invocation of a test with its outcome:
-
-image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="center", title=Gradle build scans plugin reporting retried tests]
+_TBD_.
 
 === In IDEs
 
