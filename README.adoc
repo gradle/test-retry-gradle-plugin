@@ -185,9 +185,3 @@ image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center"
 Jenkins reports each test execution discretely.
 
 image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
-
-== Developing
-
-Release by running `./gradlew final` which will automatically select the next minor release version, tag the repository, publish the binary to Bintray, and publish the plugin to the Gradle plugin portal. To perform a major version release, `./gradlew final -Prelease.scope=major`. To release a patch, `./gradlew final -Prelease.scope=patch`.
-
-When adding new source files, run `./gradlew lF` to automatically add license headers.
