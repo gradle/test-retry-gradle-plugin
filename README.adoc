@@ -24,15 +24,17 @@ plugins {
 
 test {
     retry {
-        failOnPassedAfterRetry = ? // defaults to false <1>
-        maxRetries = N <2>
-        maxFailures = N <3>
+        maxRetries = 3
+        maxFailures = 20
+        failOnPassedAfterRetry = true
     }
 }
 ----
-<1> If true, the test task will still fail if flaky tests succeed on retry. This mode helps to identify flaky tests as distinct from always failing tests, while not allowing flaky tests to pass the build.
-<2> Max number of times to retry. A value of 0 effectively disables retrying.
-<3> After this many discrete failed tests in a given round, stop retrying.
+Configuration options:
+
+- `maxRetries` - Maximum number of times to retry each test. The default value of 0 effectively disables retrying.
+- `maxFailures` - (Optional) After this many discrete failed tests in a given round, stop retrying. If not set, the plugin will keep executing all failing tests until they either pass or it hits `maxRetries`.
+- `failOnPassedAfterRetry` - (Optional) If true, the test task will still fail if flaky tests succeed on retry. This mode helps to identify flaky tests as distinct from always failing tests, while not allowing flaky tests to pass the build. Defaults to false, so by default if all flaky tests eventually pass, the test task will succeed.
 
 In the Gradle Kotlin DSL:
 
@@ -45,16 +47,22 @@ plugins {
 
 tasks.test {
     retry {
-        maxRetries.set(N)
+        maxRetries.set(5)
     }
 }
 ----
+
+== Supported test frameworks
+
+The retry plugin understands how to retry JUnit 4, JUnit 5, TestNG and Spock tests.
 
 == Retry mechanics
 
 The retry mechanism is conceptually analogous to re-running the task again but using test selection (e.g. `--tests`) to select only the tests that failed. That is, all tests are executed, then the failed tests are retried. The (hopefully reducing) set of failed tests continues to be retried until there are no failures left, or `maxRetries`/`maxFailures` is reached.
 
-The `maxRetries`/`maxFailures` properties define thresholds for how many failed tests are allowed before retry is disabled. This is intended to be used to avoid the overhead of retrying when there is a catastrophic failure causing many tests to fail (e.g. problem in a test base class, database dependency unavailable), with the assumption that they would just fail again on further retry.
+The `maxRetries`/`maxFailures` properties define thresholds for how many failed tests are allowed before retry is disabled.
+
+`maxFailures` is intended to be used to avoid the overhead of retrying when there is a catastrophic failure causing many tests to fail (e.g. problem in a test base class, database dependency unavailable), with the assumption that they would just fail again on further retry.
 
 === Parameterized tests
 
@@ -67,7 +75,7 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 * Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
-== Effect on Reporting
+== Effect on reporting
 
 The approach to reporting is to simply report each execution discretely, as opposed to inventing some kind of aggregate outcome. Each execution of a retried test will be reported. This has the least effect on test reporters in other tools like IDEs and continuous integration environments that expect one of a set of previously known outcomes for each test.
 
@@ -80,17 +88,17 @@ image::build-scans-test-retry-reporting.png[Build Scans test reporting, align="c
 
 === In IDEs
 
-The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org]. For Idea and Eclipse each test execution delegated to Gradle is reported discretely as we do for the test reports.
+The plugin has been tested with link:url[Idea, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
 
 ==== Idea
 
-Running tests with no Gradle delegation causes tests to not be retried, as expected.
+When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
 image::idea-test-retry-reporting.png[Idea test reporting, align="center", title=Idea test retry reporting]
 
 ==== Eclipse
 
-Running tests with no Gradle delegation causes tests to not be retried, as expected.
+When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
 image::eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
@@ -111,11 +119,11 @@ image::teamcity-test-retry-reporting.png[Teamcity test reporting, align="center"
 
 ==== Jenkins
 
-Jenkins reports each test execution discretely as expected.
+Jenkins reports each test execution discretely.
 
 image::jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
 
-== Supported Test Framework Versions
+== Supported test framework versions
 
 Other minor versions are likely to work as well, but are not tested.
 
