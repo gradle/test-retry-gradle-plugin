@@ -19,7 +19,6 @@ The plugin causes failed tests to be retried within the same task.
 After executing all tests, any failed tests are retried.
 The process repeats with tests that continue to fail until the maximum specified number of retries has been attempted,
 or there are no more failing tests.
-The generated test reports detail every execution of the tests.
 
 By default, all failed tests passing on retry prevents the test task from failing.
 This mode prevents _flaky_ tests from causing build failure.
