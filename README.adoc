@@ -10,9 +10,24 @@ image:https://img.shields.io/github/license/gradle/test-retry-gradle-plugin["Git
 
 toc::[]
 
-== Configuring
+== What it does
 
-The plugin will decorate each `Test` task with an extension. Any all-build or cross-task configuration is achieved via Gradle’s existing constructs (e.g. `tasks.withType()`, `allprojects {}`).
+The plugin causes failed tests to be retried within the same task.
+After executing all tests, any failed tests are retried.
+The process repeats with tests that continue to fail until the maximum specified number of retries has been attempted,
+or there are no more failing tests.
+The generated test reports detail every execution of the tests.
+
+By default, all failed tests passing on retry prevents the test task from failing.
+This mode prevents _flaky_ tests from causing build failure.
+This setting can be changed so that flaky tests cause build failure, which can be used to identify flaky tests.
+
+== Usage
+
+The plugin is available from the Gradle plugin portal with id https://plugins.gradle.org/plugin/org.gradle.test-retry[`org.gradle.test-retry`].
+
+By default, retrying is not enabled.
+Retrying is configured per test task via the `retry` extension added to each task by the plugin.
 
 .build.gradle
 [source,groovy]
@@ -29,25 +44,60 @@ test {
     }
 }
 ----
-Configuration options:
 
-- `maxRetries` - Maximum number of times to retry each test. The default value of 0 effectively disables retrying.
-- `maxFailures` - (Optional) After this many discrete failed tests in a given round, stop retrying. If not set, the plugin will keep executing all failing tests until they either pass or it hits `maxRetries`.
-- `failOnPassedAfterRetry` - (Optional) If true, the test task will still fail if flaky tests succeed on retry. This mode helps to identify flaky tests as distinct from always failing tests, while not allowing flaky tests to pass the build. Defaults to false, so by default if all flaky tests eventually pass, the test task will succeed.
+The extension is of the following type:
 
-In the Gradle Kotlin DSL:
-
-.build.gradle.kts
-[source,kotlin]
+[source,java]
 ----
-plugins {
-    id("org.gradle.test-retry") version "VERSION"
-}
+package org.gradle.testretry;
 
-tasks.test {
-    retry {
-        maxRetries.set(5)
-    }
+import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.testing.Test;
+
+/**
+ * Allows configuring test retry mechanics.
+ * <p>
+ * This extension is added with the name 'retry' to all {@link Test} tasks.
+ */
+public interface TestRetryTaskExtension {
+
+    /**
+     * Whether tests that initially fails and then pass on retry should fail the test task.
+     * <p>
+     * This setting defaults to {@code false},
+     * which results in the task not failing if all tests pass on retry.
+     * <p>
+     * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
+     *
+     * @return whether tests that initially fails and then pass on retry should fail the test task
+     */
+    Property<Boolean> getFailOnPassedAfterRetry();
+
+    /**
+     * The maximum number of times to retry an individual test.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no retries.
+     * Any value less than 1 disables retrying.
+     *
+     * @return the maximum number of times to retry an individual test
+     */
+    Property<Integer> getMaxRetries();
+
+    /**
+     * The maximum number of test failures that are allowed before retrying is disabled.
+     * <p>
+     * The count applies to each round of test execution.
+     * For example, if maxFailures is 5 and 4 tests initially fail and then 3 again on retry,
+     * this will not be considered too many failures and retrying will continue (if maxRetries {@literal >} 1).
+     * If 5 or more tests were to fail initially then no retry would be attempted.
+     * <p>
+     * This setting defaults to {@code 0}, which results in no limit.
+     * Any value less than 1 results in no limit.
+     *
+     * @return the maximum number of test failures that are allowed before retrying is disabled
+     */
+    Property<Integer> getMaxFailures();
+
 }
 ----
 
