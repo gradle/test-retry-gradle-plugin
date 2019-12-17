@@ -153,13 +153,13 @@ The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], 
 
 ==== IDEA
 
-When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
+When delegating test execution to Gradle, each execution is reported discretely as for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
 image:idea-test-retry-reporting.png[IDEA test reporting, align="center", title=IDEA test retry reporting]
 
 ==== Eclipse
 
-When delegating test execution to Gradle, each execution is reported discretely as we do for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
+When delegating test execution to Gradle, each execution is reported discretely as for the test reports. Running tests with no Gradle delegation causes tests to not be retried.
 
 image:eclipse-test-retry-reporting.png[Eclipse test reporting, align="center", title=Eclipse test retry reporting]
 
