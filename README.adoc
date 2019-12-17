@@ -2,6 +2,7 @@
 :toc:
 :toc-placement!:
 :figure-caption!:
+:caption!:
 
 = Test Retry Gradle Plugin
 
