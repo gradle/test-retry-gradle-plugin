@@ -144,7 +144,7 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 === Gradle
 
-Each execution of a test is discretely reported in the Gradle generarted XML and HTML reports.
+Each execution of a test is discretely reported in Gradle-generated XML and HTML reports.
 
 image:gradle-reports-test-retry-reporting2.png[Gradle test reporting, align="center", title=Gradle HTML test report]
 
@@ -155,6 +155,16 @@ Before retrying a failed test, Gradle will execute the whole test suite of the t
 This means that all executions of the same test may not be grouped in the console log.
 
 image:gradle-console-test-retry-reporting.png[Gradle console reporting, align="center", title=Flaky test Gradle console output]
+
+=== Gradle Enterprise
+
+Gradle build scans (`--scan` option) report discrete test executions as "Execution [N of total]" and will mark a test with both a _failed_ and then a _passed_ outcome as _flaky_.
+
+image:gradle-build-scan-test-retry-reporting.png[Gradle build scan reporting, align="center", title="Gradle build scan test report", caption="Build scan Tests view"]
+
+Flaky tests can also be visualized across many builds using the link:url[Gradle Enterprise Tests Dashboard, https://gradle.com/blog/flaky-tests/].
+
+image:gradle-enterprise-flaky-test-reporting.png[Gradle Enterprise top tests report, align="center", title=Gradle Enterprise top tests report]
 
 === IDEs
 
