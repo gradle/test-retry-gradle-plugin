@@ -24,6 +24,10 @@ By default, all failed tests passing on retry prevents the test task from failin
 This mode prevents _flaky_ tests from causing build failure.
 This setting can be changed so that flaky tests cause build failure, which can be used to identify flaky tests.
 
+When something goes badly wrong and all tests start failing, it can be preferable to not keep retrying tests.
+This can happen for example if a disk fills up or a required database is not available.
+To avoid this, the plugin can be configured to stop retrying after a certain number of total test failures.
+
 == Usage
 
 The plugin is available from the Gradle plugin portal with ID https://plugins.gradle.org/plugin/org.gradle.test-retry[`org.gradle.test-retry`].
@@ -32,11 +36,11 @@ It is compatible with Gradle 5.0 and later versions.
 By default, retrying is not enabled.
 Retrying is configured per test task via the `retry` extension added to each task by the plugin.
 
-.build.gradle
+.build.gradle:
 [source,groovy]
 ----
 plugins {
-    id 'org.gradle.test-retry' version 'VERSION'
+    id 'org.gradle.test-retry' version '1.0.0'
 }
 
 test {
@@ -48,7 +52,7 @@ test {
 }
 ----
 
-The extension is of the following type:
+The `retry` extension is of the following type:
 
 [source,java]
 ----
@@ -65,14 +69,14 @@ import org.gradle.api.tasks.testing.Test;
 public interface TestRetryTaskExtension {
 
     /**
-     * Whether tests that initially fails and then pass on retry should fail the test task.
+     * Whether tests that initially fail and then pass on retry should fail the task.
      * <p>
      * This setting defaults to {@code false},
      * which results in the task not failing if all tests pass on retry.
      * <p>
      * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
      *
-     * @return whether tests that initially fails and then pass on retry should fail the test task
+     * @return whether tests that initially fail and then pass on retry should fail the task
      */
     Property<Boolean> getFailOnPassedAfterRetry();
 
@@ -137,7 +141,7 @@ and Spock `@Unroll` tests the plugin will retry the entire method with all param
 
 The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn = { … })` tests.
 
-* Upstream tests (those that the failed test depends on) are run because the flaky test may depend on state from the prior execution of an upstream test.
+* Upstream tests (those that the failed test depends on) are run because a flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
 == Reporting

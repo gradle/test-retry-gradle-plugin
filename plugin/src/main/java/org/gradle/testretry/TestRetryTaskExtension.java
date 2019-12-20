@@ -31,14 +31,14 @@ public interface TestRetryTaskExtension {
     String NAME = "retry";
 
     /**
-     * Whether tests that initially fails and then pass on retry should fail the test task.
+     * Whether tests that initially fail and then pass on retry should fail the task.
      * <p>
      * This setting defaults to {@code false},
      * which results in the task not failing if all tests pass on retry.
      * <p>
      * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
      *
-     * @return whether tests that initially fails and then pass on retry should fail the test task
+     * @return whether tests that initially fails and then pass on retry should fail the task
      */
     Property<Boolean> getFailOnPassedAfterRetry();
 
