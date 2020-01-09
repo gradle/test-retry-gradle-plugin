@@ -135,13 +135,21 @@ project {
             params {
                 select("releaseScope", "", label = "releaseScope", description = "The scope of the release",
                     display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch"))
+                text(
+                    "githubUsername",
+                    "",
+                    label = "GitHub Username",
+                    display = ParameterDisplay.PROMPT,
+                    allowEmpty = false
+                )
+                password("githubToken", "", label = "GitHub Access Token", display = ParameterDisplay.PROMPT)
             }
             steps {
                 gradle {
                     tasks = "clean final -x test"
                     buildFile = ""
                     gradleParams =
-                        "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dorg.ajoberstar.grgit.auth.username=%githubBotUsername% -Dorg.ajoberstar.grgit.auth.password=%githubBotApiToken% %pluginPortalPublishingFlags%"
+                        "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dorg.ajoberstar.grgit.auth.username=%githubUsername% -Dorg.ajoberstar.grgit.auth.password=%githubToken% %pluginPortalPublishingFlags%"
                 }
             }
             dependencies {
