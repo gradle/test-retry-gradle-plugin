@@ -22,12 +22,11 @@ import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 final class RetryTestResultProcessor implements TestResultProcessor {
 
@@ -37,8 +36,8 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private boolean lastRetry;
 
     private Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
-    private List<TestName> failedTests = new CopyOnWriteArrayList<>();
-    private List<TestName> nonExecutedFailedTests = Collections.emptyList();
+    private Set<TestName> failedTests = ConcurrentHashMap.newKeySet();
+    private Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
     private Object rootTestDescriptorId;
 
     RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
@@ -94,27 +93,27 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     @NotNull
-    private List<TestName> copy(List<TestName> nonExecutedFailedTests) {
-        return nonExecutedFailedTests.isEmpty() ? Collections.emptyList() : new ArrayList<>(nonExecutedFailedTests);
+    private Set<TestName> copy(Set<TestName> nonExecutedFailedTests) {
+        return nonExecutedFailedTests.isEmpty() ? Collections.emptySet() : new HashSet<>(nonExecutedFailedTests);
     }
 
     public void reset(boolean lastRetry) {
         if (lastRun()) {
             throw new IllegalStateException("processor has completed");
         }
-        nonExecutedFailedTests = new ArrayList<>(failedTests);
+        nonExecutedFailedTests.clear();
+        nonExecutedFailedTests.addAll(failedTests);
         failedTests.clear();
         activeDescriptorsById.clear();
         this.lastRetry = lastRetry;
     }
 
     static final class RoundResult {
-
-        final List<TestName> failedTests;
-        final List<TestName> nonRetriedTests;
+        final Set<TestName> failedTests;
+        final Set<TestName> nonRetriedTests;
         final boolean lastRound;
 
-        public RoundResult(List<TestName> failedTests, List<TestName> nonRetriedTests, boolean lastRound) {
+        public RoundResult(Set<TestName> failedTests, Set<TestName> nonRetriedTests, boolean lastRound) {
             this.failedTests = failedTests;
             this.nonRetriedTests = nonRetriedTests;
             this.lastRound = lastRound;

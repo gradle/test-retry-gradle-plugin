@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry
 
+
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
@@ -58,6 +59,35 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
         result.output.count('grandchildTest SKIPPED') == 1
         result.output.count('grandchildTest PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "only track a @Retry test method once to ensure it was re-ran successfully"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class RetryTests extends spock.lang.Specification {
+                @spock.lang.Retry
+                def "retried"() {
+                    expect:
+                    false
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('retried FAILED') == 2
+        !result.output.contains('unable to retry')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

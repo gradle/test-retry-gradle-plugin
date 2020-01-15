@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,7 +50,7 @@ final class RetryTestFrameworkGenerator {
         this.instantiator = instantiator;
     }
 
-    TestFramework createRetryingTestFramework(JvmTestExecutionSpec spec, Test testTask, List<TestName> failedTests) {
+    TestFramework createRetryingTestFramework(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         TestFramework testFramework = spec.getTestFramework();
 
@@ -114,7 +115,7 @@ final class RetryTestFrameworkGenerator {
             .orElse(false);
     }
 
-    private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, List<TestName> failedTests) {
+    private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
         return failedTests.stream()
             .filter(failedTest -> failedTest.getClassName() != null)
             .flatMap(failedTest ->
@@ -139,7 +140,7 @@ final class RetryTestFrameworkGenerator {
             .collect(Collectors.toList());
     }
 
-    private static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, List<TestName> failedTests) {
+    private static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
         return failedTests.stream()
             .filter(failedTest -> failedTest.getClassName() != null)
             .map(failedTest ->

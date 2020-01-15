@@ -21,6 +21,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.tasks.testing.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -88,7 +89,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 .collect(Collectors.joining("\n", "\n", "\n")));
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, List<TestName> retries) {
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
         return new JvmTestExecutionSpec(
             retryTestFrameworkGenerator.createRetryingTestFramework(spec, testTask, retries),
             spec.getClasspath(),
