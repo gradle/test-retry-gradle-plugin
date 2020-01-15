@@ -20,7 +20,6 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.tasks.testing.Test;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
