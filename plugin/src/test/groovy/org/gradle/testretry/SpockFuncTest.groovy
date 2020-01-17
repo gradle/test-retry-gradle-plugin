@@ -194,6 +194,43 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "handles unrolled tests with reserved regex chars (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class UnrollTests extends spock.lang.Specification {
+
+                @spock.lang.Unroll
+                def "unrolled with param {([#param])}"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'param with space', 'param with \\\$.*=.?<>(){}[][^\\\\w]!+-']
+                    result << [false, false, false]
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+
+        result.output.count('unrolled with param {([foo])} FAILED') == 2
+        result.output.count('unrolled with param {([param with space])} FAILED') == 2
+        result.output.count('unrolled with param {([param with $.*=.?<>(){}[][^\\w]!+-])} FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     String testLanguage() {
         'groovy'
