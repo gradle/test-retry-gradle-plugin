@@ -123,6 +123,16 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                     param << ['foo', 'bar', 'baz']
                     result << [true, false, true]
                 }
+
+                @spock.lang.Unroll
+                def "unrolled with param [#param]"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [true, false, true]
+                }
             }
         """
 
@@ -137,6 +147,10 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         result.output.count('unrolled with param foo PASSED') == 2
         result.output.count('unrolled with param bar FAILED') == 2
         result.output.count('unrolled with param baz PASSED') == 2
+
+        result.output.count('unrolled with param [foo] PASSED') == 2
+        result.output.count('unrolled with param [bar] FAILED') == 2
+        result.output.count('unrolled with param [baz] PASSED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
