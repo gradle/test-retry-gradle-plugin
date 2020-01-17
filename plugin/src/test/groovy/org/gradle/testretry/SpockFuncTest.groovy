@@ -207,12 +207,13 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             class UnrollTests extends spock.lang.Specification {
 
                 @spock.lang.Unroll
-                def "unrolled with param {([#param])}"() {
+                def "unrolled with param \\\$.*=.?<>(){}[][^\\\\w]!+- {([#param1])} {([#param2])}"() {
                     expect:
                     result
 
                     where:
-                    param << ['foo', 'param with space', 'param with \\\$.*=.?<>(){}[][^\\\\w]!+-']
+                    param1 << ['foo', 'param1 with space', 'param1 with \\\$.*=.?<>(){}[][^\\\\w]!+-']
+                    param2 << ['foo', 'param2 with space', '\\\$.*=.?<>(){}[][^\\\\w]!+- param2']
                     result << [false, false, false]
                 }
             }
@@ -223,9 +224,9 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
         then:
 
-        result.output.count('unrolled with param {([foo])} FAILED') == 2
-        result.output.count('unrolled with param {([param with space])} FAILED') == 2
-        result.output.count('unrolled with param {([param with $.*=.?<>(){}[][^\\w]!+-])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with space])} {([param2 with space])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with \$.*=.?<>(){}[][^\\w]!+-])} {([\$.*=.?<>(){}[][^\\w]!+- param2])} FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
