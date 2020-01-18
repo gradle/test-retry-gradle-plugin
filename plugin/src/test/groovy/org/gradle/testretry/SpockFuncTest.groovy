@@ -123,6 +123,16 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                     param << ['foo', 'bar', 'baz']
                     result << [true, false, true]
                 }
+
+                @spock.lang.Unroll
+                def "unrolled with param [#param]"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [true, false, true]
+                }
             }
         """
 
@@ -137,6 +147,48 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         result.output.count('unrolled with param foo PASSED') == 2
         result.output.count('unrolled with param bar FAILED') == 2
         result.output.count('unrolled with param baz PASSED') == 2
+
+        result.output.count('unrolled with param [foo] PASSED') == 2
+        result.output.count('unrolled with param [bar] FAILED') == 2
+        result.output.count('unrolled with param [baz] PASSED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "handles unrolled tests with reserved regex chars (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class UnrollTests extends spock.lang.Specification {
+
+                @spock.lang.Unroll
+                def "unrolled with param \\\$.*=.?<>(){}[][^\\\\w]!+- {([#param1])} {([#param2])}"() {
+                    expect:
+                    result
+
+                    where:
+                    param1 << ['foo', 'param1 with space', 'param1 with \\\$.*=.?<>(){}[][^\\\\w]!+-']
+                    param2 << ['foo', 'param2 with space', '\\\$.*=.?<>(){}[][^\\\\w]!+- param2']
+                    result << [false, false, false]
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with space])} {([param2 with space])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with \$.*=.?<>(){}[][^\\w]!+-])} {([\$.*=.?<>(){}[][^\\w]!+- param2])} FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

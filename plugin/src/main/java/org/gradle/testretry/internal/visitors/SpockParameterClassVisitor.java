@@ -19,8 +19,14 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import java.nio.CharBuffer;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
@@ -28,6 +34,12 @@ import static org.objectweb.asm.Opcodes.ASM7;
  * Class visitor that identifies unparameterized test method names.
  */
 public class SpockParameterClassVisitor extends ClassVisitor {
+
+    private static final Set<Character> regexChars = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
+
+    private static Set<Character> setOf(char[] chars) {
+        return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
+    }
 
     private String testMethodName;
     private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
@@ -46,7 +58,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     public void visitEnd() {
         spockMethodVisitor.getTestMethodPatterns().stream()
             .filter(methodPattern -> {
-                String methodPatternRegex = methodPattern.replaceAll("#\\w+", "\\\\w+");
+                String methodPatternRegex = escapeRegEx(methodPattern).replaceAll("#\\w+", "\\\\w+");
                 return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
             })
             .findFirst()
@@ -55,6 +67,22 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 
     public String getTestMethodName() {
         return testMethodName;
+    }
+
+    private static String escapeRegEx(String aRegexFragment) {
+        final StringBuilder result = new StringBuilder();
+
+        final StringCharacterIterator iterator = new StringCharacterIterator(aRegexFragment);
+        char character = iterator.current();
+        while (character != CharacterIterator.DONE) {
+            if (regexChars.contains(character)) {
+                result.append("\\").append(character);
+            } else {
+                result.append(character);
+            }
+            character = iterator.next();
+        }
+        return result.toString();
     }
 }
 
