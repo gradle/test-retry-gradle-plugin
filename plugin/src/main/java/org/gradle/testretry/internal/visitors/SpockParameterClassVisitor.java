@@ -35,7 +35,7 @@ import static org.objectweb.asm.Opcodes.ASM7;
  */
 public class SpockParameterClassVisitor extends ClassVisitor {
 
-    private static final Set<Character> regexChars = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
+    private static final Set<Character> REGEX_CHARS = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
 
     private static Set<Character> setOf(char[] chars) {
         return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
@@ -75,7 +75,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         final StringCharacterIterator iterator = new StringCharacterIterator(aRegexFragment);
         char character = iterator.current();
         while (character != CharacterIterator.DONE) {
-            if (regexChars.contains(character)) {
+            if (REGEX_CHARS.contains(character)) {
                 result.append("\\").append(character);
             } else {
                 result.append(character);
