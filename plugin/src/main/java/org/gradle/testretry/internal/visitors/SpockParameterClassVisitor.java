@@ -24,6 +24,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,6 +37,11 @@ import static org.objectweb.asm.Opcodes.ASM7;
 public class SpockParameterClassVisitor extends ClassVisitor {
 
     private static final Set<Character> REGEX_CHARS = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
+    //A valid Java identifier https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.8 including methods
+    public static final String SPOCK_PARAM_PATTERN = "#[\\p{L}\\d$_.()&&[^#\\s]]+";
+    public static final String PARAM_PLACEHOLDER = "#param";
+    public static final String WILDCARD_SUFFIX = ".*";
+    public static final String WILDCARD = WILDCARD_SUFFIX;
 
     private static Set<Character> setOf(char[] chars) {
         return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
@@ -58,10 +64,11 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     public void visitEnd() {
         spockMethodVisitor.getTestMethodPatterns().stream()
             .filter(methodPattern -> {
-                String methodPatternRegex = escapeRegEx(methodPattern).replaceAll("#\\w+", "\\\\w+");
+                //detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
+                String methodPatternRegex = escapeRegEx(methodPattern.replaceAll(SPOCK_PARAM_PATTERN, PARAM_PLACEHOLDER)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
                 return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
             })
-            .findFirst()
+            .max(Comparator.comparingInt(String::length))
             .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
     }
 

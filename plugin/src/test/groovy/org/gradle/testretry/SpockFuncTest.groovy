@@ -157,6 +157,43 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     }
 
     @Unroll
+    def "handles unrolled tests with method call on param (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class UnrollTests extends spock.lang.Specification {
+
+                @spock.lang.Unroll
+                def "unrolled with param [#param.toString().toUpperCase()]"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [true, false, true]
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+
+        result.output.count('unrolled with param [FOO] PASSED') == 2
+        result.output.count('unrolled with param [BAR] FAILED') == 2
+        result.output.count('unrolled with param [BAZ] PASSED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "handles unrolled tests with reserved regex chars (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -174,8 +211,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                     result
 
                     where:
-                    param1 << ['foo', 'param1 with space', 'param1 with \\\$.*=.?<>(){}[][^\\\\w]!+-']
-                    param2 << ['foo', 'param2 with space', '\\\$.*=.?<>(){}[][^\\\\w]!+- param2']
+                    param1 << ['foo', 'param_1', 'param1\$1']
+                    param2 << ['foo', 'param_2', 'param2']
                     result << [false, false, false]
                 }
             }
@@ -187,12 +224,93 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         then:
 
         result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
-        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with space])} {([param2 with space])} FAILED') == 2
-        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1 with \$.*=.?<>(){}[][^\\w]!+-])} {([\$.*=.?<>(){}[][^\\w]!+- param2])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param_1])} {([param_2])} FAILED') == 2
+        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1\$1])} {([param2])} FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
+
+
+    @Unroll
+    def "handles unrolled tests with additional test context method suffix (#gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            import org.spockframework.runtime.extension.ExtensionAnnotation
+
+            import java.lang.annotation.*
+
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target([ElementType.TYPE])
+            @Inherited
+            @ExtensionAnnotation(ContextualTestExtension)
+            @interface ContextualTest {
+            }
+
+        """
+
+        writeTestSource """
+            package acme
+
+            import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
+            import org.spockframework.runtime.model.SpecInfo
+
+            class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
+
+                @Override
+                void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
+
+                    spec.features.each { feature ->
+                        feature.reportIterations = true
+                        def currentNameProvider = feature.iterationNameProvider
+                        feature.iterationNameProvider = {
+                            def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
+                            defaultName + " [suffix]"
+                        }
+                    }
+                }
+            }
+        """
+
+
+        writeTestSource """
+            package acme
+
+            @spock.lang.Unroll
+            @ContextualTest
+            class UnrollTests extends spock.lang.Specification {
+
+                def "unrolled [#param] with additional test context"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [false, true, false]
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+
+        result.output.count('unrolled [foo] with additional test context [suffix] FAILED') == 2
+        result.output.count('unrolled [bar] with additional test context [suffix] PASSED') == 2
+        result.output.count('unrolled [baz] with additional test context [suffix] FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+
 
     @Override
     String testLanguage() {
