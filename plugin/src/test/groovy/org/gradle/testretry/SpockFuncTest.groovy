@@ -240,43 +240,43 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         """
 
         writeTestSource """
-package acme
+            package acme
 
-import org.spockframework.runtime.extension.ExtensionAnnotation
+            import org.spockframework.runtime.extension.ExtensionAnnotation
 
-import java.lang.annotation.*
+            import java.lang.annotation.*
 
-@Retention(RetentionPolicy.RUNTIME)
-@Target([ElementType.TYPE])
-@Inherited
-@ExtensionAnnotation(ContextualTestExtension)
-@interface ContextualTest {
-}
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target([ElementType.TYPE])
+            @Inherited
+            @ExtensionAnnotation(ContextualTestExtension)
+            @interface ContextualTest {
+            }
 
-"""
+        """
 
         writeTestSource """
-package acme
+            package acme
 
-import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
-import org.spockframework.runtime.model.SpecInfo
+            import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
+            import org.spockframework.runtime.model.SpecInfo
 
-class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
+            class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
 
-    @Override
-    void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
+                @Override
+                void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
 
-        spec.features.each { feature ->
-            feature.reportIterations = true
-            def currentNameProvider = feature.iterationNameProvider
-            feature.iterationNameProvider = {
-                def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
-                defaultName + " [suffix]"
+                    spec.features.each { feature ->
+                        feature.reportIterations = true
+                        def currentNameProvider = feature.iterationNameProvider
+                        feature.iterationNameProvider = {
+                            def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
+                            defaultName + " [suffix]"
+                        }
+                    }
+                }
             }
-        }
-    }
-}
-"""
+        """
 
 
         writeTestSource """
