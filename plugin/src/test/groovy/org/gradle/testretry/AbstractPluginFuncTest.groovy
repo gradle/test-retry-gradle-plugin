@@ -144,7 +144,7 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     @SuppressWarnings("GroovyAssignabilityCheck")
     void writeTestSource(String source) {
-        String className = (source =~ /class\s+(\w+)\s+/)[0][1]
+        String className = (source =~ /(class|interface)\s+(\w+)\s+/)[0][2]
         testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
     }
 
