@@ -239,7 +239,6 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             package acme
 
             import org.spockframework.runtime.extension.ExtensionAnnotation
-
             import java.lang.annotation.*
 
             @Retention(RetentionPolicy.RUNTIME)
@@ -248,7 +247,6 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             @ExtensionAnnotation(ContextualTestExtension)
             @interface ContextualTest {
             }
-
         """
 
         writeTestSource """
@@ -273,7 +271,6 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                 }
             }
         """
-
 
         writeTestSource """
             package acme
