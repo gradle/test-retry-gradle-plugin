@@ -62,7 +62,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RetryTestResultProcessor.RoundResult result = retryTestResultProcessor.getResult();
 
-            if (!result.nonRetriedTests.isEmpty()) {
+            if (result.nonRetriedTests.stream().anyMatch(testName -> !"classMethod".equals(testName.getName()))) {
                 failWithNonRetriedTests(result);
                 return;
             }

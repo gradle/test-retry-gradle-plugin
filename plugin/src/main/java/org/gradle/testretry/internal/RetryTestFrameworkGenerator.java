@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -153,14 +155,15 @@ final class RetryTestFrameworkGenerator {
                             ClassReader classReader = new ClassReader(testClassIs);
                             SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName());
                             classReader.accept(visitor, 0);
-                            return new TestName(failedTest.getClassName(), visitor.getTestMethodName());
+                            return visitor.getAllTestMethods().stream().map(m -> new TestName(failedTest.getClassName(), m)).collect(Collectors.toList());
                         } catch (Throwable t) {
                             LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
-                            return failedTest;
+                            return Collections.singletonList(failedTest);
                         }
                     })
-                    .orElse(failedTest)
+                    .orElse(Collections.emptyList())
             )
+            .flatMap(Collection::stream)
             .collect(Collectors.toList());
     }
 }

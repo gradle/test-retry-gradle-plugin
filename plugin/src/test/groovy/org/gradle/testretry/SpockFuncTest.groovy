@@ -302,6 +302,155 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "can rerun on setupSpec failure"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            import java.nio.file.Files
+            import java.nio.file.Path
+            import java.nio.file.Paths
+
+            class SetupFailureSpec extends spock.lang.Specification {
+
+                void setupSpec() {
+                    failInFirstRun()
+                }
+
+                def "simpleTest1"() {
+                    expect:
+                    true
+                }
+
+                def "simpleTest2"() {
+                    expect:
+                    true
+                }
+                ${failInFirstRunSnippet()}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('simpleTest1 PASSED') == 1
+        result.output.count('simpleTest2 PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun on setupSpec failure with param"() {
+        given:
+        buildFile << """
+            test {
+              testLogging {
+                exceptionFormat = 'full'
+              }
+              retry {
+                maxRetries = 1
+              }
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            import java.nio.file.Files
+            import java.nio.file.Path
+            import java.nio.file.Paths
+
+            @spock.lang.Unroll
+            class SetupFailureSpec extends spock.lang.Specification {
+
+                void setupSpec() {
+                    failInFirstRun()
+                }
+
+                def "simpleTest1"() {
+                    expect:
+                    true
+                }
+
+                def "simpleTest2"() {
+                    expect:
+                    true
+                }
+
+                def "simpleTest3 [#param]"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [true, true, true]
+                }
+                ${failInFirstRunSnippet()}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('classMethod FAILED') == 1
+        result.output.count('simpleTest1 PASSED') == 1
+        result.output.count('simpleTest2 PASSED') == 1
+        result.output.count('simpleTest3 [foo] PASSED') == 1
+        result.output.count('simpleTest3 [bar] PASSED') == 1
+        result.output.count('simpleTest3 [baz] PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+
+    @Unroll
+    def "can rerun on setup failure"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            import java.nio.file.Files
+            import java.nio.file.Path
+            import java.nio.file.Paths
+
+            class SetupFailureSpec extends spock.lang.Specification {
+
+                void setup() {
+                    failInFirstRun()
+                }
+
+                def "simpleTest"() {
+                    expect:
+                    true
+                }
+              ${failInFirstRunSnippet()}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('simpleTest FAILED') == 1
+        result.output.count('simpleTest PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+
+    }
 
 
     @Override
@@ -358,6 +507,23 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                     ${flakyAssert()}
                 }
             }
+        """
+    }
+
+    private static String failInFirstRunSnippet() {
+        """
+        private static void failInFirstRun() {
+            try {
+                Path marker = Paths.get("marker.file");
+                if (!Files.exists(marker)) {
+                    Files.write(marker, "mark".getBytes());
+                    throw new RuntimeException("fail me!");
+                }
+                Files.write(marker, "again".getBytes());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
         """
     }
 }

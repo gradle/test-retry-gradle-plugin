@@ -66,7 +66,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
             .filter(methodPattern -> {
                 // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
                 String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
-                return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
+                return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex) || this.testMethodName.equals("classMethod");
             })
             .max(Comparator.comparingInt(String::length))
             .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
@@ -74,6 +74,10 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 
     public String getTestMethodName() {
         return testMethodName;
+    }
+
+    public List<String> getAllTestMethods(){
+        return spockMethodVisitor.getTestMethodPatterns();
     }
 
     private static String normalizeMethodName(String methodPattern) {
