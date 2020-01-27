@@ -24,7 +24,6 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.testretry.internal.visitors.SpockParameterClassVisitor;
 import org.gradle.testretry.internal.visitors.SpockStepwiseClassVisitor;
 import org.gradle.testretry.internal.visitors.TestNGClassVisitor;
 import org.objectweb.asm.ClassReader;
@@ -36,12 +35,15 @@ import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-final class RetryTestFrameworkGenerator {
+import static org.gradle.testretry.internal.spock.SpockUtils.isSpockSetupSpockFailure;
+import static org.gradle.testretry.internal.spock.SpockUtils.withSpockParametersRemoved;
 
+final class RetryTestFrameworkGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryTestFrameworkGenerator.class);
 
     private final ClassLoaderCache classLoaderCache;
@@ -52,14 +54,14 @@ final class RetryTestFrameworkGenerator {
         this.instantiator = instantiator;
     }
 
-    TestFramework createRetryingTestFramework(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests) {
+    TestFramework createRetryingTestFramework(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Map<TestName, Throwable> failureDetails) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         TestFramework testFramework = spec.getTestFramework();
 
         TestFramework retryingTestFramework;
         if (testFramework instanceof JUnitTestFramework) {
             retryingTestFramework = new JUnitTestFramework(testTask, retriedTestFilter);
-            retriesWithSpockParametersRemoved(spec, failedTests).stream()
+            retriesWithSpock(spec, failedTests, failureDetails).stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
                     if (isSpockStepwiseTest(spec, failedTest)) {
@@ -142,7 +144,7 @@ final class RetryTestFrameworkGenerator {
             .collect(Collectors.toList());
     }
 
-    private static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
+    private static List<TestName> retriesWithSpock(JvmTestExecutionSpec spec, Set<TestName> failedTests, Map<TestName, Throwable> failureDetails) {
         return failedTests.stream()
             .filter(failedTest -> failedTest.getClassName() != null)
             .map(failedTest ->
@@ -150,17 +152,7 @@ final class RetryTestFrameworkGenerator {
                     .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
                     .filter(File::exists)
                     .findAny()
-                    .map(testClass -> {
-                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                            ClassReader classReader = new ClassReader(testClassIs);
-                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName());
-                            classReader.accept(visitor, 0);
-                            return visitor.getAllTestMethods().stream().map(m -> new TestName(failedTest.getClassName(), m)).collect(Collectors.toList());
-                        } catch (Throwable t) {
-                            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
-                            return Collections.singletonList(failedTest);
-                        }
-                    })
+                    .map(testClass -> withSpockParametersRemoved(failedTest, testClass, isSpockSetupSpockFailure(failureDetails.get(failedTest))))
                     .orElse(Collections.emptyList())
             )
             .flatMap(Collection::stream)

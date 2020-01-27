@@ -303,7 +303,7 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     }
 
     @Unroll
-    def "can rerun on setupSpec failure"() {
+    def "can rerun on setupSpec failure (#gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -347,7 +347,7 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     }
 
     @Unroll
-    def "can rerun on setupSpec failure with param"() {
+    def "can rerun on setupSpec failure with param (#gradleVersion)"() {
         given:
         buildFile << """
             test {

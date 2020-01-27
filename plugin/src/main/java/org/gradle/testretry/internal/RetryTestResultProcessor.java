@@ -23,6 +23,7 @@ import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -39,6 +40,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private Set<TestName> failedTests = ConcurrentHashMap.newKeySet();
     private Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
     private Object rootTestDescriptorId;
+    private Map<TestName, Throwable> failureTraces = new HashMap<>();
 
     RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
         this.delegate = delegate;
@@ -79,7 +81,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null) {
-            failedTests.add(new TestName(descriptor.getClassName(), descriptor.getName()));
+            TestName failedTestName = new TestName(descriptor.getClassName(), descriptor.getName());
+            failedTests.add(failedTestName);
+            failureTraces.put(failedTestName, throwable);
         }
         delegate.failure(testId, throwable);
     }
@@ -89,7 +93,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     public RoundResult getResult() {
-        return new RoundResult(copy(failedTests), copy(nonExecutedFailedTests), lastRun());
+        return new RoundResult(copy(failedTests), copy(nonExecutedFailedTests), copy(failureTraces), lastRun());
+    }
+
+    private Map<TestName, Throwable> copy(Map<TestName, Throwable> failureTraces) {
+        return failureTraces.isEmpty() ? Collections.emptyMap() : new HashMap<>(failureTraces);
     }
 
     @NotNull
@@ -109,13 +117,16 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     static final class RoundResult {
+
         final Set<TestName> failedTests;
         final Set<TestName> nonRetriedTests;
+        final Map<TestName, Throwable> failureDetails;
         final boolean lastRound;
 
-        public RoundResult(Set<TestName> failedTests, Set<TestName> nonRetriedTests, boolean lastRound) {
+        public RoundResult(Set<TestName> failedTests, Set<TestName> nonRetriedTests, Map<TestName, Throwable> failureDetails, boolean lastRound) {
             this.failedTests = failedTests;
             this.nonRetriedTests = nonRetriedTests;
+            this.failureDetails = failureDetails;
             this.lastRound = lastRound;
         }
     }

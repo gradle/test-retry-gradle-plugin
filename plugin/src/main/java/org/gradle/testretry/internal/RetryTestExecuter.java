@@ -20,8 +20,11 @@ import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.tasks.testing.Test;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static org.gradle.testretry.internal.spock.SpockUtils.isSpockSetupSpockFailure;
 
 final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
@@ -62,7 +65,8 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RetryTestResultProcessor.RoundResult result = retryTestResultProcessor.getResult();
 
-            if (result.nonRetriedTests.stream().anyMatch(testName -> !"classMethod".equals(testName.getName()))) {
+            Set<TestName> nonRetriedTests = filterValidNonRetries(result.nonRetriedTests, result.failureDetails);
+            if (!nonRetriedTests.isEmpty()) {
                 failWithNonRetriedTests(result);
                 return;
             }
@@ -75,10 +79,14 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             } else if (result.lastRound) {
                 break;
             } else {
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, result.failedTests);
+                testExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, result.failedTests, result.failureDetails);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
+    }
+
+    private Set<TestName> filterValidNonRetries(Set<TestName> nonRetriedTests, Map<TestName, Throwable> failureDetails) {
+        return nonRetriedTests.stream().filter(testName -> !isSpockSetupSpockFailure(failureDetails.get(testName))).collect(Collectors.toSet());
     }
 
     private static void failWithNonRetriedTests(RetryTestResultProcessor.RoundResult result) {
@@ -88,9 +96,9 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
                 .collect(Collectors.joining("\n", "\n", "\n")));
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries, Map<TestName, Throwable> failureDetails) {
         return new JvmTestExecutionSpec(
-            retryTestFrameworkGenerator.createRetryingTestFramework(spec, testTask, retries),
+            retryTestFrameworkGenerator.createRetryingTestFramework(spec, testTask, retries, failureDetails),
             spec.getClasspath(),
             spec.getCandidateClassFiles(),
             spec.isScanForTestClasses(),

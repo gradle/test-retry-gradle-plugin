@@ -23,6 +23,7 @@ import java.nio.CharBuffer;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -48,11 +49,13 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     }
 
     private String testMethodName;
+    private boolean setupSpecFailure;
     private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
-    public SpockParameterClassVisitor(String testMethodName) {
+    public SpockParameterClassVisitor(String testMethodName, boolean setupSpecFailure) {
         super(ASM7);
         this.testMethodName = testMethodName;
+        this.setupSpecFailure = setupSpecFailure;
     }
 
     @Override
@@ -62,22 +65,21 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-        spockMethodVisitor.getTestMethodPatterns().stream()
-            .filter(methodPattern -> {
-                // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
-                String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
-                return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex) || this.testMethodName.equals("classMethod");
-            })
-            .max(Comparator.comparingInt(String::length))
-            .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
+        if (!setupSpecFailure) {
+            spockMethodVisitor.getTestMethodPatterns().stream()
+                .filter(methodPattern -> {
+                    // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
+                    String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
+                    return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
+                })
+                .max(Comparator.comparingInt(String::length))
+                .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
+        }
+
     }
 
-    public String getTestMethodName() {
-        return testMethodName;
-    }
-
-    public List<String> getAllTestMethods(){
-        return spockMethodVisitor.getTestMethodPatterns();
+    public List<String> getAllTestMethods() {
+        return setupSpecFailure ? spockMethodVisitor.getTestMethodPatterns() : Arrays.asList(testMethodName);
     }
 
     private static String normalizeMethodName(String methodPattern) {
