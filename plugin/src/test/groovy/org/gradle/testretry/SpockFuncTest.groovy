@@ -302,7 +302,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "can rerun on failure in super class"() {
+    @Unroll
+    def "can rerun on failure in super class (#gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -345,7 +346,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     }
 
-    def "can rerun on failure in inherited class"() {
+    @Unroll
+    def "can rerun on failure in inherited class (#gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -354,11 +356,11 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme
 
-            abstract class AbstractTest extends spock.lang.Specification {
+            abstract class A extends spock.lang.Specification {
 
-                def "parent"() {
+                def "a"() {
                     expect:
-                    true
+                    ${flakyAssert()}
                 }
             }
         """
@@ -366,22 +368,35 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme
 
-            class InheritedTest extends AbstractTest {
+            abstract class B extends A {
 
-                def "inherited"() {
+                def "b"() {
                     expect:
-                    ${flakyAssert()}
+                    fail
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            class C extends B {
+
+                def "c"() {
+                    expect:
+                    true
                 }
             }
         """
 
         when:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited FAILED') == 1
-        result.output.count('inherited PASSED') == 1
+        result.output.count('a FAILED') == 1
+        result.output.count('a PASSED') == 1
+        result.output.count('b FAILED') == 2
+        result.output.count('c PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
