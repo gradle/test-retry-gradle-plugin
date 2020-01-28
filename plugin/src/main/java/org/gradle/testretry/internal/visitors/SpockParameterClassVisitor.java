@@ -15,16 +15,26 @@
  */
 package org.gradle.testretry.internal.visitors;
 
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.CharBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,16 +58,39 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     }
 
     private String testMethodName;
+    private JvmTestExecutionSpec spec;
     private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
-    public SpockParameterClassVisitor(String testMethodName) {
+    public SpockParameterClassVisitor(String testMethodName, JvmTestExecutionSpec spec) {
         super(ASM7);
         this.testMethodName = testMethodName;
+        this.spec = spec;
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
         return spockMethodVisitor;
+    }
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        super.visit(version, access, name, signature, superName, interfaces);
+        if (superName != null && !superName.equals("java/lang/Object")) {
+
+            final FileCollection collection = spec.getTestClassesDirs().filter(d -> {
+                final Path superFil = Paths.get(d.getAbsolutePath(), superName+".class");
+                return Files.exists(superFil);
+            });
+            if (!collection.isEmpty()) {
+                final Path superClass = Paths.get(collection.getSingleFile().getAbsolutePath(), superName + ".class");
+                try {
+                    ClassReader classReader = new ClassReader(new FileInputStream(superClass.toFile()));
+                    classReader.accept(this, 0);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override

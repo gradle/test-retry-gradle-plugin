@@ -235,42 +235,9 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
-            package acme
+        writeTestSource contextualTestAnnotation()
 
-            import org.spockframework.runtime.extension.ExtensionAnnotation
-            import java.lang.annotation.*
-
-            @Retention(RetentionPolicy.RUNTIME)
-            @Target([ElementType.TYPE])
-            @Inherited
-            @ExtensionAnnotation(ContextualTestExtension)
-            @interface ContextualTest {
-            }
-        """
-
-        writeTestSource """
-            package acme
-
-            import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
-            import org.spockframework.runtime.model.SpecInfo
-
-            class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
-
-                @Override
-                void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
-
-                    spec.features.each { feature ->
-                        feature.reportIterations = true
-                        def currentNameProvider = feature.iterationNameProvider
-                        feature.iterationNameProvider = {
-                            def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
-                            defaultName + " [suffix]"
-                        }
-                    }
-                }
-            }
-        """
+        writeTestSource contextualTestExtension()
 
         writeTestSource """
             package acme
@@ -309,9 +276,14 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             test.retry.maxRetries = 1
         """
 
+        writeTestSource contextualTestAnnotation()
+
+        writeTestSource contextualTestExtension()
+
         writeTestSource """
             package acme
 
+            @ContextualTest
             abstract class AbstractTest extends spock.lang.Specification {
 
                 def "parent"() {
@@ -345,6 +317,57 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
 
     }
+
+    @Unroll
+    def "can rerun parametrized test method on failure in super class (#gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            @spock.lang.Unroll
+            abstract class AbstractTest extends spock.lang.Specification {
+
+                def "unrolled [#param] parent"() {
+                    expect:
+                    ${flakyAssert()}
+
+                    where:
+                    param << ['foo']
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            class InheritedTest extends AbstractTest {
+
+                def "inherited"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('unrolled [foo] parent FAILED') == 1
+        result.output.count('unrolled [foo] parent PASSED') == 1
+        result.output.count('inherited PASSED') == 1
+        result.output.count('inherited FAILED') == 0
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+
+    }
+
+
 
     @Unroll
     def "can rerun on failure in inherited class (#gradleVersion)"() {
@@ -455,6 +478,47 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
                     expect:
                     ${flakyAssert()}
                 }
+            }
+        """
+    }
+
+    private static String contextualTestExtension() {
+        """
+            package acme
+
+            import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
+            import org.spockframework.runtime.model.SpecInfo
+
+            class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
+
+                @Override
+                void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
+
+                    spec.features.each { feature ->
+                        feature.reportIterations = true
+                        def currentNameProvider = feature.iterationNameProvider
+                        feature.iterationNameProvider = {
+                            def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
+                            defaultName + " [suffix]"
+                        }
+                    }
+                }
+            }
+        """
+    }
+
+    private static String contextualTestAnnotation() {
+        """
+            package acme
+
+            import org.spockframework.runtime.extension.ExtensionAnnotation
+            import java.lang.annotation.*
+
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target([ElementType.TYPE])
+            @Inherited
+            @ExtensionAnnotation(ContextualTestExtension)
+            @interface ContextualTest {
             }
         """
     }
