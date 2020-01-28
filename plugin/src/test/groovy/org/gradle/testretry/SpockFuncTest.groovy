@@ -451,7 +451,90 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
 
     }
+    def "can rerun on failure in super class"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
 
+        writeTestSource """
+            package acme
+
+            abstract class AbstractTest extends spock.lang.Specification {
+
+                def "parent"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            class InheritedTest extends AbstractTest {
+
+                def "inherited"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent FAILED') == 1
+        result.output.count('parent PASSED') == 1
+        result.output.count('inherited PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+
+    }
+
+    def "can rerun on failure in inherited class"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            abstract class AbstractTest extends spock.lang.Specification {
+
+                def "parent"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            class InheritedTest extends AbstractTest {
+
+                def "inherited"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent PASSED') == 1
+        result.output.count('inherited FAILED') == 1
+        result.output.count('inherited PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
 
     @Override
     String testLanguage() {
