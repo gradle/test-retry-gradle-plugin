@@ -34,7 +34,6 @@ import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -72,25 +71,8 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return spockMethodVisitor;
     }
 
-    @Override
-    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-        super.visit(version, access, name, signature, superName, interfaces);
-        if (superName != null && !superName.equals("java/lang/Object")) {
-
-            final FileCollection collection = spec.getTestClassesDirs().filter(d -> {
-                final Path superFil = Paths.get(d.getAbsolutePath(), superName+".class");
-                return Files.exists(superFil);
-            });
-            if (!collection.isEmpty()) {
-                final Path superClass = Paths.get(collection.getSingleFile().getAbsolutePath(), superName + ".class");
-                try {
-                    ClassReader classReader = new ClassReader(new FileInputStream(superClass.toFile()));
-                    classReader.accept(this, 0);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+    private static Path parentClass(File dir, String parentClassName) {
+        return Paths.get(dir.getAbsolutePath(), parentClassName + ".class");
     }
 
     @Override
@@ -113,6 +95,25 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return methodPattern.replaceAll(SPOCK_PARAM_PATTERN, PARAM_PLACEHOLDER);
     }
 
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        super.visit(version, access, name, signature, superName, interfaces);
+        if (superName != null && !superName.equals("java/lang/Object")) {
+            final FileCollection collection = spec.getTestClassesDirs().filter(d -> Files.exists(parentClass(d, superName)));
+
+            if (!collection.isEmpty()) {
+                final Path parentClassFile = parentClass(collection.getSingleFile(), superName);
+                try {
+                    ClassReader classReader = new ClassReader(new FileInputStream(parentClassFile.toFile()));
+                    classReader.accept(this, 0);
+                } catch (IOException e) {
+                    throw new IllegalStateException(String.format("Parent class file [%s] could not be loaded from path [%s]",superName,parentClassFile));
+                }
+            }
+            //todo: check parent classes in other jar files on the classpath as well
+        }
+    }
+
     private static String escapeRegEx(String aRegexFragment) {
         final StringBuilder result = new StringBuilder();
 
@@ -128,6 +129,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         }
         return result.toString();
     }
+
 }
 
 class SpockParameterMethodVisitor extends MethodVisitor {
