@@ -23,7 +23,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.CharBuffer;
@@ -33,18 +32,15 @@ import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import static java.util.stream.StreamSupport.stream;
 import static org.objectweb.asm.Opcodes.ASM7;
@@ -113,26 +109,25 @@ public class SpockParameterClassVisitor extends ClassVisitor {
                 .filter(classFile -> Files.exists(classFile))
                 .findAny();
 
-            if(parentPath.isPresent()) {
-                try(InputStream fis = new FileInputStream(parentPath.get().toFile())) {
+            if (parentPath.isPresent()) {
+                try (InputStream fis = new FileInputStream(parentPath.get().toFile())) {
                     readParentClass(fis);
                 } catch (IOException ignored) {
                     // we tried, move on to looking in the jar classpath
                 }
-            }
-            else {
+            } else {
                 for (File file : spec.getClasspath()) {
-                    if(!file.getName().endsWith(".jar")) {
+                    if (!file.getName().endsWith(".jar")) {
                         continue;
                     }
 
-                    try(JarFile jarFile = new JarFile(file)) {
+                    try (JarFile jarFile = new JarFile(file)) {
                         Optional<JarEntry> classFile = jarFile.stream()
                             .filter(maybeClass -> maybeClass.getName().equals(superName + ".class"))
                             .findAny();
 
-                        if(classFile.isPresent()) {
-                            try(InputStream is = jarFile.getInputStream(classFile.get())) {
+                        if (classFile.isPresent()) {
+                            try (InputStream is = jarFile.getInputStream(classFile.get())) {
                                 readParentClass(is);
                                 return;
                             }
@@ -150,6 +145,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
             ClassReader classReader = new ClassReader(is);
             classReader.accept(this, 0);
         } catch (IOException ignored) {
+            // we did our best...
         }
     }
 
