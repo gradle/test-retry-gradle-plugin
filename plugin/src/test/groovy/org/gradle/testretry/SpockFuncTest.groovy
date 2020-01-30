@@ -15,7 +15,6 @@
  */
 package org.gradle.testretry
 
-
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
@@ -227,9 +226,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     @Unroll
-    def "handles unrolled tests with additional test context method suffix (#gradleVersion)"() {
+    def "handles unrolled tests with additional test context method suffix (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -270,7 +268,7 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     }
 
     @Unroll
-    def "can rerun on failure in super class (#gradleVersion)"() {
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -285,7 +283,6 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
             @ContextualTest
             abstract class AbstractTest extends spock.lang.Specification {
-
                 def "parent"() {
                     expect:
                     ${flakyAssert()}
@@ -294,10 +291,9 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         """
 
         writeTestSource """
-            package acme
-
+            package acme.sub
+            import acme.AbstractTest
             class InheritedTest extends AbstractTest {
-
                 def "inherited"() {
                     expect:
                     true
@@ -309,17 +305,16 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent FAILED') == 1
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
+        result.output.count('parent [suffix] FAILED') == 1
+        result.output.count('parent [suffix] PASSED') == 1
+        result.output.count('inherited [suffix] PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-
     }
 
     @Unroll
-    def "can rerun parametrized test method on failure in super class (#gradleVersion)"() {
+    def 'can rerun parameterized test method in super class (gradle version #gradleVersion)'() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -367,10 +362,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     }
 
-
-
     @Unroll
-    def "can rerun on failure in inherited class (#gradleVersion)"() {
+    def "can rerun on failure in inherited class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1

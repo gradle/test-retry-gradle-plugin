@@ -107,10 +107,9 @@ public class SpockParameterClassVisitor extends ClassVisitor {
                     ClassReader classReader = new ClassReader(new FileInputStream(parentClassFile.toFile()));
                     classReader.accept(this, 0);
                 } catch (IOException e) {
-                    throw new IllegalStateException(String.format("Parent class file [%s] could not be loaded from path [%s]",superName,parentClassFile));
+                    throw new IllegalStateException(String.format("Parent class file [%s] could not be loaded from path [%s]", superName, parentClassFile));
                 }
             }
-            //todo: check parent classes in other jar files on the classpath as well
         }
     }
 

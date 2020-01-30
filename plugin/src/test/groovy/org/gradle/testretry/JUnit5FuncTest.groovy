@@ -20,6 +20,89 @@ import spock.lang.Unroll
 class JUnit5FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
+    def "handles parameterized test in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            import org.junit.jupiter.params.ParameterizedTest;
+            import org.junit.jupiter.params.provider.ValueSource;
+
+            import static org.junit.jupiter.api.Assertions.assertEquals;
+
+            abstract class AbstractTest {
+                @ParameterizedTest(name = "test(int)[{index}]")
+                @ValueSource(ints = {0, 1})
+                void test(int number) {
+                    assertEquals(0, number);
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+            
+            class ParameterTest extends AbstractTest {
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        // we can't rerun just the failed parameter
+        result.output.count('test(int)[1] PASSED') == 2
+        result.output.count('test(int)[2] FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            abstract class AbstractTest {
+                @org.junit.jupiter.api.Test
+                void parent() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+
+            class FlakyTests extends AbstractTest {
+                @org.junit.jupiter.api.Test
+                void inherited() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent() FAILED') == 1
+        result.output.count('parent() PASSED') == 1
+        result.output.count('inherited() PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """

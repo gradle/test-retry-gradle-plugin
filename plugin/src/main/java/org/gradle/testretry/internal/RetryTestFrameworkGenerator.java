@@ -151,7 +151,7 @@ final class RetryTestFrameworkGenerator {
                     .map(testClass -> {
                         try (FileInputStream testClassIs = new FileInputStream(testClass)) {
                             ClassReader classReader = new ClassReader(testClassIs);
-                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(),spec);
+                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(), spec);
                             classReader.accept(visitor, 0);
                             return new TestName(failedTest.getClassName(), visitor.getTestMethodName());
                         } catch (Throwable t) {

@@ -18,6 +18,91 @@ package org.gradle.testretry
 import spock.lang.Unroll
 
 class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
+    @Unroll
+    def "handles parameterized test in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            import org.testng.annotations.*;
+
+            import static org.testng.AssertJUnit.assertEquals;
+
+            abstract class AbstractTest {
+                @DataProvider(name = "parameters")
+                public Object[] createParameters() {
+                    return new Object[]{0, 1};
+                }
+            
+                @Test(dataProvider = "parameters")
+                public void test(int number) {
+                    assertEquals(0, number);
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+                        
+            public class ParameterTest extends AbstractTest {
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        // we can't rerun just the failed parameter
+        result.output.count('test[0](0) PASSED') == 2
+        result.output.count('test[1](1) FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            abstract class AbstractTest {
+                @org.testng.annotations.Test
+                void parent() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests extends AbstractTest {
+                @org.testng.annotations.Test
+                public void inherited() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent FAILED') == 1
+        result.output.count('parent PASSED') == 1
+        result.output.count('inherited PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
 
     @Unroll
     def "handles test dependencies (gradle version #gradleVersion)"() {

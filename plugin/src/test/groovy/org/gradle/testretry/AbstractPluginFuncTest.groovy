@@ -144,8 +144,11 @@ abstract class AbstractPluginFuncTest extends Specification {
 
     @SuppressWarnings("GroovyAssignabilityCheck")
     void writeTestSource(String source) {
+        String packageName = (source =~ /package\s+([\w.]+)/)[0][1]
         String className = (source =~ /(class|interface)\s+(\w+)\s+/)[0][2]
-        testProjectDir.newFile("src/test/${testLanguage()}/acme/${className}.${testLanguage()}") << source
+        String sourceFilePackage = "src/test/${testLanguage()}/${packageName.replace('.', '/')}"
+        new File(testProjectDir.root, sourceFilePackage).mkdirs()
+        testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
     }
 
     GradleRunner gradleRunner(String gradleVersion) {

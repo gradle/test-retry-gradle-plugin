@@ -20,6 +20,112 @@ import spock.lang.Unroll
 class JUnit4FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
+    def "handles parameterized test in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            import static org.junit.Assert.assertTrue;
+            
+            import org.junit.Test;
+
+            abstract class AbstractTest {
+                private int input;
+                private boolean expected;
+
+                public AbstractTest(int input, boolean expected) {
+                    this.input = input;
+                    this.expected = expected;
+                }
+
+                @Test
+                public void test() {
+                    assertTrue(expected);
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+            
+            import java.util.Arrays;
+            import java.util.Collection;
+
+            import org.junit.runner.RunWith;
+            import org.junit.runners.Parameterized;
+            import org.junit.runners.Parameterized.Parameters;
+            
+            @RunWith(Parameterized.class)
+            public class ParameterTest extends AbstractTest {
+                @Parameters(name = "{index}: test({0})={1}")
+                public static Iterable<Object[]> data() {
+                   return Arrays.asList(new Object[][] {
+                         { 0, true }, { 1, false }
+                   });
+                }
+            
+                public ParameterTest(int input, boolean expected) {
+                    super(input, expected);
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('test[0: test(0)=true]') == 1
+        result.output.count('test[1: test(1)=false]') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            abstract class AbstractTest {
+                @org.junit.Test
+                public void parent() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests extends AbstractTest {
+                @org.junit.Test
+                public void inherited() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent FAILED') == 1
+        result.output.count('parent PASSED') == 1
+        result.output.count('inherited PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """

@@ -3,3 +3,4 @@ build/
 !*/src/**/build
 .gradle/
 gradle.properties
+.java-version
