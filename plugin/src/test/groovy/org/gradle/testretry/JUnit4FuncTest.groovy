@@ -20,6 +20,40 @@ import spock.lang.Unroll
 class JUnit4FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
+    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class SuccessfulTests {
+                @org.junit.${lifecycle}
+                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                    ${flakyAssert()}
+                }
+            
+                @org.junit.Test
+                public void successTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).build()
+
+        then:
+        result.output.count('successTest PASSED') >= 1
+
+        where:
+        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ['BeforeClass', 'Before', 'AfterClass', 'After']
+        ])
+    }
+
+    @Unroll
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """

@@ -54,7 +54,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
         if (testFramework instanceof JUnitTestFramework) {
-            // remove spock lifecycle method failures. if the lifecycle method succeeds on retry, we won't see
+            // remove Spock/JUnit4 lifecycle method failures. if the lifecycle method succeeds on retry, we won't see
             // a "PASSED" indicator for this synthetic method name in the build
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
         } else if (testFramework instanceof JUnitPlatformTestFramework) {
@@ -64,7 +64,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             // remove JUnit5 @BeforeAll/@AfterAll failures.
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "initializationError"));
         }
-        
+
         nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
 
         if (rootTestDescriptorId == null) {
