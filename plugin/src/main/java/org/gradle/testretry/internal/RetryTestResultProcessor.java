@@ -15,10 +15,13 @@
  */
 package org.gradle.testretry.internal;
 
+import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestCompleteEvent;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
+import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
+import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class RetryTestResultProcessor implements TestResultProcessor {
 
+    private final TestFramework testFramework;
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
@@ -40,13 +44,19 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
     private Object rootTestDescriptorId;
 
-    RetryTestResultProcessor(TestResultProcessor delegate, int maxFailures) {
+    RetryTestResultProcessor(JvmTestExecutionSpec spec, TestResultProcessor delegate, int maxFailures) {
+        this.testFramework = spec.getTestFramework();
         this.delegate = delegate;
         this.maxFailures = maxFailures;
     }
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
+        if(testFramework instanceof JUnitTestFramework) {
+            // remove spock lifecycle method failures. if the lifecycle method succeeds on retry, we won't see
+            // a "PASSED" indicator for this synthetic method name in the build
+            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
+        }
         nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
 
         if (rootTestDescriptorId == null) {

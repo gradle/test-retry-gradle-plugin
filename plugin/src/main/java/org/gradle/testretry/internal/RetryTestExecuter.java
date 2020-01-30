@@ -53,7 +53,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             return;
         }
 
-        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testResultProcessor, maxFailures);
+        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(spec, testResultProcessor, maxFailures);
 
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;

@@ -19,6 +19,43 @@ import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     @Unroll
+    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class FlakySetupSpecTests extends spock.lang.Specification {
+                def ${lifecycle}() {
+                    ${flakyAssert()}
+                }
+            
+                def successTest() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        // will be >1 in the cleanupSpec case, because the test has already reported success
+        // before cleanup happens
+        result.output.count('successTest PASSED') >= 1
+
+        where:
+        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ['setup', 'setupSpec', 'cleanup', 'cleanupSpec']
+        ])
+    }
+
+    @Unroll
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """

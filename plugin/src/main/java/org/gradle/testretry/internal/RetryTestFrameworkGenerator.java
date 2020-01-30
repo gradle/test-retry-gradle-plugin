@@ -60,6 +60,10 @@ final class RetryTestFrameworkGenerator {
             retriesWithSpockParametersRemoved(spec, failedTests).stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
+                    if("classMethod".equals(failedTest.getName())) {
+                        // failures in any Spock lifecycle method yield a failure on a method of this name
+                        retriedTestFilter.includeTestsMatching(failedTest.getClassName());
+                    }
                     if (isSpockStepwiseTest(spec, failedTest)) {
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                     } else {
