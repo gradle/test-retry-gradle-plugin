@@ -18,6 +18,41 @@ package org.gradle.testretry
 import spock.lang.Unroll
 
 class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
+
+    @Unroll
+    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class SuccessfulTests {
+                @org.testng.annotations.${lifecycle}
+                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                    ${flakyAssert()}
+                }
+            
+                @org.testng.annotations.Test
+                public void successTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).build()
+
+        then:
+        result.output.count('successTest PASSED') >= 1
+
+        where:
+        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest', 'BeforeSuite', 'AfterSuite']
+        ])
+    }
+
     @Unroll
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
         given:

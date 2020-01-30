@@ -23,6 +23,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
+import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +64,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
             // remove JUnit5 @BeforeAll/@AfterAll failures.
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "initializationError"));
+        } else if(testFramework instanceof TestNGTestFramework) {
+            // remove TestNG lifecycle method failures.
+            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "lifecycle"));
         }
 
         nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));

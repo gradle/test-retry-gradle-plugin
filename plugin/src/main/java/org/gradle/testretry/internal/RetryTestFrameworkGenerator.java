@@ -89,9 +89,14 @@ final class RetryTestFrameworkGenerator {
             retriesWithTestNGDependentsAdded(spec, failedTests).stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
-                    String strippedParameterName = failedTest.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
-                    retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
-                    retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
+                    if ("lifecycle".equals(failedTest.getName())) {
+                        // failures in TestNG lifecycle methods yield a failure on methods of these names
+                        retriedTestFilter.includeTestsMatching(failedTest.getClassName());
+                    } else {
+                        String strippedParameterName = failedTest.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
+                        retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
+                    }
                 });
         } else {
             throw new UnsupportedOperationException("Unknown test framework: " + testFramework);
