@@ -76,7 +76,8 @@ final class RetryTestFrameworkGenerator {
             failedTests.stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
-                    if ("executionError".equals(failedTest.getName()) || "initializationError".equals(failedTest.getName())) {
+                    if ("classMethod".equals(failedTest.getName()) || "executionError".equals(failedTest.getName()) ||
+                        "initializationError".equals(failedTest.getName())) {
                         // failures in JUnit5 lifecycle methods yield a failure on methods of these names
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                     } else {

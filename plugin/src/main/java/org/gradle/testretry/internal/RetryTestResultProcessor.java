@@ -64,6 +64,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
             // remove JUnit5 @BeforeAll/@AfterAll failures.
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "initializationError"));
+
+            // ONLY for Gradle 5.0, the lifecycle method name is "classMethod"
+            // remove JUnit5 @BeforeAll/@AfterAll failures.
+            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
         } else if(testFramework instanceof TestNGTestFramework) {
             // remove TestNG lifecycle method failures.
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "lifecycle"));
