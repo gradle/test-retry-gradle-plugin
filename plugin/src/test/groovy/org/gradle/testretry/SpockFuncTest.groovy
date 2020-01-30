@@ -302,7 +302,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "can rerun on failure in super class"() {
+    @Unroll
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -345,7 +346,8 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     }
 
-    def "can rerun on failure in inherited class"() {
+    @Unroll
+    def "can rerun on failure in inherited class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
