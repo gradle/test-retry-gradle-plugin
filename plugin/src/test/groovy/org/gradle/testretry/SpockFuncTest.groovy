@@ -41,7 +41,7 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunner(gradleVersion as String).build()
 
         then:
         // will be >1 in the cleanupSpec case, because the test has already reported success

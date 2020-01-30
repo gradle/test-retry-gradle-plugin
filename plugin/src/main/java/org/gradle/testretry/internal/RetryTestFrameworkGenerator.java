@@ -60,11 +60,10 @@ final class RetryTestFrameworkGenerator {
             retriesWithSpockParametersRemoved(spec, failedTests).stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
-                    if("classMethod".equals(failedTest.getName())) {
-                        // failures in any Spock lifecycle method yield a failure on a method of this name
+                    if ("classMethod".equals(failedTest.getName())) {
+                        // failures in Spock lifecycle methods yield a failure on methods of these names
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                    }
-                    if (isSpockStepwiseTest(spec, failedTest)) {
+                    } else if (isSpockStepwiseTest(spec, failedTest)) {
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                     } else {
                         String strippedParameterName = failedTest.getName().replaceAll("\\[\\d+]$", "");
@@ -77,8 +76,13 @@ final class RetryTestFrameworkGenerator {
             failedTests.stream()
                 .filter(failedTest -> failedTest.getClassName() != null)
                 .forEach(failedTest -> {
-                    String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
-                    retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
+                    if ("executionError".equals(failedTest.getName()) || "initializationError".equals(failedTest.getName())) {
+                        // failures in JUnit5 lifecycle methods yield a failure on methods of these names
+                        retriedTestFilter.includeTestsMatching(failedTest.getClassName());
+                    } else {
+                        String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
+                        retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
+                    }
                 });
         } else if (testFramework instanceof TestNGTestFramework) {
             retryingTestFramework = new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);

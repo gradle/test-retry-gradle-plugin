@@ -22,6 +22,7 @@ import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
+import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,11 +53,18 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
-        if(testFramework instanceof JUnitTestFramework) {
+        if (testFramework instanceof JUnitTestFramework) {
             // remove spock lifecycle method failures. if the lifecycle method succeeds on retry, we won't see
             // a "PASSED" indicator for this synthetic method name in the build
             nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
+        } else if (testFramework instanceof JUnitPlatformTestFramework) {
+            // remove JUnit5 @BeforeEach/@AfterEach failures.
+            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "executionError"));
+
+            // remove JUnit5 @BeforeAll/@AfterAll failures.
+            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "initializationError"));
         }
+        
         nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
 
         if (rootTestDescriptorId == null) {
@@ -119,6 +127,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     static final class RoundResult {
+
         final Set<TestName> failedTests;
         final Set<TestName> nonRetriedTests;
         final boolean lastRound;
