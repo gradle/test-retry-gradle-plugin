@@ -18,7 +18,6 @@ package org.gradle.testretry
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
-
     @Unroll
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {
         given:
@@ -413,6 +412,38 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
         result.output.count('a PASSED') == 1
         result.output.count('b FAILED') == 2
         result.output.count('c PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
+        given:
+        testProjectDir.newFile('spock-abstract-test.jar') <<
+            getClass().getResourceAsStream('/spock-abstract-test.jar').getBytes()
+
+        buildFile << """
+            test.retry.maxRetries = 1
+            
+            dependencies {
+                testImplementation files('spock-abstract-test.jar')
+            }
+        """
+
+        writeTestSource """
+            package acme
+
+            class B extends AbstractTest {
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('unrolled [foo] parent FAILED') == 1
+        result.output.count('unrolled [foo] parent PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

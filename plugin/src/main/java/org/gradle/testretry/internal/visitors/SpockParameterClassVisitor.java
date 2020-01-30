@@ -15,7 +15,6 @@
  */
 package org.gradle.testretry.internal.visitors;
 
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
@@ -24,7 +23,9 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,12 +33,20 @@ import java.nio.file.Paths;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static java.util.stream.StreamSupport.stream;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 /**
@@ -71,10 +80,6 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return spockMethodVisitor;
     }
 
-    private static Path parentClass(File dir, String parentClassName) {
-        return Paths.get(dir.getAbsolutePath(), parentClassName + ".class");
-    }
-
     @Override
     public void visitEnd() {
         spockMethodVisitor.getTestMethodPatterns().stream()
@@ -99,17 +104,52 @@ public class SpockParameterClassVisitor extends ClassVisitor {
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
         if (superName != null && !superName.equals("java/lang/Object")) {
-            final FileCollection collection = spec.getTestClassesDirs().filter(d -> Files.exists(parentClass(d, superName)));
+            Stream<File> classpathDirectories = Stream.concat(stream(spec.getTestClassesDirs().spliterator(), false),
+                stream(spec.getClasspath().spliterator(), false).filter(File::isDirectory)
+            );
 
-            if (!collection.isEmpty()) {
-                final Path parentClassFile = parentClass(collection.getSingleFile(), superName);
-                try {
-                    ClassReader classReader = new ClassReader(new FileInputStream(parentClassFile.toFile()));
-                    classReader.accept(this, 0);
-                } catch (IOException e) {
-                    throw new IllegalStateException(String.format("Parent class file [%s] could not be loaded from path [%s]", superName, parentClassFile));
+            Optional<Path> parentPath = classpathDirectories
+                .map(dir -> Paths.get(dir.getAbsolutePath(), superName + ".class"))
+                .filter(classFile -> Files.exists(classFile))
+                .findAny();
+
+            if(parentPath.isPresent()) {
+                try(InputStream fis = new FileInputStream(parentPath.get().toFile())) {
+                    readParentClass(fis);
+                } catch (IOException ignored) {
+                    // we tried, move on to looking in the jar classpath
                 }
             }
+            else {
+                for (File file : spec.getClasspath()) {
+                    if(!file.getName().endsWith(".jar")) {
+                        continue;
+                    }
+
+                    try(JarFile jarFile = new JarFile(file)) {
+                        Optional<JarEntry> classFile = jarFile.stream()
+                            .filter(maybeClass -> maybeClass.getName().equals(superName + ".class"))
+                            .findAny();
+
+                        if(classFile.isPresent()) {
+                            try(InputStream is = jarFile.getInputStream(classFile.get())) {
+                                readParentClass(is);
+                                return;
+                            }
+                        }
+                    } catch (IOException ignored) {
+                        // we tried... this file looks corrupt, move on to the next jar
+                    }
+                }
+            }
+        }
+    }
+
+    private void readParentClass(InputStream is) {
+        try {
+            ClassReader classReader = new ClassReader(is);
+            classReader.accept(this, 0);
+        } catch (IOException ignored) {
         }
     }
 
