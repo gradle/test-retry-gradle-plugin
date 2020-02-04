@@ -33,7 +33,7 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -61,13 +61,14 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
     }
 
-    private String testMethodName;
+    private String failedTestMethodNameMaybeParameterized;
+    private Set<String> testMethodNames = new HashSet<>();
     private JvmTestExecutionSpec spec;
     private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
     public SpockParameterClassVisitor(String testMethodName, JvmTestExecutionSpec spec) {
         super(ASM7);
-        this.testMethodName = testMethodName;
+        this.failedTestMethodNameMaybeParameterized = testMethodName;
         this.spec = spec;
     }
 
@@ -78,18 +79,23 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-        spockMethodVisitor.getTestMethodPatterns().stream()
+        Set<String> matchingNames = spockMethodVisitor.getTestMethodPatterns().stream()
             .filter(methodPattern -> {
                 // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
                 String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
-                return methodPattern.equals(this.testMethodName) || this.testMethodName.matches(methodPatternRegex);
+                return methodPattern.equals(failedTestMethodNameMaybeParameterized) || failedTestMethodNameMaybeParameterized.matches(methodPatternRegex);
             })
-            .max(Comparator.comparingInt(String::length))
-            .ifPresent(matchingMethod -> this.testMethodName = matchingMethod);
+            .collect(Collectors.toSet());
+
+        if(matchingNames.contains(failedTestMethodNameMaybeParameterized)) {
+            testMethodNames.add(failedTestMethodNameMaybeParameterized);
+        } else {
+            testMethodNames.addAll(matchingNames);
+        }
     }
 
-    public String getTestMethodName() {
-        return testMethodName;
+    public Set<String> getTestMethodNames() {
+        return testMethodNames;
     }
 
     private static String normalizeMethodName(String methodPattern) {
