@@ -30,19 +30,15 @@ To avoid this, the plugin can be configured to stop retrying after a certain num
 
 == Usage
 
-The plugin is available from the Gradle plugin portal with ID https://plugins.gradle.org/plugin/org.gradle.test-retry[`org.gradle.test-retry`].
-It is compatible with Gradle 5.0 and later versions.
+Apply the plugin using one of the two methods described on the https://plugins.gradle.org/plugin/org.gradle.test-retry[Gradle Plugin Portal], where the plugin is listed as `org.gradle.test-retry`. It is compatible with Gradle 5.0 and later versions.
 
 By default, retrying is not enabled.
+
 Retrying is configured per test task via the `retry` extension added to each task by the plugin.
 
 .build.gradle:
 [source,groovy]
 ----
-plugins {
-    id 'org.gradle.test-retry' version '1.1.0'
-}
-
 test {
     retry {
         maxRetries = 3
