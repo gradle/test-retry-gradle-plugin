@@ -155,26 +155,29 @@ final class RetryTestFrameworkGenerator {
     }
 
     private static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
-        return failedTests.stream()
+        List<TestName> failedTestNames = failedTests.stream()
             .filter(failedTest -> failedTest.getClassName() != null)
-            .map(failedTest ->
-                spec.getTestClassesDirs().getFiles().stream()
-                    .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
-                    .filter(File::exists)
-                    .findAny()
-                    .map(testClass -> {
-                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                            ClassReader classReader = new ClassReader(testClassIs);
-                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(), spec);
-                            classReader.accept(visitor, 0);
-                            return new TestName(failedTest.getClassName(), visitor.getTestMethodName());
-                        } catch (Throwable t) {
-                            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
-                            return failedTest;
-                        }
-                    })
-                    .orElse(failedTest)
+            .collect(Collectors.toList());
+
+        List<TestName> retries = failedTestNames.stream()
+            .flatMap(failedTest ->
+                    spec.getTestClassesDirs().getFiles().stream()
+                        .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
+                        .filter(File::exists)
+                        .flatMap(testClass -> {
+                            try (FileInputStream testClassIs = new FileInputStream(testClass)) {
+                                ClassReader classReader = new ClassReader(testClassIs);
+                                SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(), spec);
+                                classReader.accept(visitor, 0);
+                                return visitor.getTestMethodNames().stream().map(name -> new TestName(failedTest.getClassName(), name));
+                            } catch (Throwable t) {
+                                LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
+                                return Stream.of(failedTest);
+                            }
+                        })
             )
             .collect(Collectors.toList());
+
+        return retries.isEmpty() ? failedTestNames : retries;
     }
 }

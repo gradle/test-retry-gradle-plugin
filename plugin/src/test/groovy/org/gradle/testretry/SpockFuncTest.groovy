@@ -129,6 +129,44 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
     }
 
     @Unroll
+    def "handles non-parameterized test names matching a parameterized name (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class UnrollTests extends spock.lang.Specification {
+                @spock.lang.Unroll
+                def "test with #param"() {
+                    expect:
+                    true
+
+                    where:
+                    param << ['foo', 'bar']
+                }
+                
+                def "test with c"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('test with c FAILED') == 1
+        result.output.count('test with c PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
