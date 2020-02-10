@@ -23,7 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
-final class TestRetryTaskExtensionAdapter {
+public final class TestRetryTaskExtensionAdapter {
+    // for testing only
+    public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
 
     private static final int DEFAULT_MAX_RETRIES = 0;
     private static final int DEFAULT_MAX_FAILURES = 0;
@@ -32,6 +34,7 @@ final class TestRetryTaskExtensionAdapter {
     private final ProviderFactory providerFactory;
     private final TestRetryTaskExtension extension;
     private final boolean useConventions;
+    private final boolean simulateNotRetryableTest;
 
     TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
@@ -41,6 +44,9 @@ final class TestRetryTaskExtensionAdapter {
         this.providerFactory = providerFactory;
         this.extension = extension;
         this.useConventions = useConventions;
+
+        simulateNotRetryableTest = Boolean.parseBoolean(providerFactory
+            .systemProperty(SIMULATE_NOT_RETRYABLE_PROPERTY).getOrElse("false"));
 
         if (useConventions) {
             setDefaults(extension);
@@ -77,6 +83,10 @@ final class TestRetryTaskExtensionAdapter {
 
     int getMaxFailures() {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
+    }
+
+    boolean getSimulateNotRetryableTest() {
+        return simulateNotRetryableTest;
     }
 
     @NotNull
