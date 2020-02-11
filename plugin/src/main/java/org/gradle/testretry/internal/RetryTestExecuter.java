@@ -67,8 +67,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
             if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
                 break;
-            }
-            else if (result.failedTests.isEmpty()) {
+            } else if (result.failedTests.isEmpty()) {
                 if (retryCount > 0 && !failOnPassedAfterRetry) {
                     testTask.setIgnoreFailures(true);
                 }
