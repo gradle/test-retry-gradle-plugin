@@ -81,8 +81,9 @@ final class RetryTestFrameworkGenerator {
                         // failures in JUnit5 lifecycle methods yield a failure on methods of these names
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                     } else {
-                        String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[\\d+])*$", "");
+                        String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[[^]]+])*$", "");
                         retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
+                        retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
                     }
                 });
         } else if (testFramework instanceof TestNGTestFramework) {
@@ -94,7 +95,7 @@ final class RetryTestFrameworkGenerator {
                         // failures in TestNG lifecycle methods yield a failure on methods of these names
                         retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                     } else {
-                        String strippedParameterName = failedTest.getName().replaceAll("\\[[^)]+](\\(\\d+\\))+$", "");
+                        String strippedParameterName = failedTest.getName().replaceAll("\\[[^)]+](\\([^)]+\\))+$", "");
                         retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
                         retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
                     }

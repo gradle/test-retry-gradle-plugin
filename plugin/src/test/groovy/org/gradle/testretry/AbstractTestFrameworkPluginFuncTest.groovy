@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry
 
+import org.gradle.testretry.internal.TestRetryTaskExtensionAdapter
 import spock.lang.Unroll
 
 abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTest {
@@ -59,6 +60,30 @@ abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTes
 
         assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "still publishes test report when test is un-retryable (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        failedTest()
+
+        when:
+        try {
+            System.setProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY, "true")
+            gradleRunner(gradleVersion).buildAndFail()
+        } finally {
+            System.clearProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY)
+        }
+
+        then:
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

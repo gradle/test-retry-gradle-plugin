@@ -30,6 +30,8 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final Test testTask;
     private final RetryTestFrameworkGenerator retryTestFrameworkGenerator;
 
+    private RetryTestResultProcessor.RoundResult lastResult;
+
     RetryTestExecuter(
         Test task,
         TestRetryTaskExtensionAdapter extension,
@@ -61,13 +63,12 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         while (true) {
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RetryTestResultProcessor.RoundResult result = retryTestResultProcessor.getResult();
+            lastResult = result;
 
-            if (!result.nonRetriedTests.isEmpty()) {
-                failWithNonRetriedTests(result);
-                return;
+            if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
+                break;
             }
-
-            if (result.failedTests.isEmpty()) {
+            else if (result.failedTests.isEmpty()) {
                 if (retryCount > 0 && !failOnPassedAfterRetry) {
                     testTask.setIgnoreFailures(true);
                 }
@@ -81,11 +82,13 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
     }
 
-    private static void failWithNonRetriedTests(RetryTestResultProcessor.RoundResult result) {
-        throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
-            result.nonRetriedTests.stream()
-                .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
-                .collect(Collectors.joining("\n", "\n", "\n")));
+    void failWithNonRetriedTestsIfAny() {
+        if (extension.getSimulateNotRetryableTest() || !lastResult.nonRetriedTests.isEmpty()) {
+            throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+                lastResult.nonRetriedTests.stream()
+                    .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                    .collect(Collectors.joining("\n", "\n", "\n")));
+        }
     }
 
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {

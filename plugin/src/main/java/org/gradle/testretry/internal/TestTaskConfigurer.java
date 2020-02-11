@@ -15,7 +15,6 @@
  */
 package org.gradle.testretry.internal;
 
-import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
@@ -30,6 +29,9 @@ import org.gradle.util.VersionNumber;
 import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 public final class TestTaskConfigurer {
 
@@ -37,6 +39,8 @@ public final class TestTaskConfigurer {
     private final ProviderFactory providerFactory;
     private final Instantiator instantiator;
     private final ClassLoaderCache classLoaderCache;
+
+    private final Map<Task, RetryTestExecuter> retryTestExecuterByTask = Collections.synchronizedMap(new IdentityHashMap<>());
 
     @Inject
     public TestTaskConfigurer(
@@ -70,12 +74,8 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                replaceTestExecuter(test, adapter);
-            }
-        });
+        test.doFirst(task -> replaceTestExecuter(test, adapter));
+        test.doLast(task -> retryTestExecuterByTask.get(task).failWithNonRetriedTestsIfAny());
     }
 
     private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
@@ -97,15 +97,17 @@ public final class TestTaskConfigurer {
             Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
             setTestExecuter.setAccessible(true);
 
-            setTestExecuter.invoke(task, new RetryTestExecuter(
+            RetryTestExecuter retryTestExecuter = new RetryTestExecuter(
                 task,
                 extension,
                 delegate,
                 new RetryTestFrameworkGenerator(classLoaderCache, instantiator)
-            ));
+            );
+
+            retryTestExecuterByTask.put(task, retryTestExecuter);
+            setTestExecuter.invoke(task, retryTestExecuter);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
-
 }
