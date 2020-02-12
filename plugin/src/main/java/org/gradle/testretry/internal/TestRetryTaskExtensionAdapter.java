@@ -18,13 +18,13 @@ package org.gradle.testretry.internal;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
-import org.gradle.internal.SystemProperties;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
 public final class TestRetryTaskExtensionAdapter {
+
     // for testing only
     public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
 
