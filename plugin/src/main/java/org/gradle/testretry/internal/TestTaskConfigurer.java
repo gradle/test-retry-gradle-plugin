@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.internal;
 
+import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
@@ -74,8 +75,18 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(task -> replaceTestExecuter(test, adapter));
-        test.doLast(task -> retryTestExecuterByTask.get(task).failWithNonRetriedTestsIfAny());
+        test.doFirst(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                replaceTestExecuter(test, adapter);
+            }
+        });
+        test.doLast(new Action<Task>() {
+            @Override
+            public void execute(Task task) {
+                retryTestExecuterByTask.get(task).failWithNonRetriedTestsIfAny();
+            }
+        });
     }
 
     private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
