@@ -18,6 +18,7 @@ package org.gradle.testretry.internal;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.internal.SystemProperties;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,8 +46,7 @@ public final class TestRetryTaskExtensionAdapter {
         this.extension = extension;
         this.useConventions = useConventions;
 
-        simulateNotRetryableTest = Boolean.parseBoolean(providerFactory
-            .systemProperty(SIMULATE_NOT_RETRYABLE_PROPERTY).getOrElse("false"));
+        simulateNotRetryableTest = Boolean.getBoolean(SIMULATE_NOT_RETRYABLE_PROPERTY);
 
         if (useConventions) {
             setDefaults(extension);
