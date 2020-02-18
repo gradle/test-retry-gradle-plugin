@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry
+package org.gradle.testretry.testframework
 
+import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
 class KotlinDslFuncTest extends AbstractPluginFuncTest {

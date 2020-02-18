@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry
+package org.gradle.testretry.testframework
 
 import spock.lang.Unroll
 
-class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
+class JUnit5FuncTest extends AbstractTestFrameworkPluginFuncTest {
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
@@ -29,14 +29,14 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            public class SuccessfulTests {
-                @org.testng.annotations.${lifecycle}
-                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+            class SuccessfulTests {
+                @org.junit.jupiter.api.${lifecycle}
+                ${lifecycle.contains('All') ? 'static ' : ''}void lifecycle() {
                     ${flakyAssert()}
                 }
             
-                @org.testng.annotations.Test
-                public void successTest() {}
+                @org.junit.jupiter.api.Test
+                void successTest() {}
             }
         """
 
@@ -44,12 +44,12 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('successTest PASSED') >= 1
+        result.output.count('successTest() PASSED') >= 1
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest', 'BeforeSuite', 'AfterSuite']
+            ['BeforeAll', 'BeforeEach', 'AfterAll', 'AfterEach']
         ])
     }
 
@@ -63,18 +63,15 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            import org.testng.annotations.*;
+            import org.junit.jupiter.params.ParameterizedTest;
+            import org.junit.jupiter.params.provider.ValueSource;
 
-            import static org.testng.AssertJUnit.assertEquals;
+            import static org.junit.jupiter.api.Assertions.assertEquals;
 
             abstract class AbstractTest {
-                @DataProvider(name = "parameters")
-                public Object[] createParameters() {
-                    return new Object[]{0, 1};
-                }
-            
-                @Test(dataProvider = "parameters")
-                public void test(int number) {
+                @ParameterizedTest(name = "test(int)[{index}]")
+                @ValueSource(ints = {0, 1})
+                void test(int number) {
                     assertEquals(0, number);
                 }
             }
@@ -82,8 +79,8 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
         writeTestSource """
             package acme;
-                        
-            public class ParameterTest extends AbstractTest {
+            
+            class ParameterTest extends AbstractTest {
             }
         """
 
@@ -92,8 +89,8 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test[0](0) PASSED') == 2
-        result.output.count('test[1](1) FAILED') == 2
+        result.output.count('test(int)[1] PASSED') == 2
+        result.output.count('test(int)[2] FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -110,7 +107,7 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
             package acme;
 
             abstract class AbstractTest {
-                @org.testng.annotations.Test
+                @org.junit.jupiter.api.Test
                 void parent() {
                     ${flakyAssert()}
                 }
@@ -120,9 +117,9 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            public class FlakyTests extends AbstractTest {
-                @org.testng.annotations.Test
-                public void inherited() {
+            class FlakyTests extends AbstractTest {
+                @org.junit.jupiter.api.Test
+                void inherited() {
                 }
             }
         """
@@ -131,50 +128,9 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent FAILED') == 1
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    @Unroll
-    def "handles test dependencies (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test.retry.maxRetries = 1
-        """
-
-        writeTestSource """
-            package acme;
-
-            import org.testng.annotations.*;
-
-            public class OrderedTests {
-                @Test(dependsOnMethods = {"childTest"})
-                public void grandchildTest() {}
-
-                @Test(dependsOnMethods = {"parentTest"})
-                public void childTest() {
-                    ${flakyAssert()}
-                }
-
-                @Test
-                public void parentTest() {}
-            }
-        """
-
-        when:
-        def result = gradleRunner(gradleVersion).build()
-
-        then:
-        result.output.count('childTest FAILED') == 1
-        result.output.count('parentTest PASSED') == 2
-
-        // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
-        result.output.count('grandchildTest SKIPPED') == 1
-        result.output.count('grandchildTest PASSED') == 1
+        result.output.count('parent() FAILED') == 1
+        result.output.count('parent() PASSED') == 1
+        result.output.count('inherited() PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -190,18 +146,15 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            import org.testng.annotations.*;
+            import org.junit.jupiter.params.ParameterizedTest;
+            import org.junit.jupiter.params.provider.ValueSource;
 
-            import static org.testng.AssertJUnit.assertEquals;
+            import static org.junit.jupiter.api.Assertions.assertEquals;
 
-            public class ParameterTest {
-                @DataProvider(name = "parameters")
-                public Object[] createParameters() {
-                    return new Object[]{0, 1};
-                }
-
-                @Test(dataProvider = "parameters")
-                public void test(int number) {
+            class ParameterTest {
+                @ParameterizedTest(name = "test(int)[{index}]")
+                @ValueSource(ints = {0, 1})
+                void test(int number) {
                     assertEquals(0, number);
                 }
             }
@@ -212,21 +165,27 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test[0](0) PASSED') == 2
-        result.output.count('test[1](1) FAILED') == 2
+        result.output.count('test(int)[1] PASSED') == 2
+        result.output.count('test(int)[2] FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    String reportedTestName(String testName) {
+        testName + "()"
     }
 
     @Override
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.testng:testng:7.0.0'
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.5.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.5.2'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.5.2'
             }
             test {
-                useTestNG()
+                useJUnitPlatform()
             }
         """
     }
@@ -236,9 +195,9 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            public class SuccessfulTests {
-                @org.testng.annotations.Test
-                public void successTest() {}
+            class SuccessfulTests {
+                @org.junit.jupiter.api.Test
+                void successTest() {}
             }
         """
     }
@@ -248,11 +207,11 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            import static org.testng.AssertJUnit.assertTrue;
+            import static org.junit.jupiter.api.Assertions.assertTrue;
 
-            public class FailedTests {
-                @org.testng.annotations.Test
-                public void failedTest() {
+            class FailedTests {
+                @org.junit.jupiter.api.Test
+                void failedTest() {
                     assertTrue(false);
                 }
             }
@@ -264,9 +223,9 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         writeTestSource """
             package acme;
 
-            public class FlakyTests {
-                @org.testng.annotations.Test
-                public void flaky() {
+            class FlakyTests {
+                @org.junit.jupiter.api.Test
+                void flaky() {
                     ${flakyAssert()}
                 }
             }

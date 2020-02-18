@@ -26,7 +26,7 @@ import java.lang.management.ManagementFactory
 
 abstract class AbstractPluginFuncTest extends Specification {
 
-    static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
+    public static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
 
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
