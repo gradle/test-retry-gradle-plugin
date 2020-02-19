@@ -119,6 +119,10 @@ publishing {
     }
 }
 
+tasks.withType(Test::class).configureEach {
+    maxParallelForks = 4
+}
+
 tasks.named<Test>("test") {
     systemProperty(
         GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
