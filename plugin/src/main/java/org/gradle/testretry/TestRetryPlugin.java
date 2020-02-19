@@ -28,21 +28,20 @@ import static org.gradle.testretry.internal.TestTaskConfigurer.configureTestTask
 
 public class TestRetryPlugin implements Plugin<Project> {
 
+    private final ObjectFactory objectFactory;
+    private final ProviderFactory providerFactory;
+
+    @Inject
+    TestRetryPlugin(ObjectFactory objectFactory, ProviderFactory providerFactory) {
+        this.objectFactory = objectFactory;
+        this.providerFactory = providerFactory;
+    }
+
     @Override
     public void apply(Project project) {
         project.getTasks()
             .withType(Test.class)
-            .configureEach(task -> configureTestTask(task, getObjectFactory(), getProviderFactory()));
-    }
-
-    @Inject
-    protected ObjectFactory getObjectFactory() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Inject
-    protected ProviderFactory getProviderFactory() {
-        throw new UnsupportedOperationException();
+            .configureEach(task -> configureTestTask(task, objectFactory, providerFactory));
     }
 
 }
