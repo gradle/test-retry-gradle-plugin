@@ -15,9 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
+import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
-class JUnit5FuncTest extends AbstractTestFrameworkPluginFuncTest {
+class JUnit5FuncTest extends AbstractPluginFuncTest {
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
@@ -190,45 +191,4 @@ class JUnit5FuncTest extends AbstractTestFrameworkPluginFuncTest {
         """
     }
 
-    @Override
-    protected void successfulTest() {
-        writeTestSource """
-            package acme;
-
-            class SuccessfulTests {
-                @org.junit.jupiter.api.Test
-                void successTest() {}
-            }
-        """
-    }
-
-    @Override
-    protected void failedTest() {
-        writeTestSource """
-            package acme;
-
-            import static org.junit.jupiter.api.Assertions.assertTrue;
-
-            class FailedTests {
-                @org.junit.jupiter.api.Test
-                void failedTest() {
-                    assertTrue(false);
-                }
-            }
-        """
-    }
-
-    @Override
-    protected void flakyTest() {
-        writeTestSource """
-            package acme;
-
-            class FlakyTests {
-                @org.junit.jupiter.api.Test
-                void flaky() {
-                    ${flakyAssert()}
-                }
-            }
-        """
-    }
 }

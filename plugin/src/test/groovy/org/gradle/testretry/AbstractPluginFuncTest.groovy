@@ -98,46 +98,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         return 'dependencies { testImplementation "junit:junit:4.12" }'
     }
 
-    protected void successfulTest() {
-        writeTestSource """
-            package acme;
-
-            public class SuccessfulTests {
-                @org.junit.Test
-                public void successTest() {}
-            }
-        """
-    }
-
-    protected void failedTest() {
-        writeTestSource """
-            package acme;
-
-            import static org.junit.Assert.assertTrue;
-
-            public class FailedTests {
-                @org.junit.Test
-                public void failedTest() {
-                    assertTrue(false);
-                }
-            }
-        """
-    }
-
-    protected void flakyTest() {
-        writeTestSource """
-            package acme;
-
-            public class FlakyTests {
-                @org.junit.Test
-                public void flaky() {
-                    ${flakyAssert()}
-                }
-            }
-        """
-    }
-
-
     String flakyAssert() {
         return "acme.FlakyAssert.flakyAssert();"
     }

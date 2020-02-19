@@ -17,7 +17,7 @@ package org.gradle.testretry
 
 import spock.lang.Unroll
 
-class TaskConfigurationAvoidanceFuncTest extends AbstractPluginFuncTest {
+class TaskConfigurationAvoidanceFuncTest extends AbstractGeneralPluginFuncTest {
 
     @Unroll
     def "test tasks are not created from use of plugin (gradle version #gradleVersion)"() {

@@ -15,9 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
+import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
-class JUnit4FuncTest extends AbstractTestFrameworkPluginFuncTest {
+class JUnit4FuncTest extends AbstractPluginFuncTest {
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {

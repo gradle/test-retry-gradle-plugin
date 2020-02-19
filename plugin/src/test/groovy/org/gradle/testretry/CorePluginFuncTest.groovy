@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.testframework
+package org.gradle.testretry
 
-import org.gradle.testretry.AbstractPluginFuncTest
 import org.gradle.testretry.internal.TestRetryTaskExtensionAdapter
 import spock.lang.Unroll
 
-abstract class AbstractTestFrameworkPluginFuncTest extends AbstractPluginFuncTest {
+class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
 
     @Unroll
     def "has no effect when all tests pass (gradle version #gradleVersion)"() {

@@ -15,10 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
-
+import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
-class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
+class TestNGFuncTest extends AbstractPluginFuncTest {
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
@@ -232,45 +232,4 @@ class TestNGFuncTest extends AbstractTestFrameworkPluginFuncTest {
         """
     }
 
-    @Override
-    protected void successfulTest() {
-        writeTestSource """
-            package acme;
-
-            public class SuccessfulTests {
-                @org.testng.annotations.Test
-                public void successTest() {}
-            }
-        """
-    }
-
-    @Override
-    protected void failedTest() {
-        writeTestSource """
-            package acme;
-
-            import static org.testng.AssertJUnit.assertTrue;
-
-            public class FailedTests {
-                @org.testng.annotations.Test
-                public void failedTest() {
-                    assertTrue(false);
-                }
-            }
-        """
-    }
-
-    @Override
-    protected void flakyTest() {
-        writeTestSource """
-            package acme;
-
-            public class FlakyTests {
-                @org.testng.annotations.Test
-                public void flaky() {
-                    ${flakyAssert()}
-                }
-            }
-        """
-    }
 }

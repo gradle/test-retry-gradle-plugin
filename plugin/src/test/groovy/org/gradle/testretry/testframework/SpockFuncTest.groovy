@@ -15,9 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
+import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
-class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
+class SpockFuncTest extends AbstractPluginFuncTest {
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -535,48 +536,6 @@ class SpockFuncTest extends AbstractTestFrameworkPluginFuncTest {
             dependencies {
                 testImplementation "org.codehaus.groovy:groovy-all:2.5.8"
                 testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
-            }
-        """
-    }
-
-    @Override
-    protected void successfulTest() {
-        writeTestSource """
-            package acme
-
-            class SuccessfulTests extends spock.lang.Specification {
-                def successTest() {
-                    expect:
-                    true
-                }
-            }
-        """
-    }
-
-    @Override
-    protected void failedTest() {
-        writeTestSource """
-            package acme
-
-            class FailedTests extends spock.lang.Specification {
-                def failedTest() {
-                    expect:
-                    false
-                }
-            }
-        """
-    }
-
-    @Override
-    protected void flakyTest() {
-        writeTestSource """
-            package acme
-
-            class FlakyTests extends spock.lang.Specification {
-                def flaky() {
-                    expect:
-                    ${flakyAssert()}
-                }
             }
         """
     }
