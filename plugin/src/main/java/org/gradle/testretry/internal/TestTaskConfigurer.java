@@ -22,36 +22,22 @@ import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.gradle.util.VersionNumber;
+import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public final class TestTaskConfigurer {
 
-    private final ObjectFactory objectFactory;
-    private final ProviderFactory providerFactory;
-    private final Instantiator instantiator;
-    private final ClassLoaderCache classLoaderCache;
-
-    @Inject
-    public TestTaskConfigurer(
-        ObjectFactory objectFactory,
-        ProviderFactory providerFactory,
-        Instantiator instantiator,
-        ClassLoaderCache classLoaderCache
-    ) {
-        this.objectFactory = objectFactory;
-        this.providerFactory = providerFactory;
-        this.instantiator = instantiator;
-        this.classLoaderCache = classLoaderCache;
+    private TestTaskConfigurer() {
     }
 
-    public void configureTestTask(Test test) {
+    public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
         VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
 
         TestRetryTaskExtension extension;
@@ -70,44 +56,15 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                Test testTask = (Test) task;
-                RetryTestExecuter retryTestExecuter = TestTaskConfigurer.this.createRetryTestExecuter(testTask, adapter);
-                replaceTestExecuter(testTask, retryTestExecuter);
-            }
-        });
-        test.doLast(new Action<Task>() {
-            @Override
-            public void execute(Task task) {
-                Test testTask = (Test) task;
-                TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(testTask);
-                if (testExecuter instanceof RetryTestExecuter) {
-                    ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
-                } else {
-                    throw new IllegalStateException("Unexpected test executer: " + testExecuter);
-                }
-            }
-        });
+        test.doFirst(new InitTaskAction(adapter));
+        test.doLast(new FinalizeTaskAction());
     }
 
-    private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
-        try {
-            Method createTestExecutor = Test.class.getDeclaredMethod("createTestExecuter");
-            createTestExecutor.setAccessible(true);
-
-            @SuppressWarnings("unchecked")
-            TestExecuter<JvmTestExecutionSpec> testExecuter = (TestExecuter<JvmTestExecutionSpec>) createTestExecutor.invoke(task);
-
-            return testExecuter;
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
+    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
+
+        ClassLoaderCache classLoaderCache = invoke(method(Test.class, "getClassLoaderCache"), task);
+        Instantiator instantiator = invoke(method(AbstractTestTask.class, "getInstantiator"), task);
 
         return new RetryTestExecuter(
             task,
@@ -117,14 +74,12 @@ public final class TestTaskConfigurer {
         );
     }
 
-    private void replaceTestExecuter(Test task, RetryTestExecuter retryTestExecuter) {
-        try {
-            Method setTestExecuter = Test.class.getDeclaredMethod("setTestExecuter", TestExecuter.class);
-            setTestExecuter.setAccessible(true);
-            setTestExecuter.invoke(task, retryTestExecuter);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+    private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
+        return invoke(method(Test.class, "createTestExecuter"), task);
+    }
+
+    private static void setTestExecuter(Test task, RetryTestExecuter retryTestExecuter) {
+        invoke(method(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
     }
 
     private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
@@ -133,6 +88,56 @@ public final class TestTaskConfigurer {
 
     private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
         return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 1 : gradleVersion.getMajor() > 5;
+    }
+
+    private static class FinalizeTaskAction implements Action<Task> {
+
+        @Override
+        public void execute(@NotNull Task task) {
+            Test testTask = (Test) task;
+            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(testTask);
+            if (testExecuter instanceof RetryTestExecuter) {
+                ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
+            } else {
+                throw new IllegalStateException("Unexpected test executer: " + testExecuter);
+            }
+        }
+    }
+
+    private static class InitTaskAction implements Action<Task> {
+
+        private final TestRetryTaskExtensionAdapter adapter;
+
+        public InitTaskAction(TestRetryTaskExtensionAdapter adapter) {
+            this.adapter = adapter;
+        }
+
+        @Override
+        public void execute(@NotNull Task task) {
+            Test testTask = (Test) task;
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(testTask, adapter);
+            setTestExecuter(testTask, retryTestExecuter);
+        }
+    }
+
+    private static Method method(@SuppressWarnings("SameParameterValue") Class<?> type, String methodName, Class<?>... paramTypes) {
+        try {
+            Method method = type.getDeclaredMethod(methodName, paramTypes);
+            method.setAccessible(true);
+            return method;
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <T> T invoke(Method method, Object instance, Object... args) {
+        try {
+            Object result = method.invoke(instance, args);
+            @SuppressWarnings("unchecked") T cast = (T) result;
+            return cast;
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

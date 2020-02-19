@@ -18,34 +18,31 @@ package org.gradle.testretry;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
-import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.internal.reflect.Instantiator;
-import org.gradle.testretry.internal.TestTaskConfigurer;
 
 import javax.inject.Inject;
 
+import static org.gradle.testretry.internal.TestTaskConfigurer.configureTestTask;
+
 public class TestRetryPlugin implements Plugin<Project> {
-
-    private final TestTaskConfigurer configurer;
-
-    @Inject
-    public TestRetryPlugin(
-        ObjectFactory objectFactory,
-        ProviderFactory providerFactory,
-        Instantiator instantiator,
-        ClassLoaderCache classLoaderCache
-    ) {
-        this.configurer = new TestTaskConfigurer(objectFactory, providerFactory, instantiator, classLoaderCache);
-    }
 
     @Override
     public void apply(Project project) {
         project.getTasks()
             .withType(Test.class)
-            .configureEach(configurer::configureTestTask);
+            .configureEach(task -> configureTestTask(task, getObjectFactory(), getProviderFactory()));
+    }
+
+    @Inject
+    protected ObjectFactory getObjectFactory() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Inject
+    protected ProviderFactory getProviderFactory() {
+        throw new UnsupportedOperationException();
     }
 
 }

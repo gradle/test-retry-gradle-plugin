@@ -111,11 +111,11 @@ abstract class AbstractPluginFuncTest extends Specification {
         testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
     }
 
-    GradleRunner gradleRunner(String gradleVersion) {
+    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s']) {
         GradleRunner.create()
             .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .withProjectDir(testProjectDir.root)
-            .withArguments('test', '-s')
+            .withArguments(arguments)
             .withPluginClasspath()
             .forwardOutput()
             .tap {
