@@ -197,6 +197,9 @@ The plugin has been tested with the reporting of link:url[TeamCity, https://www.
 Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
 TeamCity lists each test that was executed and how often it was run in the build.
 
+By default, TeamCity will fail your build link:url[if at least one test fails, https://www.jetbrains.com/help/teamcity/build-failure-conditions.html#BuildFailureConditions-Commonbuildfailureconditions].
+When using `failOnPassedAfterRetry = false` (ie. the default for this plugin), this failure condition should be disabled.
+
 image:teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
 
 ==== Jenkins
