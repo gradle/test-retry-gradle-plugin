@@ -40,6 +40,33 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
     }
 
     @Unroll
+    def "is benign when unconfigured (gradle version #gradleVersion)"() {
+        when:
+        successfulTest()
+        gradleRunner(gradleVersion).build()
+
+        then:
+        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "does not retry by default (gradle version #gradleVersion)"() {
+        when:
+        failedTest()
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.contains("There were failing tests.")
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
     def "retries failed tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
