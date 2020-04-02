@@ -171,11 +171,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class FlakyTests {
-                static {
-                    if(true) {
-                        throw new RuntimeException("foo");
-                    }
-                }
+                ${failingStaticInitializer()}
 
                 @org.junit.Test
                 public void someTest() {

@@ -163,4 +163,13 @@ abstract class AbstractPluginFuncTest extends Specification {
         }
     }
 
+    static String failingStaticInitializer() {
+        return """
+            static {
+                if(true) {
+                    throw new RuntimeException("foo");
+                }
+            }
+        """
+    }
 }

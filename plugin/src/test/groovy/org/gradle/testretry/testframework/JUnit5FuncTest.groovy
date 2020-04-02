@@ -35,7 +35,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
                 ${lifecycle.contains('All') ? 'static ' : ''}void lifecycle() {
                     ${flakyAssert()}
                 }
-            
+
                 @org.junit.jupiter.api.Test
                 void successTest() {}
             }
@@ -52,6 +52,34 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
             GRADLE_VERSIONS_UNDER_TEST,
             ['BeforeAll', 'BeforeEach', 'AfterAll', 'AfterEach']
         ])
+    }
+
+    @Unroll
+    def "handles failing static initializers (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            class SomeTests {
+                ${failingStaticInitializer()}
+
+                @org.junit.jupiter.api.Test
+                void someTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
+
+        then:
+        result.output.count('SomeTests > someTest() FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -80,7 +108,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
 
         writeTestSource """
             package acme;
-            
+
             class ParameterTest extends AbstractTest {
             }
         """

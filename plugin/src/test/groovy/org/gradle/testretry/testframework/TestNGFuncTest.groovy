@@ -35,7 +35,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
                 public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
                     ${flakyAssert()}
                 }
-            
+
                 @org.testng.annotations.Test
                 public void successTest() {}
             }
@@ -52,6 +52,35 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
             GRADLE_VERSIONS_UNDER_TEST,
             ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest', 'BeforeSuite', 'AfterSuite']
         ])
+    }
+
+    @Unroll
+    def "handles failing static initializers (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class SomeTests {
+                ${failingStaticInitializer()}
+
+                @org.testng.annotations.Test
+                public void someTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
+
+        then:
+        result.output.contains('There were failing tests. See the report')
+        !result.output.contains('org.gradle.test-retry was unable to retry the following test methods')
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -73,7 +102,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
                 public Object[] createParameters() {
                     return new Object[]{0, 1};
                 }
-            
+
                 @Test(dataProvider = "parameters")
                 public void test(int number) {
                     assertEquals(0, number);
@@ -83,7 +112,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
 
         writeTestSource """
             package acme;
-                        
+
             public class ParameterTest extends AbstractTest {
             }
         """

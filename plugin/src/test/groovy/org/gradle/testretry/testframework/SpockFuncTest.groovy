@@ -33,7 +33,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                 def ${lifecycle}() {
                     ${flakyAssert()}
                 }
-            
+
                 def successTest() {
                     expect:
                     true
@@ -54,6 +54,37 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             GRADLE_VERSIONS_UNDER_TEST,
             ['setup', 'setupSpec', 'cleanup', 'cleanupSpec']
         ])
+    }
+
+    @Unroll
+    def "handles failing static initializers (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            class SomeSpec extends spock.lang.Specification {
+                ${failingStaticInitializer()}
+
+                def someTest() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
+
+        then:
+        result.output.count('acme.SomeSpec > initializationError FAILED') == 1
+        result.output.count('1 test completed, 1 failed') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
@@ -148,7 +179,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                     where:
                     param << ['foo', 'bar']
                 }
-                
+
                 def "test with c"() {
                     expect:
                     ${flakyAssert()}
@@ -501,7 +532,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
 
         buildFile << """
             test.retry.maxRetries = 1
-            
+
             dependencies {
                 testImplementation files('spock-abstract-test.jar')
             }
