@@ -35,7 +35,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
                 public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
                     ${flakyAssert()}
                 }
-            
+
                 @org.junit.Test
                 public void successTest() {}
             }
@@ -65,7 +65,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             package acme;
 
             import static org.junit.Assert.assertTrue;
-            
+
             import org.junit.Test;
 
             abstract class AbstractTest {
@@ -86,14 +86,14 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
 
         writeTestSource """
             package acme;
-            
+
             import java.util.Arrays;
             import java.util.Collection;
 
             import org.junit.runner.RunWith;
             import org.junit.runners.Parameterized;
             import org.junit.runners.Parameterized.Parameters;
-            
+
             @RunWith(Parameterized.class)
             public class ParameterTest extends AbstractTest {
                 @Parameters(name = "{index}: test({0})={1}")
@@ -102,7 +102,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
                          { 0, true }, { 1, false }
                    });
                 }
-            
+
                 public ParameterTest(int input, boolean expected) {
                     super(input, expected);
                 }
@@ -155,6 +155,39 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         result.output.count('parent FAILED') == 1
         result.output.count('parent PASSED') == 1
         result.output.count('inherited PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "handles failing static initializers (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests {
+                static {
+                    if(true) {
+                        throw new RuntimeException("foo");
+                    }
+                }
+
+                @org.junit.Test
+                public void someTest() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('acme.FlakyTests > someTest FAILED') == 2
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
