@@ -21,6 +21,7 @@ import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.ExtraPropertiesExtension;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
@@ -56,8 +57,8 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new InitTaskAction(adapter));
-        test.doLast(new FinalizeTaskAction());
+        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter)));
+        test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
     }
 
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
@@ -90,12 +91,34 @@ public final class TestTaskConfigurer {
         return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 1 : gradleVersion.getMajor() > 5;
     }
 
-    private static class FinalizeTaskAction implements Action<Task> {
+    private static class ConditionalTaskAction implements Action<Task> {
+
+        private static final String DEACTIVATION_PROPERTY_NAME = "retry.deactivated";
+
+        private final Action<Test> delegate;
+
+        public ConditionalTaskAction(Action<Test> delegate) {
+            this.delegate = delegate;
+        }
 
         @Override
         public void execute(@NotNull Task task) {
-            Test testTask = (Test) task;
-            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(testTask);
+            ExtraPropertiesExtension extra = task.getExtensions().getExtraProperties();
+            boolean deactivated = extra.has(DEACTIVATION_PROPERTY_NAME) && Boolean.parseBoolean(String.valueOf(extra.get(DEACTIVATION_PROPERTY_NAME)));
+            Object distributionExtension = task.getExtensions().findByName("distribution");
+            if (deactivated && distributionExtension != null) {
+                task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
+            } else {
+                delegate.execute((Test) task);
+            }
+        }
+    }
+
+    private static class FinalizeTaskAction implements Action<Test> {
+
+        @Override
+        public void execute(@NotNull Test task) {
+            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(task);
             if (testExecuter instanceof RetryTestExecuter) {
                 ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
             } else {
@@ -104,7 +127,7 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static class InitTaskAction implements Action<Task> {
+    private static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
 
@@ -113,10 +136,9 @@ public final class TestTaskConfigurer {
         }
 
         @Override
-        public void execute(@NotNull Task task) {
-            Test testTask = (Test) task;
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(testTask, adapter);
-            setTestExecuter(testTask, retryTestExecuter);
+        public void execute(@NotNull Test task) {
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter);
+            setTestExecuter(task, retryTestExecuter);
         }
     }
 
