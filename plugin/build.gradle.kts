@@ -11,7 +11,7 @@ plugins {
     checkstyle
     codenarc
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "0.10.1"
+    id("com.gradle.plugin-publish") version "0.11.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
