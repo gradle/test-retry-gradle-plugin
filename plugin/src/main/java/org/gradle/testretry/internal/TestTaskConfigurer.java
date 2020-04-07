@@ -56,15 +56,15 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new InitTaskAction(adapter));
-        test.doLast(new FinalizeTaskAction());
+        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter)));
+        test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
     }
 
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
 
-        ClassLoaderCache classLoaderCache = invoke(method(Test.class, "getClassLoaderCache"), task);
-        Instantiator instantiator = invoke(method(AbstractTestTask.class, "getInstantiator"), task);
+        ClassLoaderCache classLoaderCache = invoke(declaredMethod(Test.class, "getClassLoaderCache"), task);
+        Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
 
         return new RetryTestExecuter(
             task,
@@ -75,11 +75,11 @@ public final class TestTaskConfigurer {
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
-        return invoke(method(Test.class, "createTestExecuter"), task);
+        return invoke(declaredMethod(Test.class, "createTestExecuter"), task);
     }
 
     private static void setTestExecuter(Test task, RetryTestExecuter retryTestExecuter) {
-        invoke(method(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
+        invoke(declaredMethod(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
     }
 
     private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
@@ -90,12 +90,42 @@ public final class TestTaskConfigurer {
         return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 1 : gradleVersion.getMajor() > 5;
     }
 
-    private static class FinalizeTaskAction implements Action<Task> {
+    private static class ConditionalTaskAction implements Action<Task> {
+
+        private final Action<Test> delegate;
+
+        public ConditionalTaskAction(Action<Test> delegate) {
+            this.delegate = delegate;
+        }
 
         @Override
         public void execute(@NotNull Task task) {
-            Test testTask = (Test) task;
-            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(testTask);
+            if (isDeactivatedByTestDistributionPlugin(task)) {
+                task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
+            } else {
+                delegate.execute((Test) task);
+            }
+        }
+
+        private boolean isDeactivatedByTestDistributionPlugin(Task task) {
+            Object distributionExtension = task.getExtensions().findByName("distribution");
+            if (distributionExtension == null) {
+                return false;
+            }
+            try {
+                return invoke(method(distributionExtension.getClass(), "shouldTestRetryPluginBeDeactivated"), distributionExtension);
+            } catch (Exception e) {
+                task.getLogger().warn("Failed to determine whether test-retry plugin should be deactivated from distribution extension", e);
+                return false;
+            }
+        }
+    }
+
+    private static class FinalizeTaskAction implements Action<Test> {
+
+        @Override
+        public void execute(@NotNull Test task) {
+            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(task);
             if (testExecuter instanceof RetryTestExecuter) {
                 ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
             } else {
@@ -104,7 +134,7 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static class InitTaskAction implements Action<Task> {
+    private static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
 
@@ -113,21 +143,31 @@ public final class TestTaskConfigurer {
         }
 
         @Override
-        public void execute(@NotNull Task task) {
-            Test testTask = (Test) task;
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(testTask, adapter);
-            setTestExecuter(testTask, retryTestExecuter);
+        public void execute(@NotNull Test task) {
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter);
+            setTestExecuter(task, retryTestExecuter);
         }
     }
 
-    private static Method method(@SuppressWarnings("SameParameterValue") Class<?> type, String methodName, Class<?>... paramTypes) {
+    private static Method declaredMethod(Class<?> type, String methodName, Class<?>... paramTypes) {
         try {
-            Method method = type.getDeclaredMethod(methodName, paramTypes);
-            method.setAccessible(true);
-            return method;
+            return makeAccessible(type.getDeclaredMethod(methodName, paramTypes));
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static Method method(Class<?> type, String methodName, Class<?>... paramTypes) {
+        try {
+            return makeAccessible(type.getMethod(methodName, paramTypes));
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static Method makeAccessible(Method method) {
+        method.setAccessible(true);
+        return method;
     }
 
     private static <T> T invoke(Method method, Object instance, Object... args) {
