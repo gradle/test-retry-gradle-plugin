@@ -201,25 +201,4 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
-    def "can be deactivated (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test.retry.maxRetries = 1
-            test.ext['retry.deactivated'] = true
-            test.extensions.add("distribution", "some extension")
-        """
-        failedTest()
-
-        when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
-
-        then:
-        // 1 initial + 0 retries + 1 overall task FAILED + 1 build FAILED
-        result.output.count('FAILED') == 1 + 0 + 1 + 1
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
 }
