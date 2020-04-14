@@ -15,17 +15,14 @@
  */
 package org.gradle.testretry.internal;
 
-import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public final class TestName {
 
     private final String className;
-
-    @Nonnull
     private final String name;
 
-    public TestName(String className, @Nonnull String name) {
+    public TestName(String className, String name) {
         this.className = className;
         this.name = name;
     }
@@ -34,7 +31,6 @@ public final class TestName {
         return className;
     }
 
-    @Nonnull
     public String getName() {
         return name;
     }

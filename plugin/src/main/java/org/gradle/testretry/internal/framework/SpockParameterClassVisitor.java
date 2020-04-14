@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework.visitors;
+package org.gradle.testretry.internal.framework;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.objectweb.asm.AnnotationVisitor;
@@ -48,7 +48,7 @@ import static org.objectweb.asm.Opcodes.ASM7;
 /**
  * Class visitor that identifies unparameterized test method names.
  */
-public class SpockParameterClassVisitor extends ClassVisitor {
+final class SpockParameterClassVisitor extends ClassVisitor {
 
     private static final Set<Character> REGEX_CHARS = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
     // A valid Java identifier https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.8 including methods

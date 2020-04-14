@@ -83,7 +83,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void failure(Object testId, Throwable throwable) {
         TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
-        if (descriptor != null) {
+        if (descriptor != null && descriptor.getClassName() != null) {
             failedTests.add(new TestName(descriptor.getClassName(), descriptor.getName()));
         }
         delegate.failure(testId, throwable);

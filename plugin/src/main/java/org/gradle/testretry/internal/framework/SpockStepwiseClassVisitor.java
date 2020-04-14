@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework.visitors;
+package org.gradle.testretry.internal.framework;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-public final class SpockStepwiseClassVisitor extends ClassVisitor {
+final class SpockStepwiseClassVisitor extends ClassVisitor {
 
     private boolean stepwise = false;
 
-    public SpockStepwiseClassVisitor() {
+    SpockStepwiseClassVisitor() {
         super(ASM7);
     }
 
@@ -36,7 +36,7 @@ public final class SpockStepwiseClassVisitor extends ClassVisitor {
         return null;
     }
 
-    public boolean isStepwise() {
+    boolean isStepwise() {
         return stepwise;
     }
 }

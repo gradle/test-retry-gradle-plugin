@@ -24,7 +24,6 @@ import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
-import org.gradle.testretry.internal.framework.visitors.TestNGClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +47,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     @Override
     public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        retriesWithTestNGDependentsAdded(spec, failedTests).stream()
-            .filter(failedTest -> failedTest.getClassName() != null)
+        retriesWithTestNGDependentsAdded(spec, failedTests)
             .forEach(failedTest -> {
                 if ("lifecycle".equals(failedTest.getName())) {
                     // failures in TestNG lifecycle methods yield a failure on methods of these names
@@ -66,7 +64,6 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
         return failedTests.stream()
-            .filter(failedTest -> failedTest.getClassName() != null)
             .flatMap(failedTest ->
                 spec.getTestClassesDirs().getFiles().stream()
                     .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))

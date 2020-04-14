@@ -32,17 +32,15 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
 
-        failedTests.stream()
-            .filter(failedTest -> failedTest.getClassName() != null)
-            .forEach(failedTest -> {
-                if (ERROR_SYNTHETIC_TEST_NAMES.contains(failedTest.getName())) {
-                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else {
-                    String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[[^]]+])*$", "");
-                    retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
-                    retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
-                }
-            });
+        failedTests.forEach(failedTest -> {
+            if (ERROR_SYNTHETIC_TEST_NAMES.contains(failedTest.getName())) {
+                retriedTestFilter.includeTestsMatching(failedTest.getClassName());
+            } else {
+                String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[[^]]+])*$", "");
+                retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
+                retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
+            }
+        });
 
         return new JUnitPlatformTestFramework(retriedTestFilter);
     }

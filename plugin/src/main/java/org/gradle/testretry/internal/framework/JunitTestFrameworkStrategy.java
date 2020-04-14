@@ -23,14 +23,13 @@ import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
-import org.gradle.testretry.internal.framework.visitors.SpockParameterClassVisitor;
-import org.gradle.testretry.internal.framework.visitors.SpockStepwiseClassVisitor;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,11 +40,9 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     public static final Logger LOGGER = LoggerFactory.getLogger(JunitTestFrameworkStrategy.class);
 
     public static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
-        List<TestName> failedTestNames = failedTests.stream()
-            .filter(failedTest -> failedTest.getClassName() != null)
-            .collect(Collectors.toList());
+        List<TestName> originalFailedTests = new ArrayList<>(failedTests);
 
-        List<TestName> retries = failedTestNames.stream()
+        List<TestName> retries = failedTests.stream()
             .flatMap(failedTest ->
                 spec.getTestClassesDirs().getFiles().stream()
                     .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
@@ -64,7 +61,7 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
             )
             .collect(Collectors.toList());
 
-        return retries.isEmpty() ? failedTestNames : retries;
+        return retries.isEmpty() ? originalFailedTests : retries;
     }
 
     @Override

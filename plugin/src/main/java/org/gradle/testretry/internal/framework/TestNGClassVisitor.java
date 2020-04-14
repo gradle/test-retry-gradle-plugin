@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework.visitors;
+package org.gradle.testretry.internal.framework;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -24,18 +24,24 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-public final class TestNGClassVisitor extends ClassVisitor {
+final class TestNGClassVisitor extends ClassVisitor {
 
     private final Map<String, List<String>> dependsOn = new HashMap<>();
     private final Map<String, List<String>> dependedOn = new HashMap<>();
 
     private String currentMethod;
 
-    public TestNGClassVisitor() {
+    TestNGClassVisitor() {
         super(ASM7);
     }
 
-    public Set<String> dependsOn(String method) {
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        this.currentMethod = name;
+        return new TestNGMethodVisitor();
+    }
+
+    Set<String> dependsOn(String method) {
         Set<String> dependentChain = new HashSet<>();
         dependentChain.add(method);
 
@@ -60,13 +66,7 @@ public final class TestNGClassVisitor extends ClassVisitor {
         return dependentChain;
     }
 
-    @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-        this.currentMethod = name;
-        return new TestNGMethodVisitor();
-    }
-
-    class TestNGMethodVisitor extends MethodVisitor {
+    private final class TestNGMethodVisitor extends MethodVisitor {
 
         public TestNGMethodVisitor() {
             super(ASM7);
@@ -81,7 +81,7 @@ public final class TestNGClassVisitor extends ClassVisitor {
         }
     }
 
-    class TestNGTestAnnotationVisitor extends AnnotationVisitor {
+    private final class TestNGTestAnnotationVisitor extends AnnotationVisitor {
 
         public TestNGTestAnnotationVisitor() {
             super(ASM7);
@@ -96,7 +96,7 @@ public final class TestNGClassVisitor extends ClassVisitor {
         }
     }
 
-    class TestNGTestDependsOnAnnotationVisitor extends AnnotationVisitor {
+    private final class TestNGTestDependsOnAnnotationVisitor extends AnnotationVisitor {
 
         public TestNGTestDependsOnAnnotationVisitor() {
             super(ASM7);
