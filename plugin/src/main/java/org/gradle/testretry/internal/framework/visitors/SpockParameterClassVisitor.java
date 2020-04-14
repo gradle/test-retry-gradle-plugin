@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.visitors;
+package org.gradle.testretry.internal.framework.visitors;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.objectweb.asm.AnnotationVisitor;
@@ -61,10 +61,10 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
     }
 
-    private String failedTestMethodNameMaybeParameterized;
-    private Set<String> testMethodNames = new HashSet<>();
-    private JvmTestExecutionSpec spec;
-    private SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
+    private final String failedTestMethodNameMaybeParameterized;
+    private final Set<String> testMethodNames = new HashSet<>();
+    private final JvmTestExecutionSpec spec;
+    private final SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
     public SpockParameterClassVisitor(String testMethodName, JvmTestExecutionSpec spec) {
         super(ASM7);
@@ -79,7 +79,7 @@ public class SpockParameterClassVisitor extends ClassVisitor {
 
     @Override
     public void visitEnd() {
-        Set<String> matchingNames = spockMethodVisitor.getTestMethodPatterns().stream()
+        Set<String> matchingNames = spockMethodVisitor.annotationVisitor.testMethodPatterns.stream()
             .filter(methodPattern -> {
                 // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
                 String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
@@ -171,55 +171,50 @@ public class SpockParameterClassVisitor extends ClassVisitor {
         return result.toString();
     }
 
-}
+    private static final class SpockParameterMethodVisitor extends MethodVisitor {
 
-class SpockParameterMethodVisitor extends MethodVisitor {
+        private final SpockFeatureMetadataAnnotationVisitor annotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
 
-    private SpockFeatureMetadataAnnotationVisitor annotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
-
-    public SpockParameterMethodVisitor() {
-        super(ASM7);
-    }
-
-    @Override
-    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        if (descriptor.contains("org/spockframework/runtime/model/FeatureMetadata")) {
-            return annotationVisitor;
+        public SpockParameterMethodVisitor() {
+            super(ASM7);
         }
-        return null;
-    }
 
-    public List<String> getTestMethodPatterns() {
-        return annotationVisitor.getTestMethodPatterns();
-    }
-}
-
-/**
- * Looking for signatures like:
- * org/spockframework/runtime/model/FeatureMetadata;(
- * line=15,
- * name="unrolled with param #param",
- * ordinal=0,
- * blocks={...},
- * parameterNames={"param", "result"}
- * )
- */
-class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
-
-    private List<String> testMethodPatterns = new ArrayList<>();
-
-    public SpockFeatureMetadataAnnotationVisitor() {
-        super(ASM7);
-    }
-
-    @Override
-    public void visit(String name, Object value) {
-        if ("name".equals(name)) {
-            testMethodPatterns.add((String) value);
+        @Override
+        public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+            if (descriptor.contains("org/spockframework/runtime/model/FeatureMetadata")) {
+                return annotationVisitor;
+            }
+            return null;
         }
+
+        /**
+         * Looking for signatures like:
+         * org/spockframework/runtime/model/FeatureMetadata;(
+         * line=15,
+         * name="unrolled with param #param",
+         * ordinal=0,
+         * blocks={...},
+         * parameterNames={"param", "result"}
+         * )
+         */
+        private static final class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
+
+            private final List<String> testMethodPatterns = new ArrayList<>();
+
+            public SpockFeatureMetadataAnnotationVisitor() {
+                super(ASM7);
+            }
+
+            @Override
+            public void visit(String name, Object value) {
+                if ("name".equals(name)) {
+                    testMethodPatterns.add((String) value);
+                }
+            }
+
+        }
+
     }
 
-    public List<String> getTestMethodPatterns() {
-        return testMethodPatterns;
-    }
 }
+

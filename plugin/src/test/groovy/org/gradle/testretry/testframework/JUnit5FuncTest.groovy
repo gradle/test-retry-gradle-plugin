@@ -55,7 +55,7 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "handles failing static initializers (gradle version #gradleVersion)"() {
+    def "handles flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -65,7 +65,9 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
             package acme;
 
             class SomeTests {
-                ${failingStaticInitializer()}
+                static {
+                    ${flakyAssert()}
+                }
 
                 @org.junit.jupiter.api.Test
                 void someTest() {}
@@ -73,10 +75,11 @@ class JUnit5FuncTest extends AbstractPluginFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).buildAndFail()
+        def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('SomeTests > someTest() FAILED') == 2
+        result.output.count('SomeTests > someTest() PASSED') == 1
+        result.output.count('SomeTests > someTest() FAILED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

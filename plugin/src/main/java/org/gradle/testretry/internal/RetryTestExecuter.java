@@ -15,10 +15,13 @@
  */
 package org.gradle.testretry.internal;
 
+import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,7 +31,8 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final TestRetryTaskExtensionAdapter extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
-    private final RetryTestFrameworkGenerator retryTestFrameworkGenerator;
+    private final ClassLoaderCache classLoaderCache;
+    private final Instantiator instantiator;
 
     private RetryTestResultProcessor.RoundResult lastResult;
 
@@ -36,12 +40,14 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         Test task,
         TestRetryTaskExtensionAdapter extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
-        RetryTestFrameworkGenerator retryTestFrameworkGenerator
+        ClassLoaderCache classLoaderCache,
+        Instantiator instantiator
     ) {
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
-        this.retryTestFrameworkGenerator = retryTestFrameworkGenerator;
+        this.classLoaderCache = classLoaderCache;
+        this.instantiator = instantiator;
     }
 
     @Override
@@ -55,7 +61,9 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             return;
         }
 
-        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(spec, testResultProcessor, maxFailures);
+        TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
+
+        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testFrameworkStrategy, testResultProcessor, maxFailures);
 
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
@@ -66,6 +74,8 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             lastResult = result;
 
             if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
+                // fall through to our doLast action to fail accordingly
+                testTask.setIgnoreFailures(true);
                 break;
             } else if (result.failedTests.isEmpty()) {
                 if (retryCount > 0 && !failOnPassedAfterRetry) {
@@ -75,7 +85,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             } else if (result.lastRound) {
                 break;
             } else {
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, testTask, result.failedTests);
+                testExecutionSpec = createRetryJvmExecutionSpec(testFrameworkStrategy, spec, testTask, result.failedTests);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
@@ -90,9 +100,9 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(TestFrameworkStrategy testFrameworkStrategy, JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
         return new JvmTestExecutionSpec(
-            retryTestFrameworkGenerator.createRetryingTestFramework(spec, testTask, retries),
+            testFrameworkStrategy.createRetrying(spec, testTask, retries, instantiator, classLoaderCache),
             spec.getClasspath(),
             spec.getCandidateClassFiles(),
             spec.isScanForTestClasses(),

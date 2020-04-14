@@ -18,14 +18,14 @@ package org.gradle.testretry.internal;
 import javax.annotation.Nonnull;
 import java.util.Objects;
 
-final class TestName {
+public final class TestName {
 
     private final String className;
 
     @Nonnull
     private final String name;
 
-    TestName(String className, @Nonnull String name) {
+    public TestName(String className, @Nonnull String name) {
         this.className = className;
         this.name = name;
     }

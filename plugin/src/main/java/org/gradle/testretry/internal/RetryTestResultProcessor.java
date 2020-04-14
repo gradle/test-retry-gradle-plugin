@@ -15,16 +15,12 @@
  */
 package org.gradle.testretry.internal;
 
-import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestCompleteEvent;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
-import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
-import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
-import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
-import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.TestOutputEvent;
+import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -35,43 +31,26 @@ import java.util.concurrent.ConcurrentHashMap;
 
 final class RetryTestResultProcessor implements TestResultProcessor {
 
-    private final TestFramework testFramework;
+    private final TestFrameworkStrategy testFrameworkStrategy;
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
     private boolean lastRetry;
 
-    private Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
-    private Set<TestName> failedTests = ConcurrentHashMap.newKeySet();
-    private Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
+    private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
+    private final Set<TestName> failedTests = ConcurrentHashMap.newKeySet();
+    private final Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
     private Object rootTestDescriptorId;
 
-    RetryTestResultProcessor(JvmTestExecutionSpec spec, TestResultProcessor delegate, int maxFailures) {
-        this.testFramework = spec.getTestFramework();
+    RetryTestResultProcessor(TestFrameworkStrategy testFrameworkStrategy, TestResultProcessor delegate, int maxFailures) {
+        this.testFrameworkStrategy = testFrameworkStrategy;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
     }
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
-        if (testFramework instanceof JUnitTestFramework) {
-            // remove Spock/JUnit4 lifecycle method failures. if the lifecycle method succeeds on retry, we won't see
-            // a "PASSED" indicator for this synthetic method name in the build
-            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
-        } else if (testFramework instanceof JUnitPlatformTestFramework) {
-            // remove JUnit5 @BeforeEach/@AfterEach failures.
-            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "executionError"));
-
-            // remove JUnit5 @BeforeAll/@AfterAll failures.
-            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "initializationError"));
-
-            // ONLY for Gradle 5.0, the lifecycle method name is "classMethod"
-            // remove JUnit5 @BeforeAll/@AfterAll failures.
-            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "classMethod"));
-        } else if(testFramework instanceof TestNGTestFramework) {
-            // remove TestNG lifecycle method failures.
-            nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "lifecycle"));
-        }
+        testFrameworkStrategy.removeSyntheticFailures(nonExecutedFailedTests, descriptor);
 
         nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
 

@@ -53,11 +53,11 @@ abstract class AbstractPluginFuncTest extends Specification {
                 public static void flakyAssert() {
                     try {
                         Path marker = Paths.get("build/marker.file");
-                        if(!Files.exists(marker)) {
+                        if (!Files.exists(marker)) {
                             Files.write(marker, "mark".getBytes());
                             throw new RuntimeException("fail me!");
                         }
-                    } catch(java.io.IOException e) {
+                    } catch (java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
                     }
                 }
@@ -163,13 +163,4 @@ abstract class AbstractPluginFuncTest extends Specification {
         }
     }
 
-    static String failingStaticInitializer() {
-        return """
-            static {
-                if(true) {
-                    throw new RuntimeException("foo");
-                }
-            }
-        """
-    }
 }

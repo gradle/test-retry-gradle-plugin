@@ -161,7 +161,55 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "handles failing static initializers (gradle version #gradleVersion)"() {
+    def "handles flaky runner (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            import org.junit.runner.Runner;
+            import org.junit.runners.BlockJUnit4ClassRunner;
+            import org.junit.runner.RunWith;
+            import org.junit.runner.notification.RunNotifier;
+            
+            @RunWith(FlakyTests.MyRunner.class)
+            public class FlakyTests {
+                
+                public static class MyRunner extends BlockJUnit4ClassRunner {
+                    public MyRunner(Class<?> type) throws Exception {
+                        super(type);
+                    }
+
+                    public void run(RunNotifier notifier) {
+                        ${flakyAssert()}
+                        super.run(notifier);
+                    }
+                }
+
+                @org.junit.Test
+                public void someTest() {
+                }
+            }
+
+
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('acme.FlakyTests > initializationError FAILED') == 1
+        result.output.count('acme.FlakyTests > someTest PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "handles flaky static initializer (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -171,7 +219,9 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class FlakyTests {
-                ${failingStaticInitializer()}
+                static {
+                    ${flakyAssert()}
+                }
 
                 @org.junit.Test
                 public void someTest() {
@@ -180,10 +230,12 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
+        def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('acme.FlakyTests > someTest FAILED') == 2
+        result.output.count('acme.FlakyTests > someTest FAILED') == 1
+        result.output.count('java.lang.ExceptionInInitializerError') == 1
+        result.output.count('acme.FlakyTests > someTest PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

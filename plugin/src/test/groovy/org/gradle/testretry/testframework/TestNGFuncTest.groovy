@@ -55,7 +55,7 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "handles failing static initializers (gradle version #gradleVersion)"() {
+    def "handles flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -65,7 +65,10 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class SomeTests {
-                ${failingStaticInitializer()}
+
+                static {
+                    ${flakyAssert()}
+                }
 
                 @org.testng.annotations.Test
                 public void someTest() {}

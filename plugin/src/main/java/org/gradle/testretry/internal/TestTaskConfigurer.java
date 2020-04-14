@@ -66,12 +66,7 @@ public final class TestTaskConfigurer {
         ClassLoaderCache classLoaderCache = invoke(declaredMethod(Test.class, "getClassLoaderCache"), task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
 
-        return new RetryTestExecuter(
-            task,
-            extension,
-            delegate,
-            new RetryTestFrameworkGenerator(classLoaderCache, instantiator)
-        );
+        return new RetryTestExecuter(task, extension, delegate, classLoaderCache, instantiator);
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {

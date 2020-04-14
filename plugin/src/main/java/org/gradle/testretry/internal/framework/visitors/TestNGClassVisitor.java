@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.visitors;
+package org.gradle.testretry.internal.framework.visitors;
 
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -24,11 +24,12 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-public class TestNGClassVisitor extends ClassVisitor {
+public final class TestNGClassVisitor extends ClassVisitor {
+
+    private final Map<String, List<String>> dependsOn = new HashMap<>();
+    private final Map<String, List<String>> dependedOn = new HashMap<>();
 
     private String currentMethod;
-    private Map<String, List<String>> dependsOn = new HashMap<>();
-    private Map<String, List<String>> dependedOn = new HashMap<>();
 
     public TestNGClassVisitor() {
         super(ASM7);
