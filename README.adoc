@@ -210,3 +210,35 @@ image:teamcity-test-retry-reporting.png[Teamcity test reporting, align="center",
 Jenkins reports each test execution discretely.
 
 image:jenkins-test-retry-reporting.png[Jenkins test reporting, align="center", title=Jenkins test retry reporting]
+
+== Reporting
+
+=== Verifying the signature of the plugin jar
+
+_(plugin 1.1.6+)_
+
+The plugin jar is published to plugins.gradle.org alongside its signature.
+The public key is published to http://pool.sks-keyservers.net and https://keys.openpgp.org.
+You can verify the signature as follows:
+
+[source,subs="attributes,verbatim"]
+----
+curl -OL https://plugins.gradle.org/m2/org/gradle/test-retry-gradle-plugin/{plugin-version}/test-retry-gradle-plugin-{plugin-version}.jar
+curl -OL https://plugins.gradle.org/m2/org/gradle/test-retry-gradle-plugin/{plugin-version}/test-retry-gradle-plugin-{plugin-version}.jar.asc
+gpg --keyserver keys.openpgp.org --recv-key 314FE82E5A4C5377BCA2EDEC5208812E1E4A6DB0
+gpg --verify test-retry-gradle-plugin-{plugin-version}.jar.asc test-retry-gradle-plugin-{plugin-version}.jar
+----
+
+The output of the last command should look similar to the following:
+
+    gpg: Signature made Tue May  5 08:36:01 2020 UTC
+    gpg:                using RSA key 5208812E1E4A6DB0
+    gpg: Good signature from "Gradle Inc. <info@gradle.com>" [unknown]
+    gpg: WARNING: This key is not certified with a trusted signature!
+    gpg:          There is no indication that the signature belongs to the owner.
+    Primary key fingerprint: 314F E82E 5A4C 5377 BCA2  EDEC 5208 812E 1E4A 6DB0
+
+This verifies that the artifact was signed with the private key that corresponds to the imported public key.
+The warning is emitted because you haven't explicitly trusted the imported key (hence `[unknown]`).
+One way of establishing trust is to verify the fingerprint over a secure channel.
+Please contact technical support should you wish to do so.

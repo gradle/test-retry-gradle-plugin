@@ -11,7 +11,8 @@ plugins {
     checkstyle
     codenarc
     `kotlin-dsl`
-    id("com.gradle.plugin-publish") version "0.11.0"
+    signing
+    id("com.gradle.plugin-publish") version "0.12.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
@@ -117,6 +118,18 @@ publishing {
             }
         }
     }
+}
+
+tasks.withType<Sign>().configureEach {
+    enabled = System.getenv("CI") != null
+}
+
+configure<SigningExtension> {
+    useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
+}
+
+signing {
+    sign(publishing.publications["plugin"])
 }
 
 tasks.withType(Test::class).configureEach {
