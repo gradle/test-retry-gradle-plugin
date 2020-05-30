@@ -18,7 +18,6 @@ package org.gradle.testretry.internal.framework;
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestFramework;
-import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
@@ -30,18 +29,6 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
     public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
-        DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-
-        failedTests.forEach(failedTest -> {
-            if (ERROR_SYNTHETIC_TEST_NAMES.contains(failedTest.getName())) {
-                retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-            } else {
-                String strippedParameterName = failedTest.getName().replaceAll("\\([^)]*\\)(\\[[^]]+])*$", "");
-                retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
-                retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
-            }
-        });
-
-        return new JUnitPlatformTestFramework(retriedTestFilter);
+        return new JUnitPlatformTestFramework(createRetryFilter(spec, failedTests));
     }
 }
