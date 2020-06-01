@@ -17,6 +17,10 @@ package org.gradle.testretry.testframework
 
 class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
 
+    boolean isRerunsParameterizedMethods() {
+        false
+    }
+
     @Override
     String testLanguage() {
         'groovy'

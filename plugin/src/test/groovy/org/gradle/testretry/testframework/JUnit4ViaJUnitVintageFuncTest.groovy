@@ -17,6 +17,11 @@ package org.gradle.testretry.testframework
 
 class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
 
+    @Override
+    protected isRerunsAllParameterizedIterations() {
+        true
+    }
+
     protected String buildConfiguration() {
         return '''
             dependencies { 

@@ -29,6 +29,6 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
     public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
-        return new JUnitPlatformTestFramework(createRetryFilter(spec, failedTests));
+        return new JUnitPlatformTestFramework(createRetryFilter(spec, failedTests, false));
     }
 }

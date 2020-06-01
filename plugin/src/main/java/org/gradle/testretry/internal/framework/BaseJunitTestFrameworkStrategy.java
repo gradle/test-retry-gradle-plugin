@@ -19,19 +19,18 @@ import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.testretry.internal.TestName;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
@@ -50,47 +49,63 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         ERROR_SYNTHETIC_TEST_NAMES.forEach(testName -> nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), testName)));
     }
 
-    protected DefaultTestFilter createRetryFilter(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
+    protected DefaultTestFilter createRetryFilter(JvmTestExecutionSpec spec, Set<TestName> failedTests, boolean canRunParameterizedSpockMethods) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        BaseJunitTestFrameworkStrategy.retriesWithSpockParametersRemoved(spec, failedTests).stream()
+        transformSpockTests(spec, failedTests, canRunParameterizedSpockMethods)
             .filter(failedTest -> failedTest.getClassName() != null)
             .forEach(failedTest -> {
                 if (ERROR_SYNTHETIC_TEST_NAMES.contains(failedTest.getName())) {
                     retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else if (BaseJunitTestFrameworkStrategy.isSpockStepwiseTest(spec, failedTest)) {
+                } else if (isSpockStepwiseTest(spec, failedTest)) {
                     retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else {
+                } else if (failedTest.getName() != null) {
                     String strippedParameterName = failedTest.getName().replaceAll("(?:\\([^)]*?\\)|\\[[^]]*?])*$", "");
                     retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
                     retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
+                } else {
+                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                 }
             });
         return retriedTestFilter;
     }
 
-    public static List<TestName> retriesWithSpockParametersRemoved(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
-        List<TestName> originalFailedTests = new ArrayList<>(failedTests);
+    private static Stream<TestName> transformSpockTests(JvmTestExecutionSpec spec, Set<TestName> failedTests, boolean canRunParameterizedMethods) {
+        return failedTests.stream()
+            .flatMap(failedTest -> transformSpockTests(spec, failedTest, canRunParameterizedMethods));
+    }
 
-        List<TestName> retries = failedTests.stream()
-            .flatMap(failedTest ->
-                spec.getTestClassesDirs().getFiles().stream()
-                    .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
-                    .filter(File::exists)
-                    .flatMap(testClass -> {
-                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                            ClassReader classReader = new ClassReader(testClassIs);
-                            SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(), spec);
-                            classReader.accept(visitor, 0);
-                            return visitor.getTestMethodNames().stream().map(name -> new TestName(failedTest.getClassName(), name));
-                        } catch (Throwable t) {
-                            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
-                            return Stream.of(failedTest);
-                        }
-                    })
-            )
-            .collect(Collectors.toList());
+    private static Stream<TestName> transformSpockTests(JvmTestExecutionSpec spec, TestName failedTest, boolean canRunParameterizedMethods) {
+        Optional<File> classFileOptional = classFile(spec, failedTest);
+        if (classFileOptional.isPresent()) {
+            try (FileInputStream testClassIs = new FileInputStream(classFileOptional.get())) {
+                ClassReader classReader = new ClassReader(testClassIs);
+                SpockParameterClassVisitor visitor = new SpockParameterClassVisitor(failedTest.getName(), spec);
+                classReader.accept(visitor, 0);
 
-        return retries.isEmpty() ? originalFailedTests : retries;
+                Set<String> matchedMethodNames = visitor.getMatchedMethodNames();
+                if (matchedMethodNames.isEmpty()) {
+                    return Stream.of(failedTest);
+                }
+
+                if (!visitor.isFoundLiteralMethodName() && !canRunParameterizedMethods) {
+                    return Stream.of(new TestName(failedTest.getClassName(), null));
+                } else {
+                    return matchedMethodNames.stream().map(name -> new TestName(failedTest.getClassName(), name));
+                }
+            } catch (Throwable t) {
+                LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
+            }
+        }
+
+        return Stream.of(failedTest);
+    }
+
+    @NotNull
+    private static Optional<File> classFile(JvmTestExecutionSpec spec, TestName failedTest) {
+        return spec.getTestClassesDirs().getFiles().stream()
+            .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
+            .filter(File::exists)
+            .findFirst();
     }
 
     private static boolean isSpockStepwiseTest(JvmTestExecutionSpec spec, TestName failedTest) {

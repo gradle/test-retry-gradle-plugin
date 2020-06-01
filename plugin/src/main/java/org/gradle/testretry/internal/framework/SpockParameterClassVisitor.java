@@ -25,20 +25,18 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.CharBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,21 +48,16 @@ import static org.objectweb.asm.Opcodes.ASM7;
  */
 final class SpockParameterClassVisitor extends ClassVisitor {
 
-    private static final Set<Character> REGEX_CHARS = setOf(new char[]{'<', '(', '[', '{', '\\', '^', '-', '=', '$', '!', '|', ']', '}', ')', '?', '*', '+', '.', '>'});
     // A valid Java identifier https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.8 including methods
-    public static final String SPOCK_PARAM_PATTERN = "#[\\p{L}\\d$_.()&&[^#\\s]]+";
-    public static final String PARAM_PLACEHOLDER = "#param";
-    public static final String WILDCARD_SUFFIX = ".*";
-    public static final String WILDCARD = WILDCARD_SUFFIX;
-
-    private static Set<Character> setOf(char[] chars) {
-        return Collections.unmodifiableSet(CharBuffer.wrap(chars).chars().mapToObj(ch -> (char) ch).collect(Collectors.toSet()));
-    }
+    private static final String SPOCK_PARAM_PATTERN = "#[\\p{L}\\d$_.()&&[^#\\s]]+";
+    private static final String WILDCARD = ".*";
 
     private final String failedTestMethodNameMaybeParameterized;
-    private final Set<String> testMethodNames = new HashSet<>();
     private final JvmTestExecutionSpec spec;
     private final SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
+
+    private boolean foundLiteralMethod;
+    private final Set<String> matchedMethodNames = new HashSet<>();
 
     public SpockParameterClassVisitor(String testMethodName, JvmTestExecutionSpec spec) {
         super(ASM7);
@@ -81,25 +74,31 @@ final class SpockParameterClassVisitor extends ClassVisitor {
     public void visitEnd() {
         Set<String> matchingNames = spockMethodVisitor.annotationVisitor.testMethodPatterns.stream()
             .filter(methodPattern -> {
-                // detects a valid spock parameter and replace it with a wildcards http://spockframework.org/spock/docs/1.3/data_driven_testing.html#_more_on_unrolled_method_names
-                String methodPatternRegex = escapeRegEx(normalizeMethodName(methodPattern)).replaceAll(PARAM_PLACEHOLDER, WILDCARD) + WILDCARD_SUFFIX;
+                // Replace params in the method name with .*
+                String methodPatternRegex = Arrays.stream(methodPattern.split(SPOCK_PARAM_PATTERN))
+                    .map(Pattern::quote)
+                    .collect(Collectors.joining(WILDCARD));
+
+                // For when no params in name - [iterationNum] implicitly added to end
+                methodPatternRegex += WILDCARD;
                 return methodPattern.equals(failedTestMethodNameMaybeParameterized) || failedTestMethodNameMaybeParameterized.matches(methodPatternRegex);
             })
             .collect(Collectors.toSet());
 
-        if(matchingNames.contains(failedTestMethodNameMaybeParameterized)) {
-            testMethodNames.add(failedTestMethodNameMaybeParameterized);
+        if (matchingNames.contains(failedTestMethodNameMaybeParameterized)) {
+            foundLiteralMethod = true;
+            matchedMethodNames.add(failedTestMethodNameMaybeParameterized);
         } else {
-            testMethodNames.addAll(matchingNames);
+            matchedMethodNames.addAll(matchingNames);
         }
     }
 
-    public Set<String> getTestMethodNames() {
-        return testMethodNames;
+    public boolean isFoundLiteralMethodName() {
+        return foundLiteralMethod;
     }
 
-    private static String normalizeMethodName(String methodPattern) {
-        return methodPattern.replaceAll(SPOCK_PARAM_PATTERN, PARAM_PLACEHOLDER);
+    public Set<String> getMatchedMethodNames() {
+        return matchedMethodNames;
     }
 
     @Override
@@ -153,22 +152,6 @@ final class SpockParameterClassVisitor extends ClassVisitor {
         } catch (IOException ignored) {
             // we did our best...
         }
-    }
-
-    private static String escapeRegEx(String aRegexFragment) {
-        final StringBuilder result = new StringBuilder();
-
-        final StringCharacterIterator iterator = new StringCharacterIterator(aRegexFragment);
-        char character = iterator.current();
-        while (character != CharacterIterator.DONE) {
-            if (REGEX_CHARS.contains(character)) {
-                result.append("\\").append(character);
-            } else {
-                result.append(character);
-            }
-            character = iterator.next();
-        }
-        return result.toString();
     }
 
     private static final class SpockParameterMethodVisitor extends MethodVisitor {
