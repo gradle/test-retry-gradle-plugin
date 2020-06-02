@@ -49,7 +49,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         retriesWithTestNGDependentsAdded(spec, failedTests)
             .forEach(failedTest -> {
-                if ("lifecycle".equals(failedTest.getName())) {
+                if ("lifecycle".equals(failedTest.getName()) || failedTest.getName() == null) {
                     // failures in TestNG lifecycle methods yield a failure on methods of these names
                     retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                 } else {

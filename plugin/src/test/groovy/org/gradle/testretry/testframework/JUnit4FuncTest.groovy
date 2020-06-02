@@ -20,6 +20,10 @@ import spock.lang.Unroll
 
 class JUnit4FuncTest extends AbstractPluginFuncTest {
 
+    protected isRerunsAllParameterizedIterations() {
+        false
+    }
+
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -113,7 +117,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('test[0: test(0)=true]') == 1
+        result.output.count('test[0: test(0)=true]') == (isRerunsAllParameterizedIterations() ? 2 : 1)
         result.output.count('test[1: test(1)=false]') == 2
 
         where:
@@ -201,8 +205,8 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('acme.FlakyTests > initializationError FAILED') == 1
-        result.output.count('acme.FlakyTests > someTest PASSED') == 1
+        result.output.count('FlakyTests > initializationError FAILED') == 1
+        result.output.count('FlakyTests > someTest PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -233,9 +237,9 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('acme.FlakyTests > someTest FAILED') == 1
+        result.output.count('FlakyTests > someTest FAILED') == 1
         result.output.count('java.lang.ExceptionInInitializerError') == 1
-        result.output.count('acme.FlakyTests > someTest PASSED') == 1
+        result.output.count('FlakyTests > someTest PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -289,7 +293,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('test[0: test(0)=true] PASSED') == 1
+        result.output.count('test[0: test(0)=true] PASSED') == (isRerunsAllParameterizedIterations() ? 2 : 1)
         result.output.count('test[1: test(1)=false] FAILED') == 2
 
         where:

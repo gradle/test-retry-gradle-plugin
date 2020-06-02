@@ -19,6 +19,11 @@ import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractPluginFuncTest {
+
+    boolean isRerunsParameterizedMethods() {
+        true
+    }
+
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -82,8 +87,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('acme.SomeSpec > initializationError FAILED') == 1
-        result.output.count('acme.SomeSpec > someTest PASSED') == 1
+        result.output.count('SomeSpec > initializationError FAILED') == 1
+        result.output.count('SomeSpec > someTest PASSED') == 1
         result.output.count('2 tests completed, 1 failed') == 1
 
         where:
@@ -212,6 +217,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
 
             class UnrollTests extends spock.lang.Specification {
+            
+                def passingTest() {
+                    expect:
+                    true
+                }
+                
                 @spock.lang.Unroll
                 def "unrolled"() {
                     expect:
@@ -223,12 +234,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                 }
 
                 @spock.lang.Unroll
-                def "unrolled with param #param"() {
+                def "unrolled with param #p"() {
                     expect:
                     result
 
                     where:
-                    param << ['foo', 'bar', 'baz']
+                    p << ['foo', 'bar', 'baz']
                     result << [true, false, true]
                 }
 
@@ -248,6 +259,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
+        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
         result.output.count('unrolled[0] PASSED') == 2
         result.output.count('unrolled[1] FAILED') == 2
         result.output.count('unrolled[2] PASSED') == 2
@@ -275,6 +288,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
 
             class UnrollTests extends spock.lang.Specification {
+            
+                def passingTest() {
+                    expect:
+                    true
+                }
+                
                 @spock.lang.Unroll
                 def "unrolled with param [#param.toString().toUpperCase()]"() {
                     expect:
@@ -291,6 +310,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
+        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
         result.output.count('unrolled with param [FOO] PASSED') == 2
         result.output.count('unrolled with param [BAR] FAILED') == 2
         result.output.count('unrolled with param [BAZ] PASSED') == 2
@@ -310,6 +331,11 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
 
             class UnrollTests extends spock.lang.Specification {
+                def passingTest() {
+                    expect:
+                    true
+                }
+                
                 @spock.lang.Unroll
                 def "unrolled with param \\\$.*=.?<>(){}[][^\\\\w]!+- {([#param1])} {([#param2])}"() {
                     expect:
@@ -327,6 +353,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
+        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
         result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
         result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param_1])} {([param_2])} FAILED') == 2
         result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1\$1])} {([param2])} FAILED') == 2
@@ -353,6 +381,11 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             @ContextualTest
             class UnrollTests extends spock.lang.Specification {
 
+                def passingTest() {
+                    expect:
+                    true
+                }
+                
                 def "unrolled [#param] with additional test context"() {
                     expect:
                     result
@@ -368,6 +401,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
+        result.output.count('passingTest [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
         result.output.count('unrolled [foo] with additional test context [suffix] FAILED') == 2
         result.output.count('unrolled [bar] with additional test context [suffix] PASSED') == 2
         result.output.count('unrolled [baz] with additional test context [suffix] FAILED') == 2
@@ -377,7 +412,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
+    def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -416,7 +451,48 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         then:
         result.output.count('parent [suffix] FAILED') == 1
         result.output.count('parent [suffix] PASSED') == 1
-        result.output.count('inherited [suffix] PASSED') == 1
+        result.output.count('inherited [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "can rerun on failure in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme
+
+            abstract class AbstractTest extends spock.lang.Specification {
+                def "parent"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme.sub
+            import acme.AbstractTest
+            class InheritedTest extends AbstractTest {
+                def "inherited"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('parent FAILED') == 1
+        result.output.count('parent PASSED') == 1
+        result.output.count('inherited PASSED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -450,6 +526,11 @@ class SpockFuncTest extends AbstractPluginFuncTest {
 
             class InheritedTest extends AbstractTest {
 
+                def passingTest() {
+                    expect:
+                    true
+                }
+                
                 def "inherited"() {
                     expect:
                     true
@@ -461,9 +542,11 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
+        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
         result.output.count('unrolled [foo] parent FAILED') == 1
         result.output.count('unrolled [foo] parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
+        result.output.count('inherited PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
         result.output.count('inherited FAILED') == 0
 
         where:

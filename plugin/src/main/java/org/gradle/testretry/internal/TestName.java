@@ -15,14 +15,17 @@
  */
 package org.gradle.testretry.internal;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 public final class TestName {
 
     private final String className;
+
+    @Nullable
     private final String name;
 
-    public TestName(String className, String name) {
+    public TestName(String className, @Nullable String name) {
         this.className = className;
         this.name = name;
     }
@@ -31,6 +34,7 @@ public final class TestName {
         return className;
     }
 
+    @Nullable
     public String getName() {
         return name;
     }
