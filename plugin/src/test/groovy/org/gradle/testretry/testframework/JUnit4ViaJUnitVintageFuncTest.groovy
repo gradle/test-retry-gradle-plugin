@@ -22,6 +22,11 @@ class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
         true
     }
 
+    @Override
+    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
     protected String buildConfiguration() {
         return '''
             dependencies { 

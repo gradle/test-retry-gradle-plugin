@@ -24,6 +24,10 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         true
     }
 
+    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+        "initializationError"
+    }
+
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -87,13 +91,14 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('SomeSpec > initializationError FAILED') == 1
+        result.output.count("SomeSpec > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
         result.output.count('SomeSpec > someTest PASSED') == 1
         result.output.count('2 tests completed, 1 failed') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
+
 
     @Unroll
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {

@@ -24,6 +24,10 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         false
     }
 
+    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+        "initializationError"
+    }
+
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -205,7 +209,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('FlakyTests > initializationError FAILED') == 1
+        result.output.count("FlakyTests > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
         result.output.count('FlakyTests > someTest PASSED') == 1
 
         where:
