@@ -100,7 +100,7 @@ project {
     }
 
     subProject("Release") {
-        buildType("Development Snapshot") {
+        buildType("Publish") {
             description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
 
             steps {
@@ -130,9 +130,28 @@ project {
 
         }
 
+        buildType("Development") {
+            description =
+                "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
+            steps {
+                gradle {
+                    tasks = "clean devSnapshot -x test"
+                    buildFile = ""
+                    gradleParams =
+                        "-s $useGradleInternalScansServer -Dgradle.portal.url=https://plugins.grdev.net -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% %pluginPortalPublishingFlags%"
+                }
+            }
+            dependencies {
+                snapshot(verifyAllBuildType) {
+                    onDependencyFailure = FailureAction.CANCEL
+                    onDependencyCancel = FailureAction.CANCEL
+                }
+            }
+        }
+
         buildType("Production") {
             description =
-                "Publishes Gradle test retry plugin to release to the plugin portal"
+                "Publishes Gradle test retry plugin to production plugin portal (plugins.gradle.org)"
             params {
                 select("releaseScope", "", label = "releaseScope", description = "The scope of the release",
                     display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch"))
