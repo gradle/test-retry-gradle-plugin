@@ -135,7 +135,7 @@ project {
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
             steps {
                 gradle {
-                    tasks = "clean devSnapshot -x test"
+                    tasks = "clean devSnapshot :plugin:publishPlugins -x test"
                     buildFile = ""
                     gradleParams =
                         "-s $useGradleInternalScansServer -Dgradle.portal.url=https://plugins.grdev.net -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% %pluginPortalPublishingFlags%"
