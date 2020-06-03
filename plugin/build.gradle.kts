@@ -128,8 +128,9 @@ configure<SigningExtension> {
     useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
 }
 
+configurations.archives.get().extendsFrom(configurations.signatures.get())
 signing {
-    sign(publishing.publications["plugin"])
+    sign(configurations.archives.get())
 }
 
 tasks.withType(Test::class).configureEach {
