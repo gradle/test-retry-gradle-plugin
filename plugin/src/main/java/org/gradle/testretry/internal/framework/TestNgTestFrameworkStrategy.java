@@ -16,11 +16,13 @@
 package org.gradle.testretry.internal.framework;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
+import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
@@ -59,7 +61,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        return new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
+        return new TestNGTestFramework(testTask, ((ProjectInternal)testTask.getProject()).getServices().get(ObjectFactory.class).fileCollection(), retriedTestFilter, ((ProjectInternal)testTask.getProject()).getServices().get(ObjectFactory.class));
     }
 
     private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {

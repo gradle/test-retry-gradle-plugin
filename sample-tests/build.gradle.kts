@@ -9,7 +9,7 @@ repositories {
 dependencies {
     testImplementation("org.codehaus.groovy:groovy-all:2.5.8")
     testImplementation(gradleTestKit())
-    testImplementation("org.gradle:sample-check:0.9.0")
+    testImplementation("org.gradle:sample-check:0.12.6")
 }
 
 val copySamples by tasks.registering(Sync::class) {

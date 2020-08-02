@@ -1,7 +1,8 @@
 plugins {
     java
     jacoco
-    id("org.gradle.test-retry") version "1.0.0"
+    //TODO this needs to replaced as soon as 1.1.7 is out together with junit5.sample.out#L9 and remove `--warning-mode all` from junit5.sample.confL2
+    id("org.gradle.test-retry") version "1.1.6"
 }
 
 repositories {
