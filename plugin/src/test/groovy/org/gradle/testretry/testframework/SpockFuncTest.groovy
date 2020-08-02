@@ -647,6 +647,89 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            @spock.lang.Stepwise
+            class StepwiseTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('childTest FAILED') == 1
+        result.output.count('childTest SKIPPED') == 1
+        result.output.count('parentTest PASSED') == 2
+        result.output.contains('4 tests completed, 1 failed, 1 skipped')
+
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "build is successful if a test is ignored but never passed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            @spock.lang.Stepwise
+            class StepwiseTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                @spock.lang.Ignore
+                def "childTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('childTest SKIPPED') == 2
+        result.output.count('parentTest FAILED') == 1
+        result.output.count('parentTest PASSED') == 1
+        result.output.contains('4 tests completed, 1 failed, 2 skipped')
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     String testLanguage() {
         'groovy'

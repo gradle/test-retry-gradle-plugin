@@ -304,4 +304,36 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+            import java.nio.file.*;            
+
+            public class FlakyTests {
+                @org.junit.Test
+                public void flakyAssumeTest() {
+                   ${flakyAssert()};
+                   org.junit.Assume.assumeFalse(Files.exists(Paths.get("build/marker.file")));
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('flakyAssumeTest FAILED') == 1
+        result.output.count('flakyAssumeTest SKIPPED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+
 }
