@@ -6,7 +6,7 @@
 > Task :testClasses
 
 > Task :test
-The Test.getClassLoaderCache() method has been deprecated. This is scheduled to be removed in Gradle 7.0.
+
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.gradle.internal.serialize.PlaceholderAssertionError at SampleTests.java:21

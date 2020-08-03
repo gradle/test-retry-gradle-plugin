@@ -9,7 +9,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(GradleSamplesRunner.class)
 @SamplesRoot("build/samples")
-@SamplesOutputNormalizers({FileSeparatorOutputNormalizer.class, GradleOutputNormalizer.class, FailedTestOutputNormalizer.class})
+@SamplesOutputNormalizers({FileSeparatorOutputNormalizer.class, GradleOutputNormalizer.class, FailedTestOutputNormalizer.class, ConfigurationCacheWarningOutputNormalizer.class})
 public class SampleTests {
 
 }

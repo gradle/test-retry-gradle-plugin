@@ -26,12 +26,15 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
+import org.gradle.util.VersionNumber;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,7 +64,19 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        return new TestNGTestFramework(testTask, ((ProjectInternal)testTask.getProject()).getServices().get(ObjectFactory.class).fileCollection(), retriedTestFilter, ((ProjectInternal)testTask.getProject()).getServices().get(ObjectFactory.class));
+        VersionNumber gradleVersion = VersionNumber.parse(testTask.getProject().getGradle().getGradleVersion());
+        if (gradleVersion.getMajor() >= 6 && gradleVersion.getMinor()>= 6) {
+            final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
+            return new TestNGTestFramework(testTask, objectFactory.fileCollection(), retriedTestFilter, objectFactory);
+        } else {
+            try {
+                Class<?> testNGTestFramework = Class.forName("org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework");
+                final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
+                return (TestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
+            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
