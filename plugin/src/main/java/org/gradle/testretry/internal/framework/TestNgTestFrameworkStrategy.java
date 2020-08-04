@@ -64,8 +64,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        VersionNumber gradleVersion = VersionNumber.parse(testTask.getProject().getGradle().getGradleVersion());
-        if (gradleVersion.getMajor() >= 6 && gradleVersion.getMinor()>= 6) {
+        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.6")) >= 0) {
             final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
             return new TestNGTestFramework(testTask, objectFactory.fileCollection(), retriedTestFilter, objectFactory);
         } else {
