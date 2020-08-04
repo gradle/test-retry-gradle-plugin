@@ -1,3 +1,5 @@
+import org.gradle.testretry.build.PluginsVersionData
+
 plugins {
     id("groovy")
 }
@@ -7,18 +9,34 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.codehaus.groovy:groovy-all:2.5.8")
+    testImplementation(localGroovy())
     testImplementation(gradleTestKit())
-    testImplementation("org.gradle:sample-check:0.9.0")
+    testImplementation("org.gradle:sample-check:0.12.6")
 }
 
-val copySamples by tasks.registering(Sync::class) {
-    from("../samples")
-    into("$buildDir/samples")
-}
+val snippetsDir = file("../samples")
+val processedSnippetsDir = file("$buildDir/samples")
 
-tasks.test {
-    inputs.files(copySamples)
-        .withPathSensitivity(PathSensitivity.RELATIVE)
-        .withPropertyName("samples")
+val tokens: Map<String, Provider<String>> = mapOf(
+    "test-retry-plugin-version" to provider {
+        PluginsVersionData.latestVersion("org.gradle", "test-retry-gradle-plugin")
+    }
+)
+
+
+tasks {
+    val replaceTokensInSnippets by registering(Copy::class) {
+        from(snippetsDir)
+        into(processedSnippetsDir)
+        inputs.properties(tokens)
+        doFirst {
+            filter(org.apache.tools.ant.filters.ReplaceTokens::class, "tokens" to tokens.mapValues { it.value.get() })
+        }
+    }
+    test {
+        val fileProvider = replaceTokensInSnippets.map { it.destinationDir }
+        inputs.files(fileProvider)
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+            .withPropertyName("samples")
+    }
 }

@@ -18,6 +18,7 @@ package org.gradle.testretry.internal;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
+import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
@@ -25,6 +26,7 @@ import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.gradle.util.VersionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +65,8 @@ public final class TestTaskConfigurer {
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
 
-        ClassLoaderCache classLoaderCache = invoke(declaredMethod(Test.class, "getClassLoaderCache"), task);
+        ServiceRegistry serviceRegistry = ((ProjectInternal) task.getProject()).getServices();
+        ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
 
         return new RetryTestExecuter(task, extension, delegate, classLoaderCache, instantiator);

@@ -16,20 +16,25 @@
 package org.gradle.testretry.internal.framework;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
+import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
+import org.gradle.util.GradleVersion;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,7 +64,19 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        return new TestNGTestFramework(testTask, retriedTestFilter, instantiator, classLoaderCache);
+        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.6")) >= 0) {
+            final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
+            return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
+        } else {
+            try {
+                Class<?> testNGTestFramework = TestNGTestFramework.class;
+                @SuppressWarnings("JavaReflectionMemberAccess")
+                final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
+                return (TestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {

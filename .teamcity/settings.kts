@@ -1,3 +1,4 @@
+import jetbrains.buildServer.configs.kotlin.v2019_2.*
 import jetbrains.buildServer.configs.kotlin.v2019_2.FailureAction
 import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
@@ -5,7 +6,6 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.project
 import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.schedule
 import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.version
-import jetbrains.buildServer.configs.kotlin.v2019_2.*
 
 /*
 The settings script is an entry point for defining a TeamCity
@@ -81,7 +81,14 @@ project {
         }
     }
     val verifyAllBuildType = buildType("Verify all") {
-        triggers.vcs {}
+        triggers.schedule {
+            schedulingPolicy = daily {
+                hour = 2
+            }
+            branchFilter = "+:refs/head/master"
+            triggerBuild = always()
+            withPendingChangesOnly = false
+        }
 
         dependencies {
             snapshot(quickFeedbackBuildType) {
@@ -106,7 +113,8 @@ project {
             steps {
                 gradle {
                     tasks = "clean devSnapshot publishPluginPublicationToGradleBuildInternalSnapshotsRepository -x test"
-                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
+                    gradleParams =
+                        "-s $useGradleInternalScansServer $buildCacheSetup -PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                     buildFile = ""
                 }
@@ -153,8 +161,10 @@ project {
             description =
                 "Publishes Gradle test retry plugin to production plugin portal (plugins.gradle.org)"
             params {
-                select("releaseScope", "", label = "releaseScope", description = "The scope of the release",
-                    display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch"))
+                select(
+                    "releaseScope", "", label = "releaseScope", description = "The scope of the release",
+                    display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch")
+                )
                 text(
                     "githubUsername",
                     "",
@@ -184,3 +194,4 @@ project {
 
 
 }
+
