@@ -7,18 +7,17 @@
 
 > Task :test
 
-
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    org.gradle.internal.serialize.PlaceholderAssertionError at SampleTests.java:21
+    PlaceholderAssertionError at SampleTests.java:21
 
 org.gradle.testretry.sample.SampleTests > flaky() FAILED
     java.lang.RuntimeException at SampleTests.java:16
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    org.gradle.internal.serialize.PlaceholderAssertionError at SampleTests.java:21
+    PlaceholderAssertionError at SampleTests.java:21
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    org.gradle.internal.serialize.PlaceholderAssertionError at SampleTests.java:21
+    PlaceholderAssertionError at SampleTests.java:21
 
 6 tests completed, 4 failed
 
