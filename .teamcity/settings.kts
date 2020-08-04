@@ -81,7 +81,14 @@ project {
         }
     }
     val verifyAllBuildType = buildType("Verify all") {
-        triggers.schedule(dailyTrigger)
+        triggers.schedule {
+            schedulingPolicy = daily {
+                hour = 2
+            }
+            branchFilter = "+:refs/head/master"
+            triggerBuild = always()
+            withPendingChangesOnly = false
+        }
 
         dependencies {
             snapshot(quickFeedbackBuildType) {
@@ -120,7 +127,14 @@ project {
             }
 
             // publish a nightly snapshot
-            triggers.schedule(dailyTrigger)
+            triggers.schedule {
+                schedulingPolicy = daily {
+                    hour = 2
+                }
+                branchFilter = "+:refs/head/master"
+                triggerBuild = always()
+                withPendingChangesOnly = false
+            }
 
         }
 
@@ -178,13 +192,6 @@ project {
 
     }
 
-    val dailyTrigger = {
-        schedulingPolicy = daily {
-            hour = 2
-        }
-        branchFilter = "+:refs/head/master"
-        triggerBuild = always()
-        withPendingChangesOnly = false
-    }
 
 }
+
