@@ -70,6 +70,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         } else {
             try {
                 Class<?> testNGTestFramework = TestNGTestFramework.class;
+                @SuppressWarnings("JavaReflectionMemberAccess")
                 final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
                 return (TestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
