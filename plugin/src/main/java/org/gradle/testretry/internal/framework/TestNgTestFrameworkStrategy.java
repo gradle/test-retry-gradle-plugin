@@ -70,7 +70,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
             return new TestNGTestFramework(testTask, objectFactory.fileCollection(), retriedTestFilter, objectFactory);
         } else {
             try {
-                Class<?> testNGTestFramework = Class.forName("org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework");
+                Class<?> testNGTestFramework = TestNGTestFramework.class;
                 final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
                 return (TestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
