@@ -48,7 +48,7 @@ public final class TestName {
             return false;
         }
         TestName that = (TestName) o;
-        return Objects.equals(className, that.className) && name.equals(that.name);
+        return Objects.equals(className, that.className) && Objects.equals(name, that.name);
     }
 
     @Override
