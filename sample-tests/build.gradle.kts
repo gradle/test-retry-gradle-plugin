@@ -34,7 +34,9 @@ tasks {
         }
     }
     test {
-        val fileProvider = project.objects.directoryProperty().fileProvider(replaceTokensInSnippets.map { it.destinationDir })
+        val fileProvider = replaceTokensInSnippets.map { it.destinationDir }
         inputs.files(fileProvider)
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+            .withPropertyName("samples")
     }
 }

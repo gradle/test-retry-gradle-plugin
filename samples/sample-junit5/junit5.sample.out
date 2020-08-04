@@ -8,16 +8,16 @@
 > Task :test
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    PlaceholderAssertionError at SampleTests.java:21
+    org.opentest4j.AssertionFailedError at SampleTests.java:21
 
 org.gradle.testretry.sample.SampleTests > flaky() FAILED
     java.lang.RuntimeException at SampleTests.java:16
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    PlaceholderAssertionError at SampleTests.java:21
+    org.opentest4j.AssertionFailedError at SampleTests.java:21
 
 org.gradle.testretry.sample.SampleTests > failing() FAILED
-    PlaceholderAssertionError at SampleTests.java:21
+    org.opentest4j.AssertionFailedError at SampleTests.java:21
 
 6 tests completed, 4 failed
 
