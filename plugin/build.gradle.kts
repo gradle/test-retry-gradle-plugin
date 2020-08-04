@@ -2,7 +2,6 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 import java.net.URI
-import groovy.lang.GroovySystem
 
 plugins {
     java
@@ -38,7 +37,7 @@ dependencies {
     plugin("org.ow2.asm:asm:7.2")
 
     testImplementation(gradleTestKit())
-    testImplementation("org.codehaus.groovy:groovy-all:${GroovySystem.getVersion()}")
+    testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
 

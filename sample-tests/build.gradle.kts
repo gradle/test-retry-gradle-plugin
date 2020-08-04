@@ -1,5 +1,4 @@
 import org.gradle.testretry.build.PluginsVersionData
-import groovy.lang.GroovySystem
 
 plugins {
     id("groovy")
@@ -10,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.codehaus.groovy:groovy-all:${GroovySystem.getVersion()}")
+    testImplementation(localGroovy())
     testImplementation(gradleTestKit())
     testImplementation("org.gradle:sample-check:0.12.6")
 }
