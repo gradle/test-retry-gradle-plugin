@@ -26,7 +26,6 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
-import org.gradle.util.GradleVersion;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +63,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("6.6")) >= 0) {
+        if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
             final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
             return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
         } else {
