@@ -252,6 +252,58 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "uses configured test listeners for test retry (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                testLogging {
+                    events "standard_out"
+                }
+
+                useTestNG {
+                    listeners << "acme.LoggingTestListener"
+                }
+                retry.maxRetries = 1
+            }
+        """
+
+        writeTestSource """
+            package acme;
+
+            public class SomeTests {
+                @org.testng.annotations.Test
+                public void someTest() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        writeTestSource """
+            package acme;
+            
+            public class LoggingTestListener extends org.testng.TestListenerAdapter {
+                @Override
+                public void onTestStart(org.testng.ITestResult result) {
+                    System.out.println("[LoggingTestListener] Test started: " + result.getName());
+                }
+            }     
+"""
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('someTest FAILED') == 1
+        result.output.count('someTest PASSED') == 1
+
+        and:
+        result.output.count('[LoggingTestListener] Test started: someTest') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     protected String buildConfiguration() {
         return """
