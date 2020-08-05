@@ -24,8 +24,10 @@ import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
+import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,6 +65,13 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
+        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, classLoaderCache, retriedTestFilter);
+        copyTestNGOptions((TestNGOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
+        return testFramework;
+    }
+
+    @NotNull
+    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, ClassLoaderCache classLoaderCache, DefaultTestFilter retriedTestFilter) {
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
             final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
             return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
@@ -71,11 +80,30 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 Class<?> testNGTestFramework = TestNGTestFramework.class;
                 @SuppressWarnings("JavaReflectionMemberAccess")
                 final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
-                return (TestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
+                return (TestNGTestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private void copyTestNGOptions(TestNGOptions source, TestNGOptions target) {
+        target.setOutputDirectory(source.getOutputDirectory());
+        target.setIncludeGroups(source.getIncludeGroups());
+        target.setExcludeGroups(source.getExcludeGroups());
+        target.setConfigFailurePolicy(source.getConfigFailurePolicy());
+        target.setListeners(source.getListeners());
+        target.setParallel(source.getParallel());
+        target.setThreadCount(source.getThreadCount());
+        target.setUseDefaultListeners(source.getUseDefaultListeners());
+        target.setPreserveOrder(source.getPreserveOrder());
+        target.setGroupByInstances(source.getGroupByInstances());
+
+        target.setSuiteName(source.getSuiteName());
+        target.setTestName(source.getTestName());
+        target.setSuiteXmlFiles(source.getSuiteXmlFiles());
+        target.setSuiteXmlBuilder(source.getSuiteXmlBuilder());
+        target.setSuiteXmlWriter(source.getSuiteXmlWriter());
     }
 
     private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
