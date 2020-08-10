@@ -25,6 +25,7 @@ import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
+import org.gradle.util.GradleVersion;
 
 import java.util.Set;
 
@@ -40,6 +41,10 @@ public interface TestFrameworkStrategy {
         } else {
             throw new UnsupportedOperationException("Unknown test framework: " + testFramework);
         }
+    }
+
+    static boolean gradleVersionIsAtLeast(String version) {
+        return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version(version)) >= 0;
     }
 
     void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor);

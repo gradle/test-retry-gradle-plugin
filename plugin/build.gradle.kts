@@ -37,7 +37,7 @@ dependencies {
     plugin("org.ow2.asm:asm:7.2")
 
     testImplementation(gradleTestKit())
-    testImplementation("org.codehaus.groovy:groovy-all:2.5.8")
+    testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
 

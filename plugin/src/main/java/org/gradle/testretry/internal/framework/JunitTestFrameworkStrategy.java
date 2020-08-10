@@ -20,6 +20,7 @@ import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.api.tasks.testing.junit.JUnitOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
 
@@ -29,7 +30,13 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
     public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
-        return new JUnitTestFramework(testTask, createRetryFilter(spec, failedTests, true));
+        JUnitTestFramework testFramework = new JUnitTestFramework(testTask, createRetryFilter(spec, failedTests, true));
+        copyTestOptions((JUnitOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
+        return testFramework;
     }
 
+    private void copyTestOptions(JUnitOptions source, JUnitOptions target) {
+        target.setIncludeCategories(source.getIncludeCategories());
+        target.setExcludeCategories(source.getExcludeCategories());
+    }
 }

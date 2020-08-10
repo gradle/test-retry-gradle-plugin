@@ -7,16 +7,16 @@
 
 > Task :test
 
-SampleTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SampleTests.java:21
 
-SampleTests > flaky() FAILED
+org.gradle.testretry.sample.SampleTests > flaky() FAILED
     java.lang.RuntimeException at SampleTests.java:16
 
-SampleTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SampleTests.java:21
 
-SampleTests > failing() FAILED
+org.gradle.testretry.sample.SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SampleTests.java:21
 
 6 tests completed, 4 failed
