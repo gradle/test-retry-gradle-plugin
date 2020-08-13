@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
+
 import org.gradle.testretry.AbstractPluginFuncTest
 import spock.lang.Unroll
 
@@ -648,10 +649,10 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
+    def "build fails if a param test has failed once but never passed (gradle version #gradleVersion)"() {
         given:
         buildFile << """
-            test.retry.maxRetries = 1
+            test.retry.maxRetries = 3
             test.retry.failOnPassedAfterRetry = false
         """
 
@@ -680,10 +681,50 @@ class SpockFuncTest extends AbstractPluginFuncTest {
 
         then:
         result.output.count('childTest FAILED') == 1
-        result.output.count('childTest SKIPPED') == 1
-        result.output.count('parentTest PASSED') == 2
-        result.output.contains('4 tests completed, 1 failed, 1 skipped')
+        result.output.count('childTest SKIPPED') == 3
+        result.output.count('childTest PASSED') == 0
+        result.output.count('parentTest PASSED') == 4
+        result.output.contains('8 tests completed, 1 failed, 3 skipped')
+        !result.output.contains('Please file a bug report at')
 
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "build fails if a test has failed once but never passed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 3
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            @spock.lang.Unroll
+            class FlakyTest extends spock.lang.Specification {
+
+                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                def "a flaky Test"() {
+                    
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).forwardOutput().buildAndFail()
+
+        then:
+        result.output.count('a flaky Test FAILED') == 1
+        result.output.count('a flaky Test SKIPPED') == 3
+        result.output.count('a flaky Test PASSED') == 0
+        result.output.contains('4 tests completed, 1 failed, 3 skipped')
+        !result.output.contains('Please file a bug report at')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -693,7 +734,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     def "build is successful if a test is ignored but never passed (gradle version #gradleVersion)"() {
         given:
         buildFile << """
-            test.retry.maxRetries = 1
+            test.retry.maxRetries = 2
             test.retry.failOnPassedAfterRetry = false
         """
 
@@ -725,6 +766,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         result.output.count('parentTest FAILED') == 1
         result.output.count('parentTest PASSED') == 1
         result.output.contains('4 tests completed, 1 failed, 2 skipped')
+        !result.output.contains('Please file a bug report at')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

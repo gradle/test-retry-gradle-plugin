@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
+
 final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestFrameworkStrategy testFrameworkStrategy;
@@ -52,8 +54,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
         testFrameworkStrategy.removeSyntheticFailures(nonExecutedFailedTests, descriptor);
 
-        nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
-
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
             activeDescriptorsById.put(descriptor.getId(), descriptor);
@@ -68,11 +68,20 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
-        activeDescriptorsById.remove(testId);
+
+        final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
+        if (descriptor != null && descriptor.getClassName() != null) {
+            final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
+            final boolean hasFailedPreviously = nonExecutedFailedTests.remove(test);
+            if (hasFailedPreviously && testCompleteEvent.getResultType() == SKIPPED) {
+                failedTests.add(test);
+            }
+        }
 
         if (!testId.equals(rootTestDescriptorId) || lastRun()) {
             delegate.completed(testId, testCompleteEvent);
         }
+        activeDescriptorsById.remove(testId);
     }
 
     @Override
@@ -84,7 +93,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            failedTests.add(new TestName(descriptor.getClassName(), descriptor.getName()));
+            final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
+            nonExecutedFailedTests.remove(test);
+            failedTests.add(test);
         }
         delegate.failure(testId, throwable);
     }
