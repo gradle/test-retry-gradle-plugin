@@ -69,7 +69,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
 
-        final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
+        final TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
             final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
             final boolean hasFailedPreviously = nonExecutedFailedTests.remove(test);
@@ -81,7 +81,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         if (!testId.equals(rootTestDescriptorId) || lastRun()) {
             delegate.completed(testId, testCompleteEvent);
         }
-        activeDescriptorsById.remove(testId);
     }
 
     @Override
@@ -91,10 +90,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void failure(Object testId, Throwable throwable) {
-        TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
+        final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
             final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
-            nonExecutedFailedTests.remove(test);
             failedTests.add(test);
         }
         delegate.failure(testId, throwable);

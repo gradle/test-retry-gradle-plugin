@@ -661,15 +661,10 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             import java.nio.file.Paths
             import java.nio.file.Files
 
-            @spock.lang.Stepwise
             class StepwiseTests extends spock.lang.Specification {
-                def "parentTest"() {
-                    expect:
-                    true
-                }
 
                 @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
-                def "childTest"() {
+                def "a"() {
                     expect:
                     ${flakyAssert()}
                 }
@@ -680,11 +675,10 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('childTest FAILED') == 1
-        result.output.count('childTest SKIPPED') == 3
-        result.output.count('childTest PASSED') == 0
-        result.output.count('parentTest PASSED') == 4
-        result.output.contains('8 tests completed, 1 failed, 3 skipped')
+        result.output.count('a FAILED') == 1
+        result.output.count('a SKIPPED') == 3
+        result.output.count('a PASSED') == 0
+        result.output.contains('4 tests completed, 1 failed, 3 skipped')
         !result.output.contains('Please file a bug report at')
 
         where:
@@ -708,8 +702,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             class FlakyTest extends spock.lang.Specification {
 
                 @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
-                def "a flaky Test"() {
-                    
+                def "a"() {                    
                     expect:
                     ${flakyAssert()}
                 }
@@ -720,9 +713,9 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         def result = gradleRunner(gradleVersion).forwardOutput().buildAndFail()
 
         then:
-        result.output.count('a flaky Test FAILED') == 1
-        result.output.count('a flaky Test SKIPPED') == 3
-        result.output.count('a flaky Test PASSED') == 0
+        result.output.count('a FAILED') == 1
+        result.output.count('a SKIPPED') == 3
+        result.output.count('a PASSED') == 0
         result.output.contains('4 tests completed, 1 failed, 3 skipped')
         !result.output.contains('Please file a bug report at')
 
@@ -731,7 +724,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "build is successful if a test is ignored but never passed (gradle version #gradleVersion)"() {
+    def "build is successful if a test is ignored but never failed (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 2
