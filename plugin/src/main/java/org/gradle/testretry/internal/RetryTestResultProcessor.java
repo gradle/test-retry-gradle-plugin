@@ -52,7 +52,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
         testFrameworkStrategy.removeSyntheticFailures(nonExecutedFailedTests, descriptor);
 
-        nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), descriptor.getName()));
+        nonExecutedFailedTests.remove(testFrameworkStrategy.getTestNameFrom(descriptor));
 
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
@@ -84,7 +84,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            failedTests.add(new TestName(descriptor.getClassName(), descriptor.getName()));
+            failedTests.add(testFrameworkStrategy.getTestNameFrom(descriptor));
         }
         delegate.failure(testId, throwable);
     }

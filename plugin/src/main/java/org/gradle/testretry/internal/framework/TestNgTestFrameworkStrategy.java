@@ -24,6 +24,7 @@ import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
@@ -47,7 +48,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
     public void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor) {
-        nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), "lifecycle"));
+        nonExecutedFailedTests.remove(getTestNameFrom(descriptor.getClassName(), "lifecycle"));
     }
 
     @Override
@@ -59,8 +60,6 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                     // failures in TestNG lifecycle methods yield a failure on methods of these names
                     retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                 } else {
-                    String strippedParameterName = failedTest.getName().replaceAll("\\[[^)]+](\\([^)]+\\))+$", "");
-                    retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
                     retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
                 }
             });
@@ -119,7 +118,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                             TestNGClassVisitor visitor = new TestNGClassVisitor();
                             classReader.accept(visitor, 0);
                             return visitor.dependsOn(failedTest.getName()).stream()
-                                .map(method -> new TestName(failedTest.getClassName(), method));
+                                .map(method -> getTestNameFrom(failedTest.getClassName(), method));
                         } catch (Throwable t) {
                             LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " has TestNG dependent tests", t);
                             return Stream.of(failedTest);
@@ -128,5 +127,18 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                     .orElse(Stream.of(failedTest))
             )
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public TestName getTestNameFrom(TestDescriptor descriptor) {
+        return getTestNameFrom(descriptor.getClassName(), descriptor.getName());
+    }
+
+    private static TestName getTestNameFrom(String className, String name) {
+        return new TestName(className, stripParameterSegment(name));
+    }
+
+    private static String stripParameterSegment(String name) {
+        return name.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
 }
