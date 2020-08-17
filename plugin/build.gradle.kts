@@ -53,6 +53,9 @@ shadowJar.configure {
     relocate("org.objectweb.asm", "org.gradle.testretry.org.objectweb.asm")
     @Suppress("DEPRECATION")
     classifier = ""
+    from(file("../LICENSE")) {
+        into("META-INF")
+    }
 }
 
 tasks.getByName("jar").enabled = false
