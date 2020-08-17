@@ -90,7 +90,7 @@ pluginBundle {
 
 license {
     header = rootProject.file("gradle/licenseHeader.txt")
-    exclude("**/*.tokens")
+    excludes(listOf("**/*.tokens", "META-INF/LICENSE", "META-INF/NOTICE.txt", "META-INF/licenses/**"))
     mapping(
         mapOf(
             "java" to "SLASHSTAR_STYLE",
