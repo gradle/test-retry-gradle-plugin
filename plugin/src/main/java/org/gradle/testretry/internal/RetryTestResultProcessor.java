@@ -40,8 +40,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private boolean lastRetry;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
-    private final Set<TestName> failedTests = ConcurrentHashMap.newKeySet();
-    private final Set<TestName> nonExecutedFailedTests = ConcurrentHashMap.newKeySet();
+    private final Set<TestName> failedTestsInCurrentRound = ConcurrentHashMap.newKeySet();
+    private final Set<TestName> failedTestsFromPreviousRoundNotYetExecutedInCurrentRound = ConcurrentHashMap.newKeySet();
+
     private Object rootTestDescriptorId;
 
     RetryTestResultProcessor(TestFrameworkStrategy testFrameworkStrategy, TestResultProcessor delegate, int maxFailures) {
@@ -52,7 +53,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
-        testFrameworkStrategy.removeSyntheticFailures(nonExecutedFailedTests, descriptor);
+        testFrameworkStrategy.removeSyntheticFailures(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound, descriptor);
 
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
@@ -72,9 +73,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         final TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
             final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
-            final boolean hasFailedPreviously = nonExecutedFailedTests.remove(test);
+            final boolean hasFailedPreviously = failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.remove(test);
             if (hasFailedPreviously && testCompleteEvent.getResultType() == SKIPPED) {
-                failedTests.add(test);
+                failedTestsInCurrentRound.add(test);
             }
         }
 
@@ -93,17 +94,17 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
             final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
-            failedTests.add(test);
+            failedTestsInCurrentRound.add(test);
         }
         delegate.failure(testId, throwable);
     }
 
     private boolean lastRun() {
-        return failedTests.isEmpty() || lastRetry || (maxFailures > 0 && failedTests.size() >= maxFailures);
+        return failedTestsInCurrentRound.isEmpty() || lastRetry || (maxFailures > 0 && failedTestsInCurrentRound.size() >= maxFailures);
     }
 
     public RoundResult getResult() {
-        return new RoundResult(copy(failedTests), copy(nonExecutedFailedTests), lastRun());
+        return new RoundResult(copy(failedTestsInCurrentRound), copy(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound), lastRun());
     }
 
     @NotNull
@@ -115,9 +116,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         if (lastRun()) {
             throw new IllegalStateException("processor has completed");
         }
-        nonExecutedFailedTests.clear();
-        nonExecutedFailedTests.addAll(failedTests);
-        failedTests.clear();
+        failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.clear();
+        failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.addAll(failedTestsInCurrentRound);
+        failedTestsInCurrentRound.clear();
         activeDescriptorsById.clear();
         this.lastRetry = lastRetry;
     }
