@@ -69,12 +69,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
-
-        final TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
+        TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            final TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
-            final boolean hasFailedPreviously = failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.remove(test);
-            if (hasFailedPreviously && testCompleteEvent.getResultType() == SKIPPED) {
+            TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
+            boolean failedInPreviousRound = failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.remove(test);
+            if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
                 failedTestsInCurrentRound.add(test);
             }
         }
@@ -104,7 +103,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     public RoundResult getResult() {
-        return new RoundResult(copy(failedTestsInCurrentRound), copy(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound), lastRun());
+        return new RoundResult(
+            copy(failedTestsInCurrentRound),
+            copy(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound),
+            lastRun()
+        );
     }
 
     @NotNull
