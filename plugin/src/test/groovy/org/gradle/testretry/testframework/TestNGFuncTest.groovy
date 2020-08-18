@@ -360,6 +360,41 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+            import org.testng.annotations.*;
+            import java.nio.file.*;
+
+            public class FlakyTests {
+                @Test
+                public void flakyAssumeTest() {
+                   ${flakyAssert()};
+                   if(Files.exists(Paths.get("build/marker.file"))){
+                    throw new org.testng.SkipException("Skip me");
+                   }
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('flakyAssumeTest FAILED') == 1
+        result.output.count('flakyAssumeTest SKIPPED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+
     @Override
     protected String buildConfiguration() {
         return """

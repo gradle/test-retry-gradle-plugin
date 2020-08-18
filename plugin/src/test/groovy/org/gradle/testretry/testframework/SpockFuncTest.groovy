@@ -15,7 +15,9 @@
  */
 package org.gradle.testretry.testframework
 
+
 import org.gradle.testretry.AbstractPluginFuncTest
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractPluginFuncTest {
@@ -642,6 +644,126 @@ class SpockFuncTest extends AbstractPluginFuncTest {
         then:
         result.output.count('unrolled [foo] parent FAILED') == 1
         result.output.count('unrolled [foo] parent PASSED') == 1
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 3
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            class Tests extends spock.lang.Specification {
+
+                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                def "a"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('a FAILED') == 1
+        result.output.count('a SKIPPED') == 3
+        result.output.count('a PASSED') == 0
+        result.output.contains('4 tests completed, 1 failed, 3 skipped')
+        !result.output.contains('Please file a bug report at')
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is ignored after failure is considered to be still failing (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 3
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            @spock.lang.Unroll
+            class FlakyTest extends spock.lang.Specification {
+
+                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                def "a"() {                    
+                    expect:
+                    new File("build/marker.file").createNewFile()
+                    false
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('a FAILED') == 1
+        result.output.count('a SKIPPED') == 3
+        result.output.count('a PASSED') == 0
+        result.output.contains('4 tests completed, 1 failed, 3 skipped')
+        !result.output.contains('Please file a bug report at')
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    def "build is successful if a test is ignored but never failed (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+            test.retry.failOnPassedAfterRetry = false
+        """
+
+        writeTestSource """
+            package acme
+            import java.nio.file.Paths
+            import java.nio.file.Files
+
+            @spock.lang.Stepwise
+            class StepwiseTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                @spock.lang.Ignore
+                def "childTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('childTest SKIPPED') == 2
+        result.output.count('parentTest FAILED') == 1
+        result.output.count('parentTest PASSED') == 1
+        result.output.contains('4 tests completed, 1 failed, 2 skipped')
+        !result.output.contains('Please file a bug report at')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

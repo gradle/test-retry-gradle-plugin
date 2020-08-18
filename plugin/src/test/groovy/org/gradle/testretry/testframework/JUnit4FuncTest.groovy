@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractPluginFuncTest
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class JUnit4FuncTest extends AbstractPluginFuncTest {
@@ -299,6 +300,38 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         then:
         result.output.count('test[0: test(0)=true] PASSED') == (isRerunsAllParameterizedIterations() ? 2 : 1)
         result.output.count('test[1: test(1)=false] FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Unroll
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+            import java.nio.file.*;            
+
+            public class FlakyTests {
+                @org.junit.Test
+                public void flakyAssumeTest() {
+                   ${flakyAssert()};
+                   org.junit.Assume.assumeFalse(Files.exists(Paths.get("build/marker.file")));
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count('flakyAssumeTest FAILED') == 1
+        result.output.count('flakyAssumeTest SKIPPED') == 1
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
