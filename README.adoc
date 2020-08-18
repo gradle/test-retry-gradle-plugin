@@ -4,7 +4,7 @@
 :figure-caption!:
 :caption!:
 
-= Test Retry Gradle Plugin
+= Test Retry Gradle plugin
 
 A Gradle plugin that augments Gradle’s built-in test task with the ability to retry tests that have failed.
 

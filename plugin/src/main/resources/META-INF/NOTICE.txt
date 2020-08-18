@@ -1,4 +1,4 @@
-Test Retry Gradle Plugin
+Test Retry Gradle plugin
 ========================
 Copyright (c) 2020 Gradle Inc.
 All rights reserved.
