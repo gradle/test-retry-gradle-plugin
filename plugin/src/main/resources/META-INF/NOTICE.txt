@@ -1,0 +1,8 @@
+Test Retry Gradle Plugin
+========================
+Copyright (c) 2020 Gradle Inc.
+All rights reserved.
+
+This artifact includes parts of the following open source libraries.
+
+asm - BSD-3-Clause (see licenses/asm/LICENSE.txt)

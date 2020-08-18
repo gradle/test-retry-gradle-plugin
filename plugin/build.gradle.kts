@@ -53,6 +53,9 @@ shadowJar.configure {
     relocate("org.objectweb.asm", "org.gradle.testretry.org.objectweb.asm")
     @Suppress("DEPRECATION")
     classifier = ""
+    from(file("../LICENSE")) {
+        into("META-INF")
+    }
 }
 
 tasks.getByName("jar").enabled = false
@@ -87,7 +90,7 @@ pluginBundle {
 
 license {
     header = rootProject.file("gradle/licenseHeader.txt")
-    exclude("**/*.tokens")
+    excludes(listOf("**/*.tokens", "META-INF/LICENSE", "META-INF/NOTICE.txt", "META-INF/licenses/**"))
     mapping(
         mapOf(
             "java" to "SLASHSTAR_STYLE",

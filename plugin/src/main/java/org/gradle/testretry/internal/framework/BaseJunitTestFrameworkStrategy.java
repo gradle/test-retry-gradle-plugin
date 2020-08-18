@@ -18,6 +18,7 @@ package org.gradle.testretry.internal.framework;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
+import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.testretry.internal.TestName;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
@@ -129,5 +130,10 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             })
             .orElse(false);
+    }
+
+    @Override
+    public TestName getTestNameFrom(TestDescriptor descriptor) {
+        return new TestName(descriptor.getClassName(), descriptor.getName());
     }
 }

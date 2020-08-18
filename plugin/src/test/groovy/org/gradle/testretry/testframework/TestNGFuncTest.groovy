@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractPluginFuncTest
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class TestNGFuncTest extends AbstractPluginFuncTest {
@@ -253,6 +254,61 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/66")
+    def "handles parameters with #parameterRepresentation.name() toString() representation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+
+            import org.testng.annotations.*;
+
+            import static org.testng.AssertJUnit.assertEquals;
+
+            public class ParameterTest {
+                public class Foo {
+                    final int value;
+
+                    public Foo(int value) {
+                        this.value = value;
+                    }
+
+                    public String toString() {
+                        return ${parameterRepresentation.representation};
+                    }
+                }
+
+                @DataProvider(name = "parameters")
+                public Object[] createParameters() {
+                    return new Object[]{new Foo(0), new Foo(1)};
+                }
+
+                @Test(dataProvider = "parameters")
+                public void test(Foo foo) {
+                    assertEquals(0, foo.value);
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        // we can't rerun just the failed parameter
+        result.output.readLines().findAll { line -> line.matches('.*test\\[0].* PASSED') }.size() == 2
+        result.output.readLines().findAll { line -> line.matches('.*test\\[1].* FAILED') }.size() == 2
+
+        where:
+        [gradleVersion, parameterRepresentation] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ParameterExceptionString.values()
+        ])
+    }
+
+    @Unroll
     def "uses configured test listeners for test retry (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -281,14 +337,14 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
 
         writeTestSource """
             package acme;
-            
+
             public class LoggingTestListener extends org.testng.TestListenerAdapter {
                 @Override
                 public void onTestStart(org.testng.ITestResult result) {
                     System.out.println("[LoggingTestListener] Test started: " + result.getName());
                 }
-            }     
-"""
+            }
+        """
 
         when:
         def result = gradleRunner(gradleVersion).build()
@@ -349,6 +405,22 @@ class TestNGFuncTest extends AbstractPluginFuncTest {
                 useTestNG()
             }
         """
+    }
+
+    enum ParameterExceptionString {
+        EMPTY('""'),
+        NULL('null'),
+        MISSING('super.toString()')
+
+        String representation;
+
+        ParameterExceptionString(String representation) {
+            this.representation = representation;
+        }
+
+        String getRepresentation() {
+            return representation
+        }
     }
 
 }

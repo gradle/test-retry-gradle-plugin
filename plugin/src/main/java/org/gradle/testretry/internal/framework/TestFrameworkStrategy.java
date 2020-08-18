@@ -23,6 +23,7 @@ import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.TestName;
 import org.gradle.util.GradleVersion;
@@ -50,4 +51,6 @@ public interface TestFrameworkStrategy {
     void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor);
 
     TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache);
+
+    TestName getTestNameFrom(TestDescriptor descriptor);
 }
