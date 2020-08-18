@@ -71,7 +71,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
         TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            TestName test = new TestName(descriptor.getClassName(), descriptor.getName());
+            TestName test = testFrameworkStrategy.getTestNameFrom(descriptor);
             boolean failedInPreviousRound = failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.remove(test);
             if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
                 failedTestsInCurrentRound.add(test);
