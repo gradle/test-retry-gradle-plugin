@@ -17,6 +17,7 @@ package org.gradle.testretry.testframework
 
 
 import org.gradle.testretry.AbstractPluginFuncTest
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class SpockFuncTest extends AbstractPluginFuncTest {
@@ -649,7 +650,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "build fails if a param test has failed once but never passed (gradle version #gradleVersion)"() {
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 3
@@ -661,7 +663,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             import java.nio.file.Paths
             import java.nio.file.Files
 
-            class StepwiseTests extends spock.lang.Specification {
+            class Tests extends spock.lang.Specification {
 
                 @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
                 def "a"() {
@@ -686,7 +688,8 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "build fails if a test has failed once but never passed (gradle version #gradleVersion)"() {
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is ignored after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 3
@@ -704,13 +707,14 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                 @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
                 def "a"() {                    
                     expect:
-                    ${flakyAssert()}
+                    new File("build/marker.file").createNewFile()
+                    false
                 }
             }
         """
 
         when:
-        def result = gradleRunner(gradleVersion).forwardOutput().buildAndFail()
+        def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
         result.output.count('a FAILED') == 1

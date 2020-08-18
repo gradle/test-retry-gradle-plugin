@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractPluginFuncTest
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class JUnit4FuncTest extends AbstractPluginFuncTest {
@@ -305,7 +306,8 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
     }
 
     @Unroll
-    def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
+    def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -334,6 +336,5 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
 }
