@@ -27,6 +27,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.internal.TestName;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;
@@ -52,7 +53,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
+    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         retriesWithTestNGDependentsAdded(spec, failedTests)
             .forEach(failedTest -> {
@@ -64,18 +65,20 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, classLoaderCache, retriedTestFilter);
+        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, retriedTestFilter);
         copyTestNGOptions((TestNGOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
     }
 
     @NotNull
-    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, ClassLoaderCache classLoaderCache, DefaultTestFilter retriedTestFilter) {
+    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, DefaultTestFilter retriedTestFilter) {
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
             final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
             return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
         } else {
             try {
+                ServiceRegistry serviceRegistry = ((ProjectInternal) testTask.getProject()).getServices();
+                ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
                 Class<?> testNGTestFramework = TestNGTestFramework.class;
                 @SuppressWarnings("JavaReflectionMemberAccess")
                 final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);

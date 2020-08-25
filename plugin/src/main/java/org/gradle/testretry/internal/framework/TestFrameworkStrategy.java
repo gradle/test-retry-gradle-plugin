@@ -15,7 +15,6 @@
  */
 package org.gradle.testretry.internal.framework;
 
-import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
@@ -50,7 +49,7 @@ public interface TestFrameworkStrategy {
 
     void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor);
 
-    TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache);
+    TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator);
 
     TestName getTestNameFrom(TestDescriptor descriptor);
 }

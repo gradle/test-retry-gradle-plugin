@@ -18,6 +18,7 @@ package org.gradle.testretry
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.gradle.util.VersionNumber
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -27,6 +28,7 @@ import java.lang.management.ManagementFactory
 abstract class AbstractPluginFuncTest extends Specification {
 
     public static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
+    public static final List<String> CONFIG_CACHE_GRADLE_VERSIONS = configurationCacheCompatibleGradleVersionsUnderTest()
 
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -68,7 +70,7 @@ abstract class AbstractPluginFuncTest extends Specification {
     String baseBuildScript() {
         """
             plugins {
-                id 'groovy'
+                id '${languagePlugin}'
                 id 'org.gradle.test-retry'
             }
 
@@ -84,6 +86,10 @@ abstract class AbstractPluginFuncTest extends Specification {
                 }
             }
         """
+    }
+
+    String getLanguagePlugin() {
+        'groovy'
     }
 
     String baseBuildScriptWithoutPlugin() {
@@ -160,6 +166,12 @@ abstract class AbstractPluginFuncTest extends Specification {
             return Arrays.asList(explicitGradleVersions.split("\\|"))
         } else {
             [GradleVersion.current().toString()]
+        }
+    }
+
+    static private List<String> configurationCacheCompatibleGradleVersionsUnderTest() {
+        gradleVersionsUnderTest().findAll {String version ->
+            VersionNumber.parse(version) >= VersionNumber.parse('6.6')
         }
     }
 
