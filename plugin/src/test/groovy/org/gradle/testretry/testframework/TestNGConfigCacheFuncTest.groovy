@@ -16,7 +16,11 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractConfigCacheFuncTest
+import spock.lang.Ignore
+import spock.lang.Issue
 
+@Ignore
+@Issue("https://github.com/gradle/gradle/issues/14287")
 class TestNGConfigCacheFuncTest extends AbstractConfigCacheFuncTest {
     @Override
     protected String buildConfiguration() {
