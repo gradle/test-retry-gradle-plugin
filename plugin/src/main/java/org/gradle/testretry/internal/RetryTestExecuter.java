@@ -98,7 +98,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     }
 
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(TestFrameworkStrategy testFrameworkStrategy, JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
-        TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(spec, testTask, retries, instantiator);
+        TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(spec, testTask, retries, instantiator, extension.getObjectFactory());
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(

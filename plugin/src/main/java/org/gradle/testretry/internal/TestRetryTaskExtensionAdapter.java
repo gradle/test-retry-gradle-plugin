@@ -15,15 +15,17 @@
  */
 package org.gradle.testretry.internal;
 
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.jetbrains.annotations.NotNull;
 
+import javax.inject.Inject;
 import java.util.concurrent.Callable;
 
-public final class TestRetryTaskExtensionAdapter {
+public class TestRetryTaskExtensionAdapter {
 
     // for testing only
     public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
@@ -33,16 +35,20 @@ public final class TestRetryTaskExtensionAdapter {
     private static final boolean DEFAULT_FAIL_ON_PASSED_AFTER_RETRY = false;
 
     private final ProviderFactory providerFactory;
+    private final ObjectFactory objectFactory;
     private final TestRetryTaskExtension extension;
     private final boolean useConventions;
     private final boolean simulateNotRetryableTest;
 
-    TestRetryTaskExtensionAdapter(
+    @Inject
+    public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
+        ObjectFactory objectFactory,
         TestRetryTaskExtension extension,
         boolean useConventions
     ) {
         this.providerFactory = providerFactory;
+        this.objectFactory = objectFactory;
         this.extension = extension;
         this.useConventions = useConventions;
 
@@ -94,4 +100,7 @@ public final class TestRetryTaskExtensionAdapter {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
     }
 
+    public ObjectFactory getObjectFactory() {
+        return objectFactory;
+    }
 }

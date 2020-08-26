@@ -46,11 +46,7 @@ public final class TestTaskConfigurer {
             extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
         }
 
-        TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(
-            providerFactory,
-            extension,
-            supportsPropertyConventions(gradleVersion)
-        );
+        TestRetryTaskExtensionAdapter adapter = objectFactory.newInstance(TestRetryTaskExtensionAdapter.class, extension, supportsPropertyConventions(gradleVersion));
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 

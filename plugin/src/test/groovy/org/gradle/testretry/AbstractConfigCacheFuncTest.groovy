@@ -19,7 +19,7 @@ import org.gradle.testkit.runner.GradleRunner
 import spock.lang.Unroll
 
 
-class ConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
+abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
     @Unroll
     def "compatible with configuration cache when tests pass (gradle version #gradleVersion)"() {
         when:
@@ -34,6 +34,12 @@ class ConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
 
         and:
         result.output.count('PASSED') == 1
+
+        when:
+        result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.contains('Reusing configuration cache.')
 
         where:
         gradleVersion << CONFIG_CACHE_GRADLE_VERSIONS
@@ -55,7 +61,11 @@ class ConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
         result.output.count('PASSED') == 1
         result.output.count('FAILED') == 1
 
-        assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
+        when:
+        result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.contains('Reusing configuration cache.')
 
         where:
         gradleVersion << CONFIG_CACHE_GRADLE_VERSIONS
@@ -70,4 +80,32 @@ class ConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
     String getLanguagePlugin() {
         'java'
     }
+
+    @Override
+    protected void successfulTest() {
+        writeTestSource """
+            package acme;
+
+            public class SuccessfulTests {
+                ${testAnnotation}
+                public void successTest() {}
+            }
+        """
+    }
+
+    @Override
+    protected void flakyTest() {
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests {
+                ${testAnnotation}
+                public void flaky() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+    }
+
+    abstract String getTestAnnotation()
 }

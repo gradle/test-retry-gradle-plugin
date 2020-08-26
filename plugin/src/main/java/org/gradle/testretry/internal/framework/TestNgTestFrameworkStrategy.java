@@ -53,7 +53,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator) {
+    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ObjectFactory objectFactory) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         retriesWithTestNGDependentsAdded(spec, failedTests)
             .forEach(failedTest -> {
@@ -65,15 +65,14 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, retriedTestFilter);
+        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, objectFactory, retriedTestFilter);
         copyTestNGOptions((TestNGOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
     }
 
     @NotNull
-    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, DefaultTestFilter retriedTestFilter) {
+    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, ObjectFactory objectFactory, DefaultTestFilter retriedTestFilter) {
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
-            final ObjectFactory objectFactory = ((ProjectInternal) testTask.getProject()).getServices().get(ObjectFactory.class);
             return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
         } else {
             try {
