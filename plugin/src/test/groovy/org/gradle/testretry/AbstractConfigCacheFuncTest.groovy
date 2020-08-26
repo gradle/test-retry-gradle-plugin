@@ -15,13 +15,18 @@
  */
 package org.gradle.testretry
 
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.junit.Assume
+import org.spockframework.util.VersionNumber
 import spock.lang.Unroll
 
 
 abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
     @Unroll
     def "compatible with configuration cache when tests pass (gradle version #gradleVersion)"() {
+        shouldTest(gradleVersion)
+
         when:
         buildFile << """
             test.retry.maxRetries = 1
@@ -39,14 +44,16 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.contains('Reusing configuration cache.')
+        assertConfigurationCacheIsReused(result, gradleVersion)
 
         where:
-        gradleVersion << CONFIG_CACHE_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     @Unroll
     def "compatible with configuration cache when failed tests are retried (gradle version #gradleVersion)"() {
+        shouldTest(gradleVersion)
+
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -65,20 +72,51 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.contains('Reusing configuration cache.')
+        assertConfigurationCacheIsReused(result, gradleVersion)
 
         where:
-        gradleVersion << CONFIG_CACHE_GRADLE_VERSIONS
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    void shouldTest(String gradleVersion) {
+        // Configuration cache is supported after 6.6
+        Assume.assumeTrue("$gradleVersion does not support configuration cache", VersionNumber.parse(gradleVersion).with {
+            it.major > 6 || (it.major == 6 && it.minor >= 1)
+        })
+    }
+
+    void assertConfigurationCacheIsReused(BuildResult result, String gradleVersion) {
+        assert result.output.contains(getConfigurationCacheMessage(gradleVersion))
     }
 
     @Override
-    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s', '--configuration-cache']) {
+    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s', getConfigurationCacheArguments(gradleVersion)]) {
         return super.gradleRunner(gradleVersion, arguments)
     }
 
     @Override
     String getLanguagePlugin() {
         'java'
+    }
+
+    String getConfigurationCacheArguments(String gradleVersion) {
+        def version = VersionNumber.parse(gradleVersion)
+        if (version.major > 6 || (version.major == 6 && version.minor >= 6)) {
+            return "--configuration-cache"
+        } else if (version.major == 6 && version.minor == 5) {
+            return "--configuration-cache=on"
+        } else {
+            return "-Dorg.gradle.unsafe.instant-execution=true"
+        }
+    }
+
+    String getConfigurationCacheMessage(String gradleVersion) {
+        def version = VersionNumber.parse(gradleVersion)
+        if (version.major > 6 || (version.major == 6 && version.minor >= 5)) {
+            return 'Reusing configuration cache.'
+        } else {
+            return 'Reusing instant execution cache.'
+        }
     }
 
     @Override
