@@ -16,11 +16,9 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractConfigCacheFuncTest
-import spock.lang.Ignore
-import spock.lang.Issue
+import org.junit.Assume
+import org.spockframework.util.VersionNumber
 
-@Ignore
-@Issue("https://github.com/gradle/gradle/issues/14287")
 class TestNGConfigCacheFuncTest extends AbstractConfigCacheFuncTest {
     @Override
     protected String buildConfiguration() {
@@ -37,5 +35,19 @@ class TestNGConfigCacheFuncTest extends AbstractConfigCacheFuncTest {
     @Override
     String getTestAnnotation() {
         return "@org.testng.annotations.Test"
+    }
+
+    @Override
+    void shouldTest(String gradleVersion) {
+        super.shouldTest(gradleVersion)
+        Assume.assumeTrue("TestNG and the configuration cache are not supported with Gradle $gradleVersion", isFrameworkSupported(gradleVersion))
+    }
+
+    // TestNG only works with config cache starting with 6.7
+    boolean isFrameworkSupported(String gradleVersion) {
+        // We use VersionNumber here so that we can match 6.7 nightlies
+        return VersionNumber.parse(gradleVersion).with {
+            it.major > 6 || (it.major == 6 && it.minor >= 7)
+        }
     }
 }

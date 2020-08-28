@@ -17,10 +17,10 @@ package org.gradle.testretry
 
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.util.GradleVersion
 import org.junit.Assume
 import org.spockframework.util.VersionNumber
 import spock.lang.Unroll
-
 
 abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
     @Unroll
@@ -79,10 +79,12 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
     }
 
     void shouldTest(String gradleVersion) {
-        // Configuration cache is supported after 6.6
-        Assume.assumeTrue("$gradleVersion does not support configuration cache", VersionNumber.parse(gradleVersion).with {
-            it.major > 6 || (it.major == 6 && it.minor >= 1)
-        })
+        // Configuration cache is supported after 6.1
+        Assume.assumeTrue("$gradleVersion does not support configuration cache", isAtLeastGradle6_1(gradleVersion))
+    }
+
+    boolean isAtLeastGradle6_1(String gradleVersion) {
+        GradleVersion.version(gradleVersion) >= GradleVersion.version("6.1")
     }
 
     void assertConfigurationCacheIsReused(BuildResult result, String gradleVersion) {
@@ -100,6 +102,7 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
     }
 
     String getConfigurationCacheArguments(String gradleVersion) {
+        // We need to use VersionNumber here to match 6.6 nightlies
         def version = VersionNumber.parse(gradleVersion)
         if (version.major > 6 || (version.major == 6 && version.minor >= 6)) {
             return "--configuration-cache"
@@ -111,8 +114,7 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
     }
 
     String getConfigurationCacheMessage(String gradleVersion) {
-        def version = VersionNumber.parse(gradleVersion)
-        if (version.major > 6 || (version.major == 6 && version.minor >= 5)) {
+        if (GradleVersion.version(gradleVersion) >= GradleVersion.version("6.5")) {
             return 'Reusing configuration cache.'
         } else {
             return 'Reusing instant execution cache.'
