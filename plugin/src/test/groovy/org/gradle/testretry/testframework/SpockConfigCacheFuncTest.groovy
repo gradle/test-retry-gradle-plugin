@@ -22,8 +22,8 @@ class SpockConfigCacheFuncTest extends AbstractConfigCacheFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation "org.spockframework:spock-core:1.3-groovy-2.5"
-                testImplementation "org.codehaus.groovy:groovy-all:2.5.8"
+                implementation "org.codehaus.groovy:groovy-all:2.5.8"
+                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
     }
