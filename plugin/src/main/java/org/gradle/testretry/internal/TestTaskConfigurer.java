@@ -20,6 +20,7 @@ import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
@@ -35,7 +36,7 @@ public final class TestTaskConfigurer {
     private TestTaskConfigurer() {
     }
 
-    public static void configureTestTask(Test test, ObjectFactory objectFactory) {
+    public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
         VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
 
         TestRetryTaskExtension extension;
@@ -45,7 +46,7 @@ public final class TestTaskConfigurer {
             extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
         }
 
-        TestRetryTaskExtensionAdapter adapter = objectFactory.newInstance(TestRetryTaskExtensionAdapter.class, extension, supportsPropertyConventions(gradleVersion));
+        TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, supportsPropertyConventions(gradleVersion));
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 

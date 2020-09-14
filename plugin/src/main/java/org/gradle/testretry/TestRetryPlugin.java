@@ -19,6 +19,7 @@ package org.gradle.testretry;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.Test;
 
 import javax.inject.Inject;
@@ -28,17 +29,19 @@ import static org.gradle.testretry.internal.TestTaskConfigurer.configureTestTask
 public class TestRetryPlugin implements Plugin<Project> {
 
     private final ObjectFactory objectFactory;
+    private final ProviderFactory providerFactory;
 
     @Inject
-    TestRetryPlugin(ObjectFactory objectFactory) {
+    TestRetryPlugin(ObjectFactory objectFactory, ProviderFactory providerFactory) {
         this.objectFactory = objectFactory;
+        this.providerFactory = providerFactory;
     }
 
     @Override
     public void apply(Project project) {
         project.getTasks()
             .withType(Test.class)
-            .configureEach(task -> configureTestTask(task, objectFactory));
+            .configureEach(task -> configureTestTask(task, objectFactory, providerFactory));
     }
 
 }

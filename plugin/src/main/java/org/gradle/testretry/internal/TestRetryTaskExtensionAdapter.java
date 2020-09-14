@@ -21,10 +21,9 @@ import org.gradle.api.provider.ProviderFactory;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Inject;
 import java.util.concurrent.Callable;
 
-public class TestRetryTaskExtensionAdapter {
+public final class TestRetryTaskExtensionAdapter {
 
     // for testing only
     public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
@@ -38,8 +37,7 @@ public class TestRetryTaskExtensionAdapter {
     private final boolean useConventions;
     private final boolean simulateNotRetryableTest;
 
-    @Inject
-    public TestRetryTaskExtensionAdapter(
+    TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
         boolean useConventions
