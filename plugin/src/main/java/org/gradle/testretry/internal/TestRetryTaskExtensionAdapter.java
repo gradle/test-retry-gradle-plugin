@@ -15,7 +15,6 @@
  */
 package org.gradle.testretry.internal;
 
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
@@ -35,7 +34,6 @@ public class TestRetryTaskExtensionAdapter {
     private static final boolean DEFAULT_FAIL_ON_PASSED_AFTER_RETRY = false;
 
     private final ProviderFactory providerFactory;
-    private final ObjectFactory objectFactory;
     private final TestRetryTaskExtension extension;
     private final boolean useConventions;
     private final boolean simulateNotRetryableTest;
@@ -43,12 +41,10 @@ public class TestRetryTaskExtensionAdapter {
     @Inject
     public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
-        ObjectFactory objectFactory,
         TestRetryTaskExtension extension,
         boolean useConventions
     ) {
         this.providerFactory = providerFactory;
-        this.objectFactory = objectFactory;
         this.extension = extension;
         this.useConventions = useConventions;
 
@@ -98,9 +94,5 @@ public class TestRetryTaskExtensionAdapter {
     @NotNull
     private <T> T read(Property<T> property, T defaultValue) {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
-    }
-
-    public ObjectFactory getObjectFactory() {
-        return objectFactory;
     }
 }

@@ -20,7 +20,6 @@ import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
@@ -36,7 +35,7 @@ public final class TestTaskConfigurer {
     private TestTaskConfigurer() {
     }
 
-    public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
+    public static void configureTestTask(Test test, ObjectFactory objectFactory) {
         VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
 
         TestRetryTaskExtension extension;
@@ -51,14 +50,14 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter)));
+        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory)));
         test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
     }
 
-    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
+    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-        return new RetryTestExecuter(task, extension, delegate, instantiator);
+        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory);
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
@@ -124,14 +123,16 @@ public final class TestTaskConfigurer {
     private static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
+        private final ObjectFactory objectFactory;
 
-        public InitTaskAction(TestRetryTaskExtensionAdapter adapter) {
+        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory) {
             this.adapter = adapter;
+            this.objectFactory = objectFactory;
         }
 
         @Override
         public void execute(@NotNull Test task) {
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter);
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
             setTestExecuter(task, retryTestExecuter);
         }
     }
