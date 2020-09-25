@@ -15,11 +15,36 @@
  */
 package org.gradle.testretry.testframework
 
-import org.gradle.testretry.AbstractPluginFuncTest
+import org.gradle.testretry.AbstractFrameworkFuncTest
+import org.junit.Assume
+import org.spockframework.util.VersionNumber
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class TestNGFuncTest extends AbstractPluginFuncTest {
+class TestNGFuncTest extends AbstractFrameworkFuncTest {
+    @Override
+    String getLanguagePlugin() {
+        return 'java'
+    }
+
+    @Override
+    String getTestAnnotation() {
+        return "@org.testng.annotations.Test"
+    }
+
+    @Override
+    void shouldTestConfigCache(String gradleVersion) {
+        super.shouldTestConfigCache(gradleVersion)
+        Assume.assumeTrue("TestNG and the configuration cache are not supported with Gradle $gradleVersion", isFrameworkSupportedWithConfigCache(gradleVersion))
+    }
+
+    // TestNG only works with config cache starting with 6.7
+    boolean isFrameworkSupportedWithConfigCache(String gradleVersion) {
+        // We use VersionNumber here so that we can match 6.7 nightlies
+        return VersionNumber.parse(gradleVersion).with {
+            it.major > 6 || (it.major == 6 && it.minor >= 7)
+        }
+    }
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {

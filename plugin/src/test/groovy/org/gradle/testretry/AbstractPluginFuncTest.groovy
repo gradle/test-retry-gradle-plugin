@@ -86,9 +86,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         """
     }
 
-    String getLanguagePlugin() {
-        'groovy'
-    }
+    abstract String getLanguagePlugin()
 
     String baseBuildScriptWithoutPlugin() {
         baseBuildScript() - "id 'org.gradle.test-retry'"

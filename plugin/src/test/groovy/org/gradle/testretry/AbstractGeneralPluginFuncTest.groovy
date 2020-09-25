@@ -15,14 +15,15 @@
  */
 package org.gradle.testretry
 
-class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
+abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
+    abstract String getTestAnnotation()
 
     protected void successfulTest() {
         writeTestSource """
             package acme;
 
             public class SuccessfulTests {
-                @org.junit.Test
+                ${testAnnotation}
                 public void successTest() {}
             }
         """
@@ -48,12 +49,11 @@ class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class FlakyTests {
-                @org.junit.Test
+                ${testAnnotation}
                 public void flaky() {
                     ${flakyAssert()}
                 }
             }
         """
     }
-
 }

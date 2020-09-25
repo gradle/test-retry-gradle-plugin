@@ -22,10 +22,10 @@ import org.junit.Assume
 import org.spockframework.util.VersionNumber
 import spock.lang.Unroll
 
-abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest {
+abstract class AbstractFrameworkFuncTest extends AbstractGeneralPluginFuncTest {
     @Unroll
     def "compatible with configuration cache when tests pass (gradle version #gradleVersion)"() {
-        shouldTest(gradleVersion)
+        shouldTestConfigCache(gradleVersion)
 
         when:
         buildFile << """
@@ -35,13 +35,13 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         successfulTest()
 
         then:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         and:
         result.output.count('PASSED') == 1
 
         when:
-        result = gradleRunner(gradleVersion).build()
+        result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
         assertConfigurationCacheIsReused(result, gradleVersion)
@@ -52,7 +52,7 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
 
     @Unroll
     def "compatible with configuration cache when failed tests are retried (gradle version #gradleVersion)"() {
-        shouldTest(gradleVersion)
+        shouldTestConfigCache(gradleVersion)
 
         given:
         buildFile << """
@@ -62,14 +62,14 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         flakyTest()
 
         when:
-        def result = gradleRunner(gradleVersion).build()
+        def result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
         result.output.count('PASSED') == 1
         result.output.count('FAILED') == 1
 
         when:
-        result = gradleRunner(gradleVersion).build()
+        result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
         assertConfigurationCacheIsReused(result, gradleVersion)
@@ -78,7 +78,7 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    void shouldTest(String gradleVersion) {
+    void shouldTestConfigCache(String gradleVersion) {
         // Configuration cache is supported after 6.1
         Assume.assumeTrue("$gradleVersion does not support configuration cache", isAtLeastGradle6_1(gradleVersion))
     }
@@ -91,26 +91,22 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
         assert result.output.contains(getConfigurationCacheMessage(gradleVersion))
     }
 
-    @Override
-    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s', getConfigurationCacheArguments(gradleVersion)]) {
-        return super.gradleRunner(gradleVersion, arguments)
-    }
-
-    @Override
-    String getLanguagePlugin() {
-        'java'
-    }
-
-    String getConfigurationCacheArguments(String gradleVersion) {
+    String[] withConfigurationCacheArguments(String gradleVersion, String[] arguments) {
+        String configCacheArgument
         // We need to use VersionNumber here to match 6.6 nightlies
         def version = VersionNumber.parse(gradleVersion)
         if (version.major > 6 || (version.major == 6 && version.minor >= 6)) {
-            return "--configuration-cache"
+            configCacheArgument = "--configuration-cache"
         } else if (version.major == 6 && version.minor == 5) {
-            return "--configuration-cache=on"
+            configCacheArgument = "--configuration-cache=on"
         } else {
-            return "-Dorg.gradle.unsafe.instant-execution=true"
+            configCacheArgument = "-Dorg.gradle.unsafe.instant-execution=true"
         }
+        return arguments + [configCacheArgument]
+    }
+
+    GradleRunner gradleRunnerWithConfigurationCache(String gradleVersion, String[] arguments = ['-s', 'test']) {
+        return gradleRunner(gradleVersion, withConfigurationCacheArguments(gradleVersion, arguments))
     }
 
     String getConfigurationCacheMessage(String gradleVersion) {
@@ -120,32 +116,4 @@ abstract class AbstractConfigCacheFuncTest extends AbstractGeneralPluginFuncTest
             return 'Reusing instant execution cache.'
         }
     }
-
-    @Override
-    protected void successfulTest() {
-        writeTestSource """
-            package acme;
-
-            public class SuccessfulTests {
-                ${testAnnotation}
-                public void successTest() {}
-            }
-        """
-    }
-
-    @Override
-    protected void flakyTest() {
-        writeTestSource """
-            package acme;
-
-            public class FlakyTests {
-                ${testAnnotation}
-                public void flaky() {
-                    ${flakyAssert()}
-                }
-            }
-        """
-    }
-
-    abstract String getTestAnnotation()
 }
