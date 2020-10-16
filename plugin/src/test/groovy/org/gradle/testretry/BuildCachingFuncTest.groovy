@@ -19,6 +19,15 @@ import org.gradle.testkit.runner.TaskOutcome
 import spock.lang.Unroll
 
 class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
+    @Override
+    String getTestAnnotation() {
+        return '@org.junit.Test'
+    }
+
+    @Override
+    String getLanguagePlugin() {
+        return 'java'
+    }
 
     @Unroll
     def "test task is still cacheable (gradle version #gradleVersion)"() {

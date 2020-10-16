@@ -15,10 +15,10 @@
  */
 package org.gradle.testretry.internal.framework;
 
-import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
 import org.gradle.internal.reflect.Instantiator;
@@ -29,7 +29,7 @@ import java.util.Set;
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
-    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ClassLoaderCache classLoaderCache) {
+    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ObjectFactory objectFactory) {
         JUnitPlatformTestFramework testFramework = new JUnitPlatformTestFramework(createRetryFilter(spec, failedTests, false));
         copyTestOptions((JUnitPlatformOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;

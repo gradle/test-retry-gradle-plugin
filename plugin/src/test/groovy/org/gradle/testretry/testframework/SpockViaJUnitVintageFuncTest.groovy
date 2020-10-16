@@ -35,14 +35,14 @@ class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation "org.codehaus.groovy:groovy-all:2.5.8", {
+                implementation "org.codehaus.groovy:groovy-all:2.5.8", {
                     exclude group: "org.junit.jupiter"
                 }
                 testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
                 testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
                 testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
             }
-            
+
             test {
                 useJUnitPlatform()
             }

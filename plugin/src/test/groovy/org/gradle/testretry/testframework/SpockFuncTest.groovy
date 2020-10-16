@@ -15,12 +15,20 @@
  */
 package org.gradle.testretry.testframework
 
-
-import org.gradle.testretry.AbstractPluginFuncTest
+import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class SpockFuncTest extends AbstractPluginFuncTest {
+class SpockFuncTest extends AbstractFrameworkFuncTest {
+    @Override
+    String getLanguagePlugin() {
+        return 'groovy'
+    }
+
+    @Override
+    String getTestAnnotation() {
+        return ''
+    }
 
     boolean isRerunsParameterizedMethods() {
         true
@@ -81,7 +89,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                 static {
                     ${flakyAssert()}
                 }
-                
+
                 def someTest() {
                     expect:
                     true
@@ -224,12 +232,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
 
             class UnrollTests extends spock.lang.Specification {
-            
+
                 def passingTest() {
                     expect:
                     true
                 }
-                
+
                 @spock.lang.Unroll
                 def "unrolled"() {
                     expect:
@@ -295,12 +303,12 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             package acme
 
             class UnrollTests extends spock.lang.Specification {
-            
+
                 def passingTest() {
                     expect:
                     true
                 }
-                
+
                 @spock.lang.Unroll
                 def "unrolled with param [#param.toString().toUpperCase()]"() {
                     expect:
@@ -342,7 +350,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                     expect:
                     true
                 }
-                
+
                 @spock.lang.Unroll
                 def "unrolled with param \\\$.*=.?<>(){}[][^\\\\w]!+- {([#param1])} {([#param2])}"() {
                     expect:
@@ -392,7 +400,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                     expect:
                     true
                 }
-                
+
                 def "unrolled [#param] with additional test context"() {
                     expect:
                     result
@@ -537,7 +545,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
                     expect:
                     true
                 }
-                
+
                 def "inherited"() {
                     expect:
                     true
@@ -705,7 +713,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             class FlakyTest extends spock.lang.Specification {
 
                 @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
-                def "a"() {                    
+                def "a"() {
                     expect:
                     new File("build/marker.file").createNewFile()
                     false
@@ -778,7 +786,7 @@ class SpockFuncTest extends AbstractPluginFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation "org.codehaus.groovy:groovy-all:2.5.8"
+                implementation "org.codehaus.groovy:groovy-all:2.5.8"
                 testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
@@ -821,6 +829,34 @@ class SpockFuncTest extends AbstractPluginFuncTest {
             @Inherited
             @ExtensionAnnotation(ContextualTestExtension)
             @interface ContextualTest {
+            }
+        """
+    }
+
+    @Override
+    protected void successfulTest() {
+        writeTestSource """
+            package acme;
+
+            public class SuccessfulTests extends spock.lang.Specification {
+                public void successTest() {
+                    expect:
+                    true
+                }
+            }
+        """
+    }
+
+    @Override
+    protected void flakyTest() {
+        writeTestSource """
+            package acme;
+
+            public class FlakyTests extends spock.lang.Specification {
+                public void flaky() {
+                    expect:
+                    ${flakyAssert()}
+                }
             }
         """
     }

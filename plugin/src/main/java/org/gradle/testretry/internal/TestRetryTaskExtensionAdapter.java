@@ -93,5 +93,4 @@ public final class TestRetryTaskExtensionAdapter {
     private <T> T read(Property<T> property, T defaultValue) {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
     }
-
 }

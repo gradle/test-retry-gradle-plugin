@@ -19,6 +19,15 @@ import org.gradle.testretry.internal.TestRetryTaskExtensionAdapter
 import spock.lang.Unroll
 
 class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
+    @Override
+    String getTestAnnotation() {
+        return '@org.junit.Test'
+    }
+
+    @Override
+    String getLanguagePlugin() {
+        return 'java'
+    }
 
     @Unroll
     def "has no effect when all tests pass (gradle version #gradleVersion)"() {

@@ -15,11 +15,20 @@
  */
 package org.gradle.testretry.testframework
 
-import org.gradle.testretry.AbstractPluginFuncTest
+import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
 import spock.lang.Unroll
 
-class JUnit4FuncTest extends AbstractPluginFuncTest {
+class JUnit4FuncTest extends AbstractFrameworkFuncTest {
+    @Override
+    String getLanguagePlugin() {
+        return 'java'
+    }
+
+    @Override
+    String getTestAnnotation() {
+        return "@org.junit.Test"
+    }
 
     protected isRerunsAllParameterizedIterations() {
         false
@@ -183,10 +192,10 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
             import org.junit.runners.BlockJUnit4ClassRunner;
             import org.junit.runner.RunWith;
             import org.junit.runner.notification.RunNotifier;
-            
+
             @RunWith(FlakyTests.MyRunner.class)
             public class FlakyTests {
-                
+
                 public static class MyRunner extends BlockJUnit4ClassRunner {
                     public MyRunner(Class<?> type) throws Exception {
                         super(type);
@@ -315,7 +324,7 @@ class JUnit4FuncTest extends AbstractPluginFuncTest {
 
         writeTestSource """
             package acme;
-            import java.nio.file.*;            
+            import java.nio.file.*;
 
             public class FlakyTests {
                 @org.junit.Test

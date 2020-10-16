@@ -17,8 +17,6 @@ package org.gradle.testretry.internal;
 
 import org.gradle.api.Action;
 import org.gradle.api.Task;
-import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
-import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
@@ -26,7 +24,6 @@ import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.gradle.util.VersionNumber;
 import org.jetbrains.annotations.NotNull;
@@ -49,27 +46,19 @@ public final class TestTaskConfigurer {
             extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
         }
 
-        TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(
-            providerFactory,
-            extension,
-            supportsPropertyConventions(gradleVersion)
-        );
+        TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, supportsPropertyConventions(gradleVersion));
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter)));
+        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory)));
         test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
     }
 
-    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension) {
+    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
-
-        ServiceRegistry serviceRegistry = ((ProjectInternal) task.getProject()).getServices();
-        ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-
-        return new RetryTestExecuter(task, extension, delegate, classLoaderCache, instantiator);
+        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory);
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
@@ -135,14 +124,16 @@ public final class TestTaskConfigurer {
     private static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
+        private final ObjectFactory objectFactory;
 
-        public InitTaskAction(TestRetryTaskExtensionAdapter adapter) {
+        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory) {
             this.adapter = adapter;
+            this.objectFactory = objectFactory;
         }
 
         @Override
         public void execute(@NotNull Test task) {
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter);
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
             setTestExecuter(task, retryTestExecuter);
         }
     }

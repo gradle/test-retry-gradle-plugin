@@ -15,10 +15,19 @@
  */
 package org.gradle.testretry.testframework
 
-import org.gradle.testretry.AbstractPluginFuncTest
+import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Unroll
 
-class JUnit5FuncTest extends AbstractPluginFuncTest {
+class JUnit5FuncTest extends AbstractFrameworkFuncTest {
+    @Override
+    String getLanguagePlugin() {
+        return 'java'
+    }
+
+    @Override
+    String getTestAnnotation() {
+        return "@org.junit.jupiter.api.Test"
+    }
 
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
