@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
+import org.junit.Assume
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -31,6 +32,14 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     }
 
     boolean isRerunsParameterizedMethods() {
+        true
+    }
+
+    boolean canTargetInheritedMethods() {
+        true
+    }
+
+    boolean nonParameterizedMethodsCanHaveCustomIterationNames() {
         true
     }
 
@@ -381,6 +390,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def "handles unrolled tests with additional test context method suffix (gradle version #gradleVersion)"() {
         given:
+        Assume.assumeTrue(nonParameterizedMethodsCanHaveCustomIterationNames())
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -396,6 +406,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             @ContextualTest
             class UnrollTests extends spock.lang.Specification {
 
+                @spock.lang.Unroll
                 def passingTest() {
                     expect:
                     true
@@ -429,6 +440,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
+        Assume.assumeTrue(canTargetInheritedMethods())
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -475,6 +487,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
+        Assume.assumeTrue(canTargetInheritedMethods())
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -569,9 +582,9 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
     }
 
-    @Unroll
-    def "can rerun on failure in inherited class (gradle version #gradleVersion)"() {
+    def "can rerun on failure in super super class (gradle version #gradleVersion)"() {
         given:
+        Assume.assumeTrue(canTargetInheritedMethods())
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -595,7 +608,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
                 def "b"() {
                     expect:
-                    fail
+                    false
                 }
             }
         """

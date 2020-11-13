@@ -15,9 +15,21 @@
  */
 package org.gradle.testretry.testframework
 
-class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
+class Spock2FuncTest extends SpockFuncTest {
 
     boolean isRerunsParameterizedMethods() {
+        false
+    }
+
+    @Override
+    boolean canTargetInheritedMethods() {
+        // https://github.com/spockframework/spock/issues/1235
+        false
+    }
+
+    @Override
+    boolean nonParameterizedMethodsCanHaveCustomIterationNames() {
+        // // https://github.com/spockframework/spock/issues/1236
         false
     }
 
@@ -30,14 +42,8 @@ class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation "org.codehaus.groovy:groovy-all:2.5.8", {
-                    exclude group: "org.junit.jupiter"
-                }
-                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
-                testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
-                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
+                implementation 'org.spockframework:spock-core:2.0-M2-groovy-3.0'
             }
-
             test {
                 useJUnitPlatform()
             }
