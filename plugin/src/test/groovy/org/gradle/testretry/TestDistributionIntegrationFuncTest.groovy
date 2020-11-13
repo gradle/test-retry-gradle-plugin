@@ -19,15 +19,6 @@ import org.gradle.testkit.runner.BuildResult
 import spock.lang.Unroll
 
 class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest {
-    @Override
-    String getTestAnnotation() {
-        return '@org.junit.Test'
-    }
-
-    @Override
-    String getLanguagePlugin() {
-        return 'java'
-    }
 
     def setup() {
         buildFile << """

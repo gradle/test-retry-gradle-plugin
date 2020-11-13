@@ -18,15 +18,6 @@ package org.gradle.testretry
 import spock.lang.Unroll
 
 class TaskConfigurationAvoidanceFuncTest extends AbstractGeneralPluginFuncTest {
-    @Override
-    String getTestAnnotation() {
-        return '@org.junit.Test'
-    }
-
-    @Override
-    String getLanguagePlugin() {
-        return 'java'
-    }
 
     @Unroll
     def "test tasks are not created from use of plugin (gradle version #gradleVersion)"() {

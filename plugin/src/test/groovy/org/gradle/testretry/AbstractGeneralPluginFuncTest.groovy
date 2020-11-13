@@ -16,7 +16,14 @@
 package org.gradle.testretry
 
 abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
-    abstract String getTestAnnotation()
+
+    String getTestAnnotation() {
+        return '@org.junit.Test'
+    }
+
+    String getLanguagePlugin() {
+        return 'java'
+    }
 
     protected void successfulTest() {
         writeTestSource """

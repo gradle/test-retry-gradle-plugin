@@ -16,7 +16,6 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
-import org.junit.Assume
 import org.spockframework.util.VersionNumber
 import spock.lang.Issue
 import spock.lang.Unroll
@@ -30,12 +29,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getTestAnnotation() {
         return "@org.testng.annotations.Test"
-    }
-
-    @Override
-    void shouldTestConfigCache(String gradleVersion) {
-        super.shouldTestConfigCache(gradleVersion)
-        Assume.assumeTrue("TestNG and the configuration cache are not supported with Gradle $gradleVersion", isFrameworkSupportedWithConfigCache(gradleVersion))
     }
 
     // TestNG only works with config cache starting with 6.7
