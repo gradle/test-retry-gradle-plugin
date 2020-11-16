@@ -24,10 +24,10 @@ import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
@@ -39,9 +39,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private final int maxFailures;
     private boolean lastRetry;
 
-    private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new ConcurrentHashMap<>();
-    private final Set<TestName> failedTestsInCurrentRound = ConcurrentHashMap.newKeySet();
-    private final Set<TestName> failedTestsFromPreviousRoundNotYetExecutedInCurrentRound = ConcurrentHashMap.newKeySet();
+    private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
+    private final Set<TestName> failedTestsInCurrentRound = new HashSet<>();
+    private final Set<TestName> failedTestsFromPreviousRoundNotYetExecutedInCurrentRound = new HashSet<>();
 
     private Object rootTestDescriptorId;
 
