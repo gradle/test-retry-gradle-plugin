@@ -114,10 +114,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
             return false;
         }
 
-        return spec.getTestClassesDirs().getFiles().stream()
-            .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
-            .filter(File::exists)
-            .findAny()
+        return classFile(spec, failedTest)
             .map(testClass -> {
                 try (FileInputStream testClassIs = new FileInputStream(testClass)) {
                     ClassReader classReader = new ClassReader(testClassIs);
