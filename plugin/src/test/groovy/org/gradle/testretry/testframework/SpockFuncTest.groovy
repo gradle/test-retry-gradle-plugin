@@ -660,7 +660,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
                 implementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
-c
+
         file("dep/src/main/groovy/acme/FlakyAssert.java") << flakyAssertClass()
         file("dep/src/main/groovy/acme/AbstractTest.groovy") << """
             package acme;
