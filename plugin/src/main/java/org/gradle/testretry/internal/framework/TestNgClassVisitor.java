@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-final class TestNGClassVisitor extends TestsReader.Visitor<TestNGClassVisitor> {
+final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
 
     private final Map<String, List<String>> dependsOn = new HashMap<>();
     private final Map<String, List<String>> dependedOn = new HashMap<>();
@@ -44,7 +44,7 @@ final class TestNGClassVisitor extends TestsReader.Visitor<TestNGClassVisitor> {
     }
 
     @Override
-    public TestNGClassVisitor getResult() {
+    public TestNgClassVisitor getResult() {
         return this;
     }
 

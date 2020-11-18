@@ -106,7 +106,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         return failedTests.stream()
             .flatMap(failedTest -> {
                 try {
-                    Optional<TestNGClassVisitor> opt = testsReader.readTestClassDirClass(failedTest.getClassName(), TestNGClassVisitor::new);
+                    Optional<TestNgClassVisitor> opt = testsReader.readTestClassDirClass(failedTest.getClassName(), TestNgClassVisitor::new);
                     return opt
                         .map(visitor ->
                             visitor.dependsOn(failedTest.getName())
