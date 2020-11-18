@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal;
+package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.TestCompleteEvent;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
-import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
+import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

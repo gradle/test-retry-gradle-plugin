@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework;
+package org.gradle.testretry.internal.executer.framework;
 
-import org.gradle.testretry.internal.TestsReader;
+import org.gradle.testretry.internal.executer.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
 
 final class SpockStepwiseClassVisitor extends TestsReader.Visitor<Boolean> {

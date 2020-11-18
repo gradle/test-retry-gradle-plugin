@@ -24,7 +24,7 @@ import org.gradle.api.tasks.testing.Test;
 
 import javax.inject.Inject;
 
-import static org.gradle.testretry.internal.TestTaskConfigurer.configureTestTask;
+import static org.gradle.testretry.internal.config.TestTaskConfigurer.configureTestTask;
 
 public class TestRetryPlugin implements Plugin<Project> {
 

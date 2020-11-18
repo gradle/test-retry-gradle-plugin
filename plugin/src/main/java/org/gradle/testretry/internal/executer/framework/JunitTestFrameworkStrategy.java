@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework;
+package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.tasks.testing.junit.JUnitOptions;
-import org.gradle.testretry.internal.TestFrameworkTemplate;
-import org.gradle.testretry.internal.TestName;
+import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
+import org.gradle.testretry.internal.executer.TestName;
 
 import java.util.Set;
 

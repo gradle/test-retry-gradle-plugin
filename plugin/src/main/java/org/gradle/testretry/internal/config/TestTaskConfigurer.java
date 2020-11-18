@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal;
+package org.gradle.testretry.internal.config;
 
 import org.gradle.api.Action;
 import org.gradle.api.Task;
@@ -25,6 +25,7 @@ import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.TestRetryTaskExtension;
+import org.gradle.testretry.internal.executer.RetryTestExecuter;
 import org.gradle.util.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 

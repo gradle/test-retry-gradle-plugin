@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal;
+package org.gradle.testretry.internal.config;
 
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;

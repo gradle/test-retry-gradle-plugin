@@ -15,7 +15,7 @@
  */
 package org.gradle.testretry
 
-import org.gradle.testretry.internal.TestRetryTaskExtensionAdapter
+import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter
 import spock.lang.Unroll
 
 class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {

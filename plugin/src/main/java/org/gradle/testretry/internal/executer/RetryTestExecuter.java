@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal;
+package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
@@ -22,11 +22,12 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
+import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
+import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 
 import java.util.stream.Collectors;
 
-final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
+public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     private final TestRetryTaskExtensionAdapter extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
@@ -35,7 +36,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     private RetryTestResultProcessor.RoundResult lastResult;
 
-    RetryTestExecuter(
+    public RetryTestExecuter(
         Test task,
         TestRetryTaskExtensionAdapter extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
@@ -94,7 +95,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
     }
 
-    void failWithNonRetriedTestsIfAny() {
+    public void failWithNonRetriedTestsIfAny() {
         if (extension.getSimulateNotRetryableTest() || (lastResult != null && !lastResult.nonRetriedTests.isEmpty())) {
             throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
                 lastResult.nonRetriedTests.stream()

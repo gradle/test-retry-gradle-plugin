@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal;
+package org.gradle.testretry.internal.config;
 
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
@@ -37,7 +37,7 @@ public final class TestRetryTaskExtensionAdapter {
     private final boolean useConventions;
     private final boolean simulateNotRetryableTest;
 
-    TestRetryTaskExtensionAdapter(
+    public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
         boolean useConventions
@@ -73,19 +73,19 @@ public final class TestRetryTaskExtensionAdapter {
         }
     }
 
-    boolean getFailOnPassedAfterRetry() {
+    public boolean getFailOnPassedAfterRetry() {
         return read(extension.getFailOnPassedAfterRetry(), DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
     }
 
-    int getMaxRetries() {
+    public int getMaxRetries() {
         return read(extension.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
 
-    int getMaxFailures() {
+    public int getMaxFailures() {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
     }
 
-    boolean getSimulateNotRetryableTest() {
+    public boolean getSimulateNotRetryableTest() {
         return simulateNotRetryableTest;
     }
 

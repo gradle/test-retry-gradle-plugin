@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.framework;
+package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.project.ProjectInternal;
@@ -26,9 +26,9 @@ import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
-import org.gradle.testretry.internal.TestFrameworkTemplate;
-import org.gradle.testretry.internal.TestName;
-import org.gradle.testretry.internal.TestsReader;
+import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
+import org.gradle.testretry.internal.executer.TestName;
+import org.gradle.testretry.internal.executer.TestsReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
