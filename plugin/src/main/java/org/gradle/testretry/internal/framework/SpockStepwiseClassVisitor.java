@@ -15,18 +15,12 @@
  */
 package org.gradle.testretry.internal.framework;
 
+import org.gradle.testretry.internal.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassVisitor;
 
-import static org.objectweb.asm.Opcodes.ASM7;
-
-final class SpockStepwiseClassVisitor extends ClassVisitor {
+final class SpockStepwiseClassVisitor extends TestsReader.Visitor<Boolean> {
 
     private boolean stepwise = false;
-
-    SpockStepwiseClassVisitor() {
-        super(ASM7);
-    }
 
     @Override
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -36,7 +30,8 @@ final class SpockStepwiseClassVisitor extends ClassVisitor {
         return null;
     }
 
-    boolean isStepwise() {
+    @Override
+    public Boolean getResult() {
         return stepwise;
     }
 }

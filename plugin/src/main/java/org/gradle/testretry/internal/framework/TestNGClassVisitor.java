@@ -15,30 +15,37 @@
  */
 package org.gradle.testretry.internal.framework;
 
+import org.gradle.testretry.internal.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-final class TestNGClassVisitor extends ClassVisitor {
+final class TestNGClassVisitor extends TestsReader.Visitor<TestNGClassVisitor> {
 
     private final Map<String, List<String>> dependsOn = new HashMap<>();
     private final Map<String, List<String>> dependedOn = new HashMap<>();
 
     private String currentMethod;
 
-    TestNGClassVisitor() {
-        super(ASM7);
-    }
-
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         this.currentMethod = name;
         return new TestNGMethodVisitor();
+    }
+
+    @Override
+    public TestNGClassVisitor getResult() {
+        return this;
     }
 
     Set<String> dependsOn(String method) {

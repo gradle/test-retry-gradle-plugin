@@ -529,6 +529,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def 'can rerun parameterized test method in super class (gradle version #gradleVersion)'() {
         given:
+        Assume.assumeTrue(canTargetInheritedMethods())
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -641,6 +642,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
         given:
+        Assume.assumeTrue(canTargetInheritedMethods())
         testProjectDir.newFile('spock-abstract-test.jar') <<
             getClass().getResourceAsStream('/spock-abstract-test.jar').getBytes()
 

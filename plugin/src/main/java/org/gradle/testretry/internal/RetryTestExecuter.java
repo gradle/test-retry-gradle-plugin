@@ -24,7 +24,6 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.framework.TestFrameworkStrategy;
 
-import java.util.Set;
 import java.util.stream.Collectors;
 
 final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -32,8 +31,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
     private final TestRetryTaskExtensionAdapter extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
-    private final Instantiator instantiator;
-    private final ObjectFactory objectFactory;
+    private final TestFrameworkTemplate frameworkTemplate;
 
     private RetryTestResultProcessor.RoundResult lastResult;
 
@@ -47,8 +45,11 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
-        this.instantiator = instantiator;
-        this.objectFactory = objectFactory;
+        this.frameworkTemplate = new TestFrameworkTemplate(
+            testTask,
+            instantiator,
+            objectFactory
+        );
     }
 
     @Override
@@ -86,7 +87,8 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
             } else if (result.lastRound) {
                 break;
             } else {
-                testExecutionSpec = createRetryJvmExecutionSpec(testFrameworkStrategy, spec, testTask, result.failedTests);
+                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
+                testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
@@ -101,8 +103,7 @@ final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
         }
     }
 
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(TestFrameworkStrategy testFrameworkStrategy, JvmTestExecutionSpec spec, Test testTask, Set<TestName> retries) {
-        TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(spec, testTask, retries, instantiator, objectFactory);
+    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(

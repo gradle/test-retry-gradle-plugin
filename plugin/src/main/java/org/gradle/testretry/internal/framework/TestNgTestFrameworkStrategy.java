@@ -17,28 +17,25 @@ package org.gradle.testretry.internal.framework;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.testretry.internal.TestFrameworkTemplate;
 import org.gradle.testretry.internal.TestName;
-import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.ClassReader;
+import org.gradle.testretry.internal.TestsReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,9 +50,9 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(JvmTestExecutionSpec spec, Test testTask, Set<TestName> failedTests, Instantiator instantiator, ObjectFactory objectFactory) {
+    public TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        retriesWithTestNGDependentsAdded(spec, failedTests)
+        retriesWithTestNGDependentsAdded(template.testsReader, failedTests)
             .forEach(failedTest -> {
                 if ("lifecycle".equals(failedTest.getName()) || failedTest.getName() == null) {
                     // failures in TestNG lifecycle methods yield a failure on methods of these names
@@ -65,23 +62,21 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
             });
 
-        TestNGTestFramework testFramework = createTestFramework(testTask, instantiator, objectFactory, retriedTestFilter);
-        copyTestNGOptions((TestNGOptions) testTask.getTestFramework().getOptions(), testFramework.getOptions());
+        TestNGTestFramework testFramework = createTestFramework(template, retriedTestFilter);
+        copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
     }
 
-    @NotNull
-    private TestNGTestFramework createTestFramework(Test testTask, Instantiator instantiator, ObjectFactory objectFactory, DefaultTestFilter retriedTestFilter) {
+    private TestNGTestFramework createTestFramework(TestFrameworkTemplate template, DefaultTestFilter retriedTestFilter) {
         if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
-            return new TestNGTestFramework(testTask, testTask.getClasspath(), retriedTestFilter, objectFactory);
+            return new TestNGTestFramework(template.task, template.task.getClasspath(), retriedTestFilter, template.objectFactory);
         } else {
             try {
-                ServiceRegistry serviceRegistry = ((ProjectInternal) testTask.getProject()).getServices();
+                ServiceRegistry serviceRegistry = ((ProjectInternal) template.task.getProject()).getServices();
                 ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
                 Class<?> testNGTestFramework = TestNGTestFramework.class;
-                @SuppressWarnings("JavaReflectionMemberAccess")
-                final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
-                return (TestNGTestFramework) constructor.newInstance(testTask, retriedTestFilter, instantiator, classLoaderCache);
+                @SuppressWarnings("JavaReflectionMemberAccess") final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
+                return (TestNGTestFramework) constructor.newInstance(template.task, retriedTestFilter, template.instantiator, classLoaderCache);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
@@ -107,27 +102,23 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         target.setSuiteXmlWriter(source.getSuiteXmlWriter());
     }
 
-    private static List<TestName> retriesWithTestNGDependentsAdded(JvmTestExecutionSpec spec, Set<TestName> failedTests) {
+    private static List<TestName> retriesWithTestNGDependentsAdded(TestsReader testsReader, Set<TestName> failedTests) {
         return failedTests.stream()
-            .flatMap(failedTest ->
-                spec.getTestClassesDirs().getFiles().stream()
-                    .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
-                    .filter(File::exists)
-                    .findAny()
-                    .map(testClass -> {
-                        try (FileInputStream testClassIs = new FileInputStream(testClass)) {
-                            ClassReader classReader = new ClassReader(testClassIs);
-                            TestNGClassVisitor visitor = new TestNGClassVisitor();
-                            classReader.accept(visitor, 0);
-                            return visitor.dependsOn(failedTest.getName()).stream()
-                                .map(method -> getTestNameFrom(failedTest.getClassName(), method));
-                        } catch (Throwable t) {
-                            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " has TestNG dependent tests", t);
-                            return Stream.of(failedTest);
-                        }
-                    })
-                    .orElse(Stream.of(failedTest))
-            )
+            .flatMap(failedTest -> {
+                try {
+                    Optional<TestNGClassVisitor> opt = testsReader.readTestClassDirClass(failedTest.getClassName(), TestNGClassVisitor::new);
+                    return opt
+                        .map(visitor ->
+                            visitor.dependsOn(failedTest.getName())
+                                .stream()
+                                .map(method -> getTestNameFrom(failedTest.getClassName(), method))
+                        )
+                        .orElse(Stream.of(failedTest));
+                } catch (Throwable t) {
+                    LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " has TestNG dependent tests", t);
+                    return Stream.of(failedTest);
+                }
+            })
             .collect(Collectors.toList());
     }
 

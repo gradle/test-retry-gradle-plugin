@@ -15,54 +15,55 @@
  */
 package org.gradle.testretry.internal.framework;
 
-import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
+import org.gradle.testretry.internal.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static java.util.stream.StreamSupport.stream;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 /**
  * Class visitor that identifies unparameterized test method names.
  */
-final class SpockParameterClassVisitor extends ClassVisitor {
+final class SpockParameterClassVisitor extends TestsReader.Visitor<SpockParameterClassVisitor.Result> {
 
     // A valid Java identifier https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.8 including methods
     private static final String SPOCK_PARAM_PATTERN = "#[\\p{L}\\d$_.()&&[^#\\s]]+";
     private static final String WILDCARD = ".*";
 
     private final String failedTestMethodNameMaybeParameterized;
-    private final JvmTestExecutionSpec spec;
+    private final TestsReader testsReader;
     private final SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
 
     private boolean foundLiteralMethod;
     private final Set<String> matchedMethodNames = new HashSet<>();
 
-    public SpockParameterClassVisitor(String testMethodName, JvmTestExecutionSpec spec) {
-        super(ASM7);
+    public SpockParameterClassVisitor(String testMethodName, TestsReader testsReader) {
         this.failedTestMethodNameMaybeParameterized = testMethodName;
-        this.spec = spec;
+        this.testsReader = testsReader;
+    }
+
+    public class Result {
+
+        public boolean isFoundLiteralMethodName() {
+            return foundLiteralMethod;
+        }
+
+        public Set<String> getMatchedMethodNames() {
+            return matchedMethodNames;
+        }
+    }
+
+    @Override
+    public Result getResult() {
+        return new Result();
     }
 
     @Override
@@ -93,64 +94,11 @@ final class SpockParameterClassVisitor extends ClassVisitor {
         }
     }
 
-    public boolean isFoundLiteralMethodName() {
-        return foundLiteralMethod;
-    }
-
-    public Set<String> getMatchedMethodNames() {
-        return matchedMethodNames;
-    }
-
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         super.visit(version, access, name, signature, superName, interfaces);
-        if (superName != null && !superName.equals("java/lang/Object")) {
-            Stream<File> classpathDirectories = Stream.concat(stream(spec.getTestClassesDirs().spliterator(), false),
-                stream(spec.getClasspath().spliterator(), false).filter(File::isDirectory)
-            );
-
-            Optional<Path> parentPath = classpathDirectories
-                .map(dir -> Paths.get(dir.getAbsolutePath(), superName + ".class"))
-                .filter(classFile -> Files.exists(classFile))
-                .findAny();
-
-            if (parentPath.isPresent()) {
-                try (InputStream fis = new FileInputStream(parentPath.get().toFile())) {
-                    readParentClass(fis);
-                } catch (IOException ignored) {
-                    // we tried, move on to looking in the jar classpath
-                }
-            } else {
-                for (File file : spec.getClasspath()) {
-                    if (!file.getName().endsWith(".jar")) {
-                        continue;
-                    }
-
-                    try (JarFile jarFile = new JarFile(file)) {
-                        Optional<JarEntry> classFile = jarFile.stream()
-                            .filter(maybeClass -> maybeClass.getName().equals(superName + ".class"))
-                            .findAny();
-
-                        if (classFile.isPresent()) {
-                            try (InputStream is = jarFile.getInputStream(classFile.get())) {
-                                readParentClass(is);
-                                return;
-                            }
-                        }
-                    } catch (IOException ignored) {
-                        // we tried... this file looks corrupt, move on to the next jar
-                    }
-                }
-            }
-        }
-    }
-
-    private void readParentClass(InputStream is) {
-        try {
-            ClassReader classReader = new ClassReader(is);
-            classReader.accept(this, 0);
-        } catch (IOException ignored) {
-            // we did our best...
+        if (superName != null && !superName.equals("spock/lang/Specification")) {
+            testsReader.readClass(superName.replace('/', '.'), () -> this);
         }
     }
 

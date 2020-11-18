@@ -15,10 +15,13 @@
  */
 package org.gradle.testretry.internal;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.annotation.Nullable;
+import java.util.Comparator;
 import java.util.Objects;
 
-public final class TestName {
+public final class TestName implements Comparable<TestName> {
 
     private final String className;
 
@@ -54,5 +57,13 @@ public final class TestName {
     @Override
     public int hashCode() {
         return Objects.hash(className, name);
+    }
+
+    private static final Comparator<TestName> COMPARATOR = Comparator.comparing(TestName::getClassName)
+        .thenComparing(Comparator.nullsLast(Comparator.comparing(TestName::getName)));
+
+    @Override
+    public int compareTo(@NotNull TestName o) {
+        return COMPARATOR.compare(this, o);
     }
 }
