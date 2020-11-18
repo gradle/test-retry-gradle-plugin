@@ -642,15 +642,44 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Unroll
     def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods())
-        testProjectDir.newFile('spock-abstract-test.jar') <<
-            getClass().getResourceAsStream('/spock-abstract-test.jar').getBytes()
+        settingsFile << """
+            include 'dep'
+        """
+        file("dep/build.gradle") << """
+            plugins {
+                id 'groovy'
+            }
 
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                implementation "org.codehaus.groovy:groovy-all:2.5.8"
+                implementation "org.spockframework:spock-core:1.3-groovy-2.5"
+            }
+        """
+
+        file("dep/src/main/groovy/acme/FlakyAssert.java") << flakyAssertClass()
+        file("dep/src/main/groovy/acme/AbstractTest.groovy") << """
+            package acme;
+            
+            class AbstractTest extends spock.lang.Specification {
+                @spock.lang.Unroll
+                def "unrolled [#param] parent"() {
+                    expect:
+                    ${flakyAssert()}
+
+                    where:
+                    param << ["foo"]
+                }
+            }
+        """
         buildFile << """
             test.retry.maxRetries = 1
 
             dependencies {
-                testImplementation files('spock-abstract-test.jar')
+                testImplementation project(":dep")
             }
         """
 

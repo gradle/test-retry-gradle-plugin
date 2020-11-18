@@ -44,7 +44,11 @@ abstract class AbstractPluginFuncTest extends Specification {
         testProjectDir.newFolder('src', 'test', 'java', 'acme')
         testProjectDir.newFolder('src', 'test', 'groovy', 'acme')
 
-        writeTestSource """
+        writeTestSource flakyAssertClass()
+    }
+
+    String flakyAssertClass() {
+        """
             package acme;
 
             import java.nio.file.*;
@@ -63,6 +67,13 @@ abstract class AbstractPluginFuncTest extends Specification {
                 }
             }
         """
+    }
+
+    File file(String path) {
+        def file = new File(testProjectDir.root, path)
+        assert file.parentFile.mkdirs() || file.parentFile.directory
+        assert file.createNewFile() || file.file
+        file
     }
 
     String baseBuildScript() {
