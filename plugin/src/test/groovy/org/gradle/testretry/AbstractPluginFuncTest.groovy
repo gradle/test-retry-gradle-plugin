@@ -63,13 +63,13 @@ abstract class AbstractPluginFuncTest extends Specification {
                     Path marker = Paths.get("build/marker.file." + id);
                     try {
                         if (Files.exists(marker)) {
-                            int counter = Integer.parseInt(Files.readString(marker));
+                            int counter = Integer.parseInt(new String(Files.readAllBytes(marker)));
                             if (++counter == failures) {
                                 return;
                             }
-                            Files.writeString(marker, Integer.toString(counter));
+                            Files.write(marker, Integer.toString(counter).getBytes());
                         } else {
-                            Files.writeString(marker, "0");
+                            Files.write(marker, "0".getBytes());
                         }
                         throw new RuntimeException("fail me!");                        
                     } catch (java.io.IOException e) {
