@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry
 
+import groovy.json.StringEscapeUtils
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
@@ -47,6 +48,10 @@ abstract class AbstractPluginFuncTest extends Specification {
         writeTestSource flakyAssertClass()
     }
 
+    String markerFileExistsCheck(String id = "id") {
+        "Files.exists(Paths.get(\"build/marker.file.${StringEscapeUtils.escapeJava(id)}\"))"
+    }
+
     String flakyAssertClass() {
         """
             package acme;
@@ -54,13 +59,19 @@ abstract class AbstractPluginFuncTest extends Specification {
             import java.nio.file.*;
 
             public class FlakyAssert {
-                public static void flakyAssert() {
+                public static void flakyAssert(String id, int failures) {
+                    Path marker = Paths.get("build/marker.file." + id);
                     try {
-                        Path marker = Paths.get("build/marker.file");
-                        if (!Files.exists(marker)) {
-                            Files.write(marker, "mark".getBytes());
-                            throw new RuntimeException("fail me!");
+                        if (Files.exists(marker)) {
+                            int counter = Integer.parseInt(Files.readString(marker));
+                            if (++counter == failures) {
+                                return;
+                            }
+                            Files.writeString(marker, Integer.toString(counter));
+                        } else {
+                            Files.writeString(marker, "0");
                         }
+                        throw new RuntimeException("fail me!");                        
                     } catch (java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
                     }
@@ -111,8 +122,8 @@ abstract class AbstractPluginFuncTest extends Specification {
         return 'dependencies { testImplementation "junit:junit:4.12" }'
     }
 
-    String flakyAssert() {
-        return "acme.FlakyAssert.flakyAssert();"
+    String flakyAssert(String id = "id", int failures = 1) {
+        return "acme.FlakyAssert.flakyAssert(\"${StringEscapeUtils.escapeJava(id)}\", $failures);"
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")

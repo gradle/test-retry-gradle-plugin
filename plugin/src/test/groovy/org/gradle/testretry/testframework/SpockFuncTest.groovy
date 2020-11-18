@@ -718,7 +718,7 @@ c
 
             class Tests extends spock.lang.Specification {
 
-                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                @spock.lang.IgnoreIf({${markerFileExistsCheck()})
                 def "a"() {
                     expect:
                     ${flakyAssert()}
@@ -757,11 +757,10 @@ c
             @spock.lang.Unroll
             class FlakyTest extends spock.lang.Specification {
 
-                @spock.lang.IgnoreIf({Files.exists(Paths.get("build/marker.file")) })
+                @spock.lang.IgnoreIf({${markerFileExistsCheck()}})
                 def "a"() {
                     expect:
-                    new File("build/marker.file").createNewFile()
-                    false
+                    ${flakyAssert()}
                 }
             }
         """

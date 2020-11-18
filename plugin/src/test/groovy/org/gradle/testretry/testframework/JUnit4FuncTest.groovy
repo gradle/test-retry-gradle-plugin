@@ -330,7 +330,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
                 @org.junit.Test
                 public void flakyAssumeTest() {
                    ${flakyAssert()};
-                   org.junit.Assume.assumeFalse(Files.exists(Paths.get("build/marker.file")));
+                   org.junit.Assume.assumeFalse(${markerFileExistsCheck()});
                 }
             }
         """
