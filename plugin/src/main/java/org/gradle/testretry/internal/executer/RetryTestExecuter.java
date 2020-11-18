@@ -34,7 +34,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
 
-    private RetryTestResultProcessor.RoundResult lastResult;
+    private RoundResult lastResult;
 
     public RetryTestExecuter(
         Test task,
@@ -73,7 +73,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         while (true) {
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
-            RetryTestResultProcessor.RoundResult result = retryTestResultProcessor.getResult();
+            RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
 
             if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
@@ -88,7 +88,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             } else if (result.lastRound) {
                 break;
             } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
+                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests.toSet());
                 testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }

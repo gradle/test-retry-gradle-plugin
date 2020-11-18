@@ -21,13 +21,9 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
-import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
@@ -40,8 +36,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private boolean lastRetry;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
-    private final Set<TestName> failedTestsInCurrentRound = new HashSet<>();
-    private final Set<TestName> failedTestsFromPreviousRoundNotYetExecutedInCurrentRound = new HashSet<>();
+
+    private TestNames currentRoundFailedTests = new TestNames();
+    private TestNames previousRoundFailedTests = new TestNames();
 
     private Object rootTestDescriptorId;
 
@@ -53,34 +50,35 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     @Override
     public void started(TestDescriptorInternal descriptor, TestStartEvent testStartEvent) {
-        testFrameworkStrategy.removeSyntheticFailures(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound, descriptor);
-
         if (rootTestDescriptorId == null) {
             rootTestDescriptorId = descriptor.getId();
             activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
-            if (!descriptor.isComposite()) {
-                activeDescriptorsById.put(descriptor.getId(), descriptor);
-            }
+            activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         }
     }
 
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
-        TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
-        if (descriptor != null && descriptor.getClassName() != null) {
-            TestName test = testFrameworkStrategy.getTestNameFrom(descriptor);
-            boolean failedInPreviousRound = failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.remove(test);
-            if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
-                failedTestsInCurrentRound.add(test);
+        if (testId.equals(rootTestDescriptorId)) {
+            if (!lastRun()) {
+                return;
+            }
+        } else {
+            TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
+            if (descriptor != null && descriptor.getClassName() != null) {
+                TestName testName = testFrameworkStrategy.getTestNameFrom(descriptor);
+
+                boolean failedInPreviousRound = previousRoundFailedTests.remove(testName.getClassName(), testName.getName());
+                if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
+                    currentRoundFailedTests.add(testName.getClassName(), testName.getName());
+                }
             }
         }
 
-        if (!testId.equals(rootTestDescriptorId) || lastRun()) {
-            delegate.completed(testId, testCompleteEvent);
-        }
+        delegate.completed(testId, testCompleteEvent);
     }
 
     @Override
@@ -92,49 +90,32 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            failedTestsInCurrentRound.add(testFrameworkStrategy.getTestNameFrom(descriptor));
+            TestName testName = testFrameworkStrategy.getTestNameFrom(descriptor);
+            currentRoundFailedTests.add(testName.getClassName(), testName.getName());
         }
+
         delegate.failure(testId, throwable);
     }
 
     private boolean lastRun() {
-        return failedTestsInCurrentRound.isEmpty() || lastRetry || (maxFailures > 0 && failedTestsInCurrentRound.size() >= maxFailures);
+        return currentRoundFailedTests.isEmpty()
+            || lastRetry
+            || (maxFailures > 0 && currentRoundFailedTests.size() >= maxFailures);
     }
 
     public RoundResult getResult() {
-        return new RoundResult(
-            copy(failedTestsInCurrentRound),
-            copy(failedTestsFromPreviousRoundNotYetExecutedInCurrentRound),
-            lastRun()
-        );
-    }
-
-    @NotNull
-    private Set<TestName> copy(Set<TestName> nonExecutedFailedTests) {
-        return nonExecutedFailedTests.isEmpty() ? Collections.emptySet() : new HashSet<>(nonExecutedFailedTests);
+        return new RoundResult(currentRoundFailedTests, previousRoundFailedTests, lastRun());
     }
 
     public void reset(boolean lastRetry) {
         if (lastRun()) {
             throw new IllegalStateException("processor has completed");
         }
-        failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.clear();
-        failedTestsFromPreviousRoundNotYetExecutedInCurrentRound.addAll(failedTestsInCurrentRound);
-        failedTestsInCurrentRound.clear();
-        activeDescriptorsById.clear();
+
         this.lastRetry = lastRetry;
+        this.previousRoundFailedTests = currentRoundFailedTests;
+        this.currentRoundFailedTests = new TestNames();
+        this.activeDescriptorsById.clear();
     }
 
-    static final class RoundResult {
-
-        final Set<TestName> failedTests;
-        final Set<TestName> nonRetriedTests;
-        final boolean lastRound;
-
-        public RoundResult(Set<TestName> failedTests, Set<TestName> nonRetriedTests, boolean lastRound) {
-            this.failedTests = failedTests;
-            this.nonRetriedTests = nonRetriedTests;
-            this.lastRound = lastRound;
-        }
-    }
 }
