@@ -55,6 +55,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
+            if (descriptor.getClassName() != null && descriptor.getClassName().equals(descriptor.getName())) {
+                previousRoundFailedTests.remove(descriptor.getClassName(), testFrameworkStrategy::isSyntheticFailure);
+            }
             activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         }

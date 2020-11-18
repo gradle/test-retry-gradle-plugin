@@ -17,7 +17,6 @@ package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
@@ -45,8 +44,8 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNgTestFrameworkStrategy.class);
 
     @Override
-    public void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor) {
-        nonExecutedFailedTests.remove(getTestNameFrom(descriptor.getClassName(), "lifecycle"));
+    public boolean isSyntheticFailure(String testName) {
+        return testName.equals("lifecycle");
     }
 
     @Override

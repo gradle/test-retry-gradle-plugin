@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 final class TestNames {
@@ -28,6 +29,16 @@ final class TestNames {
 
     void add(String className, String testName) {
         map.computeIfAbsent(className, ignored -> new HashSet<>()).add(testName);
+    }
+
+    void remove(String className, Predicate<? super String> predicate) {
+        Set<String> testNames = map.get(className);
+        if (testNames != null) {
+            testNames.removeIf(predicate);
+            if (testNames.isEmpty()) {
+                map.remove(className);
+            }
+        }
     }
 
     boolean remove(String className, String testName) {

@@ -16,7 +16,6 @@
 package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
-import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.testretry.internal.executer.TestName;
@@ -45,8 +44,8 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
     );
 
     @Override
-    public void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor) {
-        ERROR_SYNTHETIC_TEST_NAMES.forEach(testName -> nonExecutedFailedTests.remove(new TestName(descriptor.getClassName(), testName)));
+    public boolean isSyntheticFailure(String testName) {
+        return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
     }
 
     protected DefaultTestFilter createRetryFilter(TestsReader testsReader, Set<TestName> failedTests, boolean canRunParameterizedSpockMethods) {

@@ -45,7 +45,7 @@ public interface TestFrameworkStrategy {
         return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version(version)) >= 0;
     }
 
-    void removeSyntheticFailures(Set<TestName> nonExecutedFailedTests, TestDescriptorInternal descriptor);
+    boolean isSyntheticFailure(String testName);
 
     TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests);
 
