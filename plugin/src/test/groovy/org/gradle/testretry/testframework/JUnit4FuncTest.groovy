@@ -38,6 +38,14 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         "initializationError"
     }
 
+    protected String classRuleAfterErrorTestMethodName(String gradleVersion) {
+        "classMethod"
+    }
+
+    protected String classRuleBeforeErrorTestMethodName(String gradleVersion) {
+        "classMethod"
+    }
+
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -449,10 +457,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         if (failBefore) {
-            assert result.output.count('classMethod FAILED') == 1
+            assert result.output.count("${classRuleBeforeErrorTestMethodName(gradleVersion)} FAILED") == 1
             assert result.output.count("ruleTest PASSED") == 1
         } else {
-            assert result.output.count('classMethod FAILED') == 1
+            assert result.output.count("${classRuleAfterErrorTestMethodName(gradleVersion)} FAILED") == 1
             assert result.output.count("ruleTest PASSED") == 2
         }
 
