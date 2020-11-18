@@ -718,7 +718,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
             class Tests extends spock.lang.Specification {
 
-                @spock.lang.IgnoreIf({${markerFileExistsCheck()})
+                @spock.lang.IgnoreIf({${markerFileExistsCheck()}})
                 def "a"() {
                     expect:
                     ${flakyAssert()}
