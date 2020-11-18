@@ -346,4 +346,122 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Unroll
+    def "handles failure in rule before = #failBefore (gradle version #gradleVersion)"(String gradleVersion, boolean failBefore) {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+            import java.nio.file.*;
+
+            public class FlakyTests {
+
+                public static class FailingRule implements org.junit.rules.TestRule {
+                 
+                    @Override
+                    public org.junit.runners.model.Statement apply(org.junit.runners.model.Statement base, org.junit.runner.Description description) {
+                        return new org.junit.runners.model.Statement() {
+                            @Override
+                            public void evaluate() throws Throwable {
+                                ${failBefore ? flakyAssert() : ""}
+                                try {
+                                    base.evaluate();
+                                } finally {
+                                    ${!failBefore ? flakyAssert() : ""}
+                                }
+                            }
+                        };
+                    }
+                 
+                }
+
+                @org.junit.Rule
+                public FailingRule rule = new FailingRule();
+
+                @org.junit.Test
+                public void ruleTest() {
+
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        result.output.count('ruleTest FAILED') == 1
+        result.output.count("ruleTest PASSED") == 1
+
+        where:
+        [gradleVersion, failBefore] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            [true, false]
+        ])
+    }
+
+    @Unroll
+    def "handles failure in class rule before = #failBefore (gradle version #gradleVersion)"(String gradleVersion, boolean failBefore) {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeTestSource """
+            package acme;
+            import java.nio.file.*;
+
+            public class FlakyTests {
+
+                public static class FailingRule implements org.junit.rules.TestRule {
+                 
+                    @Override
+                    public org.junit.runners.model.Statement apply(org.junit.runners.model.Statement base, org.junit.runner.Description description) {
+                        return new org.junit.runners.model.Statement() {
+                            @Override
+                            public void evaluate() throws Throwable {
+                                ${failBefore ? flakyAssert() : ""}
+                                try {
+                                    base.evaluate();
+                                } finally {
+                                    ${!failBefore ? flakyAssert() : ""}
+                                }
+                            }
+                        };
+                    }
+                 
+                }
+
+                @org.junit.ClassRule
+                public static FailingRule rule = new FailingRule();
+
+                @org.junit.Test
+                public void ruleTest() {
+
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        if (failBefore) {
+            assert result.output.count('classMethod FAILED') == 1
+            assert result.output.count("ruleTest PASSED") == 1
+        } else {
+            assert result.output.count('classMethod FAILED') == 1
+            assert result.output.count("ruleTest PASSED") == 2
+        }
+
+        where:
+        [gradleVersion, failBefore] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            [true, false]
+        ])
+    }
+
+
 }
