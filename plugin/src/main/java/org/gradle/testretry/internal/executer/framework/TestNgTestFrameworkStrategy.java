@@ -45,7 +45,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
     public boolean isSyntheticFailure(String testName) {
-        return testName.equals("lifecycle");
+        return false;
     }
 
     @Override
@@ -53,8 +53,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
         retriesWithTestNGDependentsAdded(template.testsReader, failedTests)
             .forEach(failedTest -> {
-                if ("lifecycle".equals(failedTest.getName()) || failedTest.getName() == null) {
-                    // failures in TestNG lifecycle methods yield a failure on methods of these names
+                if (failedTest.getName() == null) {
                     retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                 } else {
                     retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());

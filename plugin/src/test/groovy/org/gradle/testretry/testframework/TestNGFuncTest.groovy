@@ -61,10 +61,12 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).build()
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
 
         then:
-        result.output.count('successTest PASSED') >= 1
+        result.output.count('lifecycle FAILED') >= 1
+        result.output.contains("org.gradle.test-retry was unable to retry")
+        result.output.contains("acme.SuccessfulTests#lifecycle")
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
