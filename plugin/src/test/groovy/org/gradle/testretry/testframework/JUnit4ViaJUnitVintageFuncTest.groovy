@@ -28,12 +28,12 @@ class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
     }
 
     @Override
-    protected String classRuleAfterErrorTestMethodName(String gradleVersion) {
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
         "executionError"
     }
 
     @Override
-    protected String classRuleBeforeErrorTestMethodName(String gradleVersion) {
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
         "initializationError"
     }
 

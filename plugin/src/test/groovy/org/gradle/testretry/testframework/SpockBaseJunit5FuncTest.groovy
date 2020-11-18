@@ -15,18 +15,25 @@
  */
 package org.gradle.testretry.testframework
 
-class Spock2FuncTest extends SpockBaseJunit5FuncTest {
+class SpockBaseJunit5FuncTest extends SpockFuncTest {
 
-    @Override
-    boolean canTargetInheritedMethods() {
-        // https://github.com/spockframework/spock/issues/1235
+    boolean isRerunsParameterizedMethods() {
         false
     }
 
     @Override
-    boolean nonParameterizedMethodsCanHaveCustomIterationNames() {
-        // // https://github.com/spockframework/spock/issues/1236
-        false
+    protected String staticInitErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
+    @Override
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        "initializationError"
+    }
+
+    @Override
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        "executionError"
     }
 
     @Override
