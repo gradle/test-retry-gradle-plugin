@@ -30,8 +30,16 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         return "@org.junit.jupiter.api.Test"
     }
 
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
+    }
+
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
     @Unroll
-    def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"() {
+    def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
         given:
         buildFile << """
             test.retry.maxRetries = 2
@@ -58,8 +66,8 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         if (exhaust) {
             if (lifecycle == "BeforeAll") {
-                assert result.output.count('initializationError FAILED') == 3
-                assert result.output.count('initializationError PASSED') == 0
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 0
                 assert result.output.count('successTest() FAILED') == 0
                 assert result.output.count('successTest() PASSED') == 0
             } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
@@ -68,15 +76,15 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
                 assert result.output.count('successTest() FAILED') == 3
                 assert result.output.count('successTest() PASSED') == 0
             } else if (lifecycle == "AfterAll") {
-                assert result.output.count('executionError FAILED') == 3
-                assert result.output.count('executionError PASSED') == 0
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 0
                 assert result.output.count('successTest() FAILED') == 0
                 assert result.output.count('successTest() PASSED') == 3
             }
         } else {
             if (lifecycle == "BeforeAll") {
-                assert result.output.count('initializationError FAILED') == 2
-                assert result.output.count('initializationError PASSED') == 1
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
                 assert result.output.count('successTest() FAILED') == 0
                 assert result.output.count('successTest() PASSED') == 1
             } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
@@ -85,8 +93,8 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
                 assert result.output.count('successTest() FAILED') == 2
                 assert result.output.count('successTest() PASSED') == 1
             } else if (lifecycle == "AfterAll") {
-                assert result.output.count('executionError FAILED') == 2
-                assert result.output.count('executionError PASSED') == 1
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
                 assert result.output.count('successTest() FAILED') == 0
                 assert result.output.count('successTest() PASSED') == 3
             }

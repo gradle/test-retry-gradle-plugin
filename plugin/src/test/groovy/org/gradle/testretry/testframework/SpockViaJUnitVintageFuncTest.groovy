@@ -18,6 +18,16 @@ package org.gradle.testretry.testframework
 class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
+    @Override
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
+    }
+
+    @Override
     protected String buildConfiguration() {
         return """
             dependencies {

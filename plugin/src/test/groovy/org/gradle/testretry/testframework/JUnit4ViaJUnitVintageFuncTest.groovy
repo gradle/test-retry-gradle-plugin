@@ -29,12 +29,12 @@ class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
 
     @Override
     protected String afterClassErrorTestMethodName(String gradleVersion) {
-        "executionError"
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
     }
 
     @Override
     protected String beforeClassErrorTestMethodName(String gradleVersion) {
-        "initializationError"
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
     }
 
     protected String buildConfiguration() {
