@@ -15,7 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
-class SpockBaseJunit5FuncTest extends SpockFuncTest {
+abstract class SpockBaseJunit5FuncTest extends SpockFuncTest {
 
     boolean isRerunsParameterizedMethods() {
         false
