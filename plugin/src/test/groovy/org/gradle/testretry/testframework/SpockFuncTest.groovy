@@ -686,7 +686,9 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
 
             dependencies {
-                implementation "org.codehaus.groovy:groovy-all:2.5.8"
+                implementation "org.codehaus.groovy:groovy-all:2.5.8", {
+                    exclude group: "org.junit.jupiter"
+                }
                 implementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
