@@ -15,31 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
-import org.gradle.util.GradleVersion
-
 class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
 
     boolean isRerunsParameterizedMethods() {
         false
-    }
-
-    private static boolean isGradle57OrLater(String gradleVersion) {
-        GradleVersion.version(gradleVersion) >= GradleVersion.version("5.7")
-    }
-
-    @Override
-    boolean canRetryUnrolledTestWithContextSuffix(String gradleVersion) {
-        isGradle57OrLater(gradleVersion)
-    }
-
-    @Override
-    boolean canRetryInheritedFromBinaryParameterizedTest(String gradleVersion) {
-        isGradle57OrLater(gradleVersion)
-    }
-
-    @Override
-    boolean canRetryInheritedTestWithContextSuffix(String gradleVersion) {
-        isGradle57OrLater(gradleVersion)
     }
 
     @Override
