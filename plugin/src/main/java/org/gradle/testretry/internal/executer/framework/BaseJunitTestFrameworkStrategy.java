@@ -61,7 +61,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                     retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
                     retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
                 } else {
-                    retriedTestFilter.includeTest(failedTest.getClassName(), null);
+                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
                 }
             });
         return retriedTestFilter;
