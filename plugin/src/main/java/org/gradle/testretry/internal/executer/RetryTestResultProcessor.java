@@ -95,7 +95,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private void emitFakePassedEvent(TestDescriptorInternal parent, TestCompleteEvent parentEvent, String name) {
         Object syntheticTestId = new Object();
-        TestDescriptorInternal syntheticDescriptor = new TestDescriptorImpl(syntheticTestId, parent.getOwnerBuildOperationId(), parent.getClassName(), name);
+        TestDescriptorInternal syntheticDescriptor = new TestDescriptorImpl(syntheticTestId, parent, name);
         long timestamp = parentEvent.getEndTime();
         delegate.started(syntheticDescriptor, new TestStartEvent(timestamp, parent.getId()));
         delegate.completed(syntheticTestId, new TestCompleteEvent(timestamp));

@@ -22,14 +22,12 @@ import javax.annotation.Nullable;
 final class TestDescriptorImpl implements TestDescriptorInternal {
 
     private final Object syntheticTestId;
-    private final Object ownerBuildOperationId;
-    private final String className;
+    private final TestDescriptorInternal parent;
     private final String testName;
 
-    public TestDescriptorImpl(Object testId, Object ownerBuildOperationId, String className, String testName) {
+    public TestDescriptorImpl(Object testId, TestDescriptorInternal parent, String testName) {
         this.syntheticTestId = testId;
-        this.ownerBuildOperationId = ownerBuildOperationId;
-        this.className = className;
+        this.parent = parent;
         this.testName = testName;
     }
 
@@ -46,18 +44,18 @@ final class TestDescriptorImpl implements TestDescriptorInternal {
     @Nullable
     @Override
     public Object getOwnerBuildOperationId() {
-        return ownerBuildOperationId;
+        return parent.getOwnerBuildOperationId();
     }
 
     @Nullable
     @Override
     public String getClassName() {
-        return className;
+        return parent.getClassName();
     }
 
     @Override
     public String getClassDisplayName() {
-        return className;
+        return parent.getClassDisplayName();
     }
 
     @Override
