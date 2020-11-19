@@ -39,6 +39,18 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         true
     }
 
+    boolean canRetryUnrolledTestWithContextSuffix(String gradleVersion) {
+        true
+    }
+
+    boolean canRetryInheritedFromBinaryParameterizedTest(String gradleVersion) {
+        true
+    }
+
+    boolean canRetryInheritedTestWithContextSuffix(String gradleVersion) {
+        true
+    }
+
     boolean nonParameterizedMethodsCanHaveCustomIterationNames() {
         true
     }
@@ -391,6 +403,8 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     def "handles unrolled tests with additional test context method suffix (gradle version #gradleVersion)"() {
         given:
         Assume.assumeTrue(nonParameterizedMethodsCanHaveCustomIterationNames())
+        Assume.assumeTrue(canRetryUnrolledTestWithContextSuffix(gradleVersion))
+
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -441,6 +455,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
         Assume.assumeTrue(canTargetInheritedMethods())
+        Assume.assumeTrue(canRetryInheritedTestWithContextSuffix(gradleVersion))
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -643,6 +658,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
         given:
         Assume.assumeTrue(canTargetInheritedMethods())
+        Assume.assumeTrue(canRetryInheritedFromBinaryParameterizedTest(gradleVersion))
         settingsFile << """
             include 'dep'
         """
