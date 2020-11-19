@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
+
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import org.junit.Assume
 import spock.lang.Issue
@@ -43,8 +44,16 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         true
     }
 
-    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+    protected String staticInitErrorTestMethodName(String gradleVersion) {
         "initializationError"
+    }
+
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        "classMethod"
+    }
+
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        "classMethod"
     }
 
     @Unroll
@@ -75,7 +84,18 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         then:
         // will be >1 in the cleanupSpec case, because the test has already reported success
         // before cleanup happens
-        result.output.count('successTest PASSED') >= 1
+        if (lifecycle == "setupSpec") {
+            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            assert result.output.count('successTest PASSED') == 1
+        } else if (lifecycle == "cleanupSpec") {
+            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            assert result.output.count('successTest PASSED') == 2
+        } else {
+            assert result.output.count('successTest FAILED') == 1
+            assert result.output.count('successTest PASSED') == 1
+        }
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
@@ -85,10 +105,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     }
 
     @Unroll
-    def "handles flaky static initializers (gradle version #gradleVersion)"() {
+    def "handles flaky static initializers exhaustive = #exhaust (gradle version #gradleVersion)"(String gradleVersion, boolean exhaust) {
         given:
         buildFile << """
-            test.retry.maxRetries = 1
+            test.retry.maxRetries = 2
         """
 
         writeTestSource """
@@ -96,7 +116,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
             class SomeSpec extends spock.lang.Specification {
                 static {
-                    ${flakyAssert()}
+                    ${flakyAssert("id", exhaust ? 3 : 2)}
                 }
 
                 def someTest() {
@@ -107,15 +127,25 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).build()
+        def runner = gradleRunner(gradleVersion as String)
+        def result = exhaust ? runner.buildAndFail() : runner.build()
 
         then:
-        result.output.count("SomeSpec > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
-        result.output.count('SomeSpec > someTest PASSED') == 1
-        result.output.count('2 tests completed, 1 failed') == 1
+        result.output.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+        result.output.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+        result.output.count('SomeSpec > someTest PASSED') == (exhaust ? 0 : 1)
+        if (exhaust) {
+            assert result.output.count('3 tests completed, 3 failed') == 1
+        } else {
+            assert result.output.count('4 tests completed, 2 failed') == 1
+        }
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        [gradleVersion, exhaust] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            [true, false]
+        ])
+
     }
 
 

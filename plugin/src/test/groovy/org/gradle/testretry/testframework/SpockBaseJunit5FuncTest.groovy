@@ -15,40 +15,37 @@
  */
 package org.gradle.testretry.testframework
 
-class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
+abstract class SpockBaseJunit5FuncTest extends SpockFuncTest {
 
-    @Override
-    protected isRerunsAllParameterizedIterations() {
-        true
+    boolean isRerunsParameterizedMethods() {
+        false
     }
 
     @Override
-    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+    protected String staticInitErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "initializationError"
-    }
-
-    @Override
-    protected String afterClassErrorTestMethodName(String gradleVersion) {
-        gradleVersion == "5.0" ? "classMethod" : "executionError"
     }
 
     @Override
     protected String beforeClassErrorTestMethodName(String gradleVersion) {
-        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+        "initializationError"
     }
 
+    @Override
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        "executionError"
+    }
+
+    @Override
     protected String buildConfiguration() {
-        return '''
-            dependencies { 
-                testImplementation "junit:junit:4.12" 
-                testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
-                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
+        return """
+            dependencies {
+                implementation 'org.spockframework:spock-core:2.0-M2-groovy-3.0'
             }
-            
             test {
                 useJUnitPlatform()
             }
-        '''
+        """
     }
 
 }

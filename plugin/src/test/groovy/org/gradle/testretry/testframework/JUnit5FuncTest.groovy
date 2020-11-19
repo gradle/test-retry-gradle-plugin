@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
+
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Unroll
 
@@ -29,11 +30,19 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         return "@org.junit.jupiter.api.Test"
     }
 
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
+    }
+
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
     @Unroll
-    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+    def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
         given:
         buildFile << """
-            test.retry.maxRetries = 1
+            test.retry.maxRetries = 2
         """
 
         writeTestSource """
@@ -42,7 +51,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             class SuccessfulTests {
                 @org.junit.jupiter.api.${lifecycle}
                 ${lifecycle.contains('All') ? 'static ' : ''}void lifecycle() {
-                    ${flakyAssert()}
+                    ${flakyAssert("id", exhaust ? 3 : 2)}
                 }
 
                 @org.junit.jupiter.api.Test
@@ -51,15 +60,51 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).build()
+        def runner = gradleRunner(gradleVersion as String)
+        def result = exhaust ? runner.buildAndFail() : runner.build()
 
         then:
-        result.output.count('successTest() PASSED') >= 1
+        if (exhaust) {
+            if (lifecycle == "BeforeAll") {
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 0
+                assert result.output.count('successTest() FAILED') == 0
+                assert result.output.count('successTest() PASSED') == 0
+            } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
+                assert result.output.count('initializationError FAILED') == 0
+                assert result.output.count('initializationError PASSED') == 0
+                assert result.output.count('successTest() FAILED') == 3
+                assert result.output.count('successTest() PASSED') == 0
+            } else if (lifecycle == "AfterAll") {
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 0
+                assert result.output.count('successTest() FAILED') == 0
+                assert result.output.count('successTest() PASSED') == 3
+            }
+        } else {
+            if (lifecycle == "BeforeAll") {
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                assert result.output.count('successTest() FAILED') == 0
+                assert result.output.count('successTest() PASSED') == 1
+            } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
+                assert result.output.count('initializationError FAILED') == 0
+                assert result.output.count('initializationError PASSED') == 0
+                assert result.output.count('successTest() FAILED') == 2
+                assert result.output.count('successTest() PASSED') == 1
+            } else if (lifecycle == "AfterAll") {
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                assert result.output.count('successTest() FAILED') == 0
+                assert result.output.count('successTest() PASSED') == 3
+            }
+        }
 
         where:
-        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+        [gradleVersion, lifecycle, exhaust] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeAll', 'BeforeEach', 'AfterAll', 'AfterEach']
+            ['BeforeAll', 'BeforeEach', 'AfterAll', 'AfterEach'],
+            [true, false]
         ])
     }
 

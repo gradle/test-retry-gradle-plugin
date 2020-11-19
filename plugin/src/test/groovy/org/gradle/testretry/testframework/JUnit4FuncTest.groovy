@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
+
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
 import spock.lang.Unroll
@@ -38,19 +39,19 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         "initializationError"
     }
 
-    protected String classRuleAfterErrorTestMethodName(String gradleVersion) {
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
         "classMethod"
     }
 
-    protected String classRuleBeforeErrorTestMethodName(String gradleVersion) {
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
         "classMethod"
     }
 
     @Unroll
-    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+    def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
         given:
         buildFile << """
-            test.retry.maxRetries = 1
+            test.retry.maxRetries = 2
         """
 
         writeTestSource """
@@ -59,7 +60,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             public class SuccessfulTests {
                 @org.junit.${lifecycle}
                 public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
-                    ${flakyAssert()}
+                    ${flakyAssert("id", exhaust ? 3 : 2)}
                 }
 
                 @org.junit.Test
@@ -68,15 +69,28 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).build()
+        def runner = gradleRunner(gradleVersion as String)
+        def result = exhaust ? runner.buildAndFail() : runner.build()
 
         then:
-        result.output.count('successTest PASSED') >= 1
+        if (lifecycle == "BeforeClass") {
+            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+            assert result.output.count('successTest PASSED') == (exhaust ? 0 : 1)
+            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+        } else if (lifecycle == "AfterClass") {
+            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+            assert result.output.count('successTest PASSED') == 3
+            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+        } else {
+            assert result.output.count('successTest FAILED') == (exhaust ? 3 : 2)
+            assert result.output.count('successTest PASSED') == (exhaust ? 0 : 1)
+        }
 
         where:
-        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+        [gradleVersion, lifecycle, exhaust] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeClass', 'Before', 'AfterClass', 'After']
+            ['BeforeClass', 'Before', 'AfterClass', 'After'],
+            [true, false]
         ])
     }
 
@@ -457,10 +471,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         if (failBefore) {
-            assert result.output.count("${classRuleBeforeErrorTestMethodName(gradleVersion)} FAILED") == 1
+            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
             assert result.output.count("ruleTest PASSED") == 1
         } else {
-            assert result.output.count("${classRuleAfterErrorTestMethodName(gradleVersion)} FAILED") == 1
+            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
             assert result.output.count("ruleTest PASSED") == 2
         }
 

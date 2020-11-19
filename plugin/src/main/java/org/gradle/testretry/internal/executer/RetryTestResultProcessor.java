@@ -55,9 +55,6 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
-            if (descriptor.getClassName() != null && descriptor.getClassName().equals(descriptor.getName())) {
-                previousRoundFailedTests.remove(descriptor.getClassName(), testFrameworkStrategy::isSyntheticFailure);
-            }
             activeDescriptorsById.put(descriptor.getId(), descriptor);
             delegate.started(descriptor, testStartEvent);
         }
@@ -78,10 +75,34 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
                     currentRoundFailedTests.add(testName.getClassName(), testName.getName());
                 }
+
+                if (isClassDescriptor(descriptor)) {
+                    previousRoundFailedTests.remove(descriptor.getClassName(), name -> {
+                        if (testFrameworkStrategy.isSyntheticFailure(name)) {
+                            emitFakePassedEvent(descriptor, testCompleteEvent, name);
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    });
+                }
+
             }
         }
 
         delegate.completed(testId, testCompleteEvent);
+    }
+
+    private void emitFakePassedEvent(TestDescriptorInternal parent, TestCompleteEvent parentEvent, String name) {
+        Object syntheticTestId = new Object();
+        TestDescriptorInternal syntheticDescriptor = new TestDescriptorImpl(syntheticTestId, parent, name);
+        long timestamp = parentEvent.getEndTime();
+        delegate.started(syntheticDescriptor, new TestStartEvent(timestamp, parent.getId()));
+        delegate.completed(syntheticTestId, new TestCompleteEvent(timestamp));
+    }
+
+    private boolean isClassDescriptor(TestDescriptorInternal descriptor) {
+        return descriptor.getClassName() != null && descriptor.getClassName().equals(descriptor.getName());
     }
 
     @Override

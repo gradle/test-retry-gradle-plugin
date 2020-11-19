@@ -15,15 +15,16 @@
  */
 package org.gradle.testretry.testframework
 
-class SpockViaJUnitVintageFuncTest extends SpockFuncTest {
+class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
 
-    boolean isRerunsParameterizedMethods() {
-        false
+    @Override
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "initializationError"
     }
 
     @Override
-    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
-        gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
     }
 
     @Override

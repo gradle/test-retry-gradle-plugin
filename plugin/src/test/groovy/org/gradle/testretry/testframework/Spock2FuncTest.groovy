@@ -15,11 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
-class Spock2FuncTest extends SpockFuncTest {
-
-    boolean isRerunsParameterizedMethods() {
-        false
-    }
+class Spock2FuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
     boolean canTargetInheritedMethods() {
@@ -34,8 +30,13 @@ class Spock2FuncTest extends SpockFuncTest {
     }
 
     @Override
-    protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
+    @Override
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        gradleVersion == "5.0" ? "classMethod" : "executionError"
     }
 
     @Override
