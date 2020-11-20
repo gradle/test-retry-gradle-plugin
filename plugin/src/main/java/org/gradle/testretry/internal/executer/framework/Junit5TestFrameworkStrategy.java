@@ -18,16 +18,17 @@ package org.gradle.testretry.internal.executer.framework;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
+import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
-import org.gradle.testretry.internal.executer.TestName;
-
-import java.util.Set;
+import org.gradle.testretry.internal.executer.TestNames;
 
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests) {
-        JUnitPlatformTestFramework newFramework = new JUnitPlatformTestFramework(createRetryFilter(template.testsReader, failedTests, false));
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
+        TestFilterBuilder filters = template.filterBuilder();
+        addFilters(filters, template.testsReader, failedTests, false);
+        JUnitPlatformTestFramework newFramework = new JUnitPlatformTestFramework(filters.build());
         copyTestOptions((JUnitPlatformOptions) template.task.getTestFramework().getOptions(), newFramework.getOptions());
         return newFramework;
     }

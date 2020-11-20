@@ -19,19 +19,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-final class TestNames {
+public final class TestNames {
 
     private final Map<String, Set<String>> map = new HashMap<>();
 
-    void add(String className, String testName) {
+    public void add(String className, String testName) {
         map.computeIfAbsent(className, ignored -> new HashSet<>()).add(testName);
     }
 
-    void remove(String className, Predicate<? super String> predicate) {
+    public void remove(String className, Predicate<? super String> predicate) {
         Set<String> testNames = map.get(className);
         if (testNames != null) {
             testNames.removeIf(predicate);
@@ -41,7 +40,7 @@ final class TestNames {
         }
     }
 
-    boolean remove(String className, String testName) {
+    public boolean remove(String className, String testName) {
         Set<String> testNames = map.get(className);
         if (testNames == null) {
             return false;
@@ -57,27 +56,15 @@ final class TestNames {
         }
     }
 
-    Stream<TestName> stream() {
-        return map.entrySet()
-            .stream()
-            .flatMap(entry ->
-                entry.getValue()
-                    .stream()
-                    .map(testName -> new TestName(entry.getKey(), testName))
-            );
+    public Stream<Map.Entry<String, Set<String>>> stream() {
+        return map.entrySet().stream();
     }
 
-    Set<TestName> toSet() {
-        Set<TestName> set = new TreeSet<>();
-        stream().forEach(set::add);
-        return set;
-    }
-
-    boolean isEmpty() {
+    public boolean isEmpty() {
         return map.isEmpty();
     }
 
     public int size() {
-        return (int) stream().count();
+        return stream().mapToInt(s -> s.getValue().size()).sum();
     }
 }

@@ -32,4 +32,8 @@ public class TestFrameworkTemplate {
         this.objectFactory = objectFactory;
         this.testsReader = new TestsReader(task.getTestClassesDirs().getFiles(), task.getClasspath());
     }
+
+    public TestFilterBuilder filterBuilder() {
+        return new TestFilterBuilder();
+    }
 }

@@ -24,20 +24,17 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
+import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
-import org.gradle.testretry.internal.executer.TestName;
+import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.executer.TestsReader;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
@@ -49,27 +46,12 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests) {
-        DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-
-        retriesWithTestNGDependentsAdded(template.testsReader, failedTests)
-            .forEach(failedTest -> {
-                if (failedTest.getName() == null) {
-                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else {
-                    retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
-                }
-            });
-
-        TestNGTestFramework testFramework = createTestFramework(template, retriedTestFilter);
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
+        TestFilterBuilder testFilterBuilder = template.filterBuilder();
+        addFilters(template.testsReader, failedTests, testFilterBuilder);
+        TestNGTestFramework testFramework = createTestFramework(template, testFilterBuilder.build());
         copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
-    }
-
-    @NotNull
-    private static String stripParameters(String testMethodName) {
-        // strip parameter segment
-        return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
 
     private TestNGTestFramework createTestFramework(TestFrameworkTemplate template, DefaultTestFilter retriedTestFilter) {
@@ -107,25 +89,34 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         target.setSuiteXmlWriter(source.getSuiteXmlWriter());
     }
 
-    private  List<TestName> retriesWithTestNGDependentsAdded(TestsReader testsReader, Set<TestName> failedTests) {
-        return failedTests.stream()
-            .map(name -> new TestName(name.getClassName(), stripParameters(name.getName())))
-            .flatMap(failedTest -> {
+    private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
+        failedTests.stream().forEach(entry -> {
+            String className = entry.getKey();
+            Set<String> tests = entry.getValue();
+
+            tests.forEach(test -> {
+                Optional<TestNgClassVisitor> classVisitor;
                 try {
-                    Optional<TestNgClassVisitor> opt = testsReader.readTestClassDirClass(failedTest.getClassName(), TestNgClassVisitor::new);
-                    return opt
-                        .map(visitor ->
-                            visitor.dependsOn(failedTest.getName())
-                                .stream()
-                                .map(method -> new TestName(failedTest.getClassName(), method))
-                        )
-                        .orElse(Stream.of(failedTest));
+                    classVisitor = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
                 } catch (Throwable t) {
-                    LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " has TestNG dependent tests", t);
-                    return Stream.of(failedTest);
+                    LOGGER.warn("Unable to determine if class " + className + " has TestNG dependent tests", t);
+                    classVisitor = Optional.empty();
                 }
-            })
-            .collect(Collectors.toList());
+
+                String parameterlessName = stripParameters(test);
+                filters.test(className, parameterlessName);
+
+                classVisitor
+                    .ifPresent(visitor ->
+                        visitor.dependsOn(parameterlessName)
+                            .forEach(methodName -> filters.test(className, methodName))
+                    );
+            });
+        });
+    }
+
+    private static String stripParameters(String testMethodName) {
+        return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
 
 }

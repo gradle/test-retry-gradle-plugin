@@ -88,7 +88,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             } else if (result.lastRound) {
                 break;
             } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests.toSet());
+                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, result.failedTests);
                 testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
@@ -99,7 +99,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         if (extension.getSimulateNotRetryableTest() || (lastResult != null && !lastResult.nonRetriedTests.isEmpty())) {
             throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
                 lastResult.nonRetriedTests.stream()
-                    .map(retry -> "   " + retry.getClassName() + "#" + retry.getName())
+                    .flatMap(entry -> entry.getValue().stream().map(methodName -> "   " + entry.getKey() + "#" + methodName))
                     .collect(Collectors.joining("\n", "\n", "\n")));
         }
     }

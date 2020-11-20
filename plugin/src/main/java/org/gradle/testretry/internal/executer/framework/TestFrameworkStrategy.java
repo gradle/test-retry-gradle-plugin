@@ -20,10 +20,8 @@ import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
-import org.gradle.testretry.internal.executer.TestName;
+import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.util.GradleVersion;
-
-import java.util.Set;
 
 public interface TestFrameworkStrategy {
 
@@ -45,6 +43,6 @@ public interface TestFrameworkStrategy {
 
     boolean isSyntheticFailure(String testName);
 
-    TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests);
+    TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests);
 
 }

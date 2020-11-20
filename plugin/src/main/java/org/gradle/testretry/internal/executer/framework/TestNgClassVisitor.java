@@ -50,7 +50,6 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
 
     Set<String> dependsOn(String method) {
         Set<String> dependentChain = new HashSet<>();
-        dependentChain.add(method);
 
         List<String> search = Collections.singletonList(method);
         while (!search.isEmpty()) {

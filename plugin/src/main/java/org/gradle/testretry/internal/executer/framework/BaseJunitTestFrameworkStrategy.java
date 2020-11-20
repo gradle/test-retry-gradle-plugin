@@ -15,21 +15,19 @@
  */
 package org.gradle.testretry.internal.executer.framework;
 
-import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
-import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
-import org.gradle.testretry.internal.executer.TestName;
+import org.gradle.testretry.internal.executer.TestFilterBuilder;
+import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.executer.TestsReader;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
@@ -47,71 +45,80 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
     }
 
-    protected DefaultTestFilter createRetryFilter(TestsReader testsReader, Set<TestName> failedTests, boolean canRunParameterizedSpockMethods) {
-        DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
-        transformSpockTests(testsReader, failedTests, canRunParameterizedSpockMethods)
-            .forEach(failedTest -> {
-                if (ERROR_SYNTHETIC_TEST_NAMES.contains(failedTest.getName())) {
-                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else if (isSpockStepwiseTest(testsReader, failedTest)) {
-                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
-                } else if (failedTest.getName() != null) {
-                    String strippedParameterName = failedTest.getName().replaceAll("(?:\\([^)]*?\\)|\\[[^]]*?])*$", "");
-                    retriedTestFilter.includeTest(failedTest.getClassName(), strippedParameterName);
-                    retriedTestFilter.includeTest(failedTest.getClassName(), failedTest.getName());
-                } else {
-                    retriedTestFilter.includeTestsMatching(failedTest.getClassName());
+    protected void addFilters(TestFilterBuilder filters, TestsReader testsReader, TestNames failedTests, boolean canRunParameterizedSpockMethods) {
+        failedTests.stream()
+            .forEach(entry -> {
+                String className = entry.getKey();
+                Set<String> tests = entry.getValue();
+
+                if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
+                    filters.clazz(className);
+                    return;
                 }
+
+                if (processSpockTest(filters, testsReader, canRunParameterizedSpockMethods, className, tests)) {
+                    return;
+                }
+
+                tests.forEach(name -> addPotentiallyParameterizedSuffixed(filters, className, name));
             });
-        return retriedTestFilter;
     }
 
-    private static Stream<TestName> transformSpockTests(TestsReader testsReader, Set<TestName> failedTests, boolean canRunParameterizedMethods) {
-        return failedTests.stream()
-            .flatMap(failedTest -> transformSpockTests(testsReader, failedTest, canRunParameterizedMethods));
-    }
+    private boolean processSpockTest(TestFilterBuilder filters, TestsReader testsReader, boolean canRunParameterizedSpockMethods, String className, Set<String> tests) {
+        if (isSpockStepwiseTest(testsReader, className)) {
+            filters.clazz(className);
+            return true;
+        }
 
-    private static Stream<TestName> transformSpockTests(TestsReader testsReader, TestName failedTest, boolean canRunParameterizedMethods) {
         try {
-            Optional<SpockParameterClassVisitor.Result> resultOpt = testsReader.readTestClassDirClass(failedTest.getClassName(), () -> new SpockParameterClassVisitor(failedTest.getName(), testsReader));
+            Optional<Map<String, List<String>>> resultOpt = testsReader.readTestClassDirClass(className, () -> new SpockParameterClassVisitor(tests, testsReader));
             if (resultOpt.isPresent()) {
-                SpockParameterClassVisitor.Result result = resultOpt.get();
-                Set<String> matchedMethodNames = result.getMatchedMethodNames();
-                if (matchedMethodNames.isEmpty()) {
-                    return Stream.of(failedTest);
+                Map<String, List<String>> result = resultOpt.get();
+                if (result.isEmpty()) {
+                    return false; // not a spec
                 }
 
-                if (!result.isFoundLiteralMethodName() && !canRunParameterizedMethods) {
-                    return Stream.of(new TestName(failedTest.getClassName(), null));
+                if (canRunParameterizedSpockMethods) {
+                    result.forEach((test, matches) -> {
+                        if (matches.isEmpty()) {
+                            addPotentiallyParameterizedSuffixed(filters, className, test);
+                        } else {
+                            matches.forEach(match -> filters.test(className, match));
+                        }
+                    });
                 } else {
-                    return matchedMethodNames.stream().map(name -> new TestName(failedTest.getClassName(), name));
+                    boolean allLiteralMethodMatches = result.entrySet()
+                        .stream()
+                        .allMatch(e2 -> e2.getValue().size() == 1 && e2.getValue().get(0).equals(e2.getKey()));
+
+                    if (allLiteralMethodMatches) {
+                        tests.forEach(test -> filters.test(className, test));
+                    } else {
+                        filters.clazz(className);
+                    }
                 }
+
+                return true;
             }
         } catch (Throwable t) {
-            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " contains Spock @Unroll parameterizations", t);
+            LOGGER.warn("Unable to determine if class " + className + " contains Spock @Unroll parameterizations", t);
         }
-
-        return Stream.of(failedTest);
+        return false;
     }
 
-    @NotNull
-    private static Optional<File> classFile(JvmTestExecutionSpec spec, TestName failedTest) {
-        return spec.getTestClassesDirs().getFiles().stream()
-            .map(dir -> new File(dir, failedTest.getClassName().replace('.', '/') + ".class"))
-            .filter(File::exists)
-            .findFirst();
+    private void addPotentiallyParameterizedSuffixed(TestFilterBuilder filters, String className, String name) {
+        // It's a common pattern to add all the parameters on the end of a literal method name with []
+        String strippedParameterName = name.replaceAll("(?:\\([^)]*?\\)|\\[[^]]*?])*$", "");
+        filters.test(className, strippedParameterName);
+        filters.test(className, name);
     }
 
-    private static boolean isSpockStepwiseTest(TestsReader testsReader, TestName failedTest) {
-        if (failedTest.getClassName() == null) {
-            return false;
-        }
-
+    private static boolean isSpockStepwiseTest(TestsReader testsReader, String className) {
         try {
-            return testsReader.readTestClassDirClass(failedTest.getClassName(), SpockStepwiseClassVisitor::new)
+            return testsReader.readTestClassDirClass(className, SpockStepwiseClassVisitor::new)
                 .orElse(false);
         } catch (Throwable t) {
-            LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " is a Spock @Stepwise test", t);
+            LOGGER.warn("Unable to determine if class " + className + " is a Spock @Stepwise test", t);
             return false;
         }
     }
