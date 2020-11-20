@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.executer;
+package org.gradle.testretry.internal.testsreader;
 
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.ClassReader;

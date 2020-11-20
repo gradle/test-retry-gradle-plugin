@@ -15,7 +15,9 @@
  */
 package org.gradle.testretry;
 
+import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.testing.Test;
 
 /**
@@ -66,5 +68,55 @@ public interface TestRetryTaskExtension {
      * @return the maximum number of test failures that are allowed before retrying is disabled
      */
     Property<Integer> getMaxFailures();
+
+    /**
+     * Filtering for which tests may be retried.
+     */
+    Filters getFilters();
+
+    /**
+     * Filtering for which tests may be retried.
+     */
+    void filters(Action<? super Filters> action);
+
+    interface Filters {
+
+        /**
+         * A set of full class name patterns of classes to include.
+         *
+         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         *
+         * '*' can be used to match zero or more characters in a class name.
+         */
+        SetProperty<String> getIncludeClasses();
+
+        /**
+         * A set of full annotation class name patterns to use to include a class for retry if annotated with an annotation matching the pattern.
+         *
+         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         *
+         * '*' can be used to match zero or more characters in a class name.
+         */
+        SetProperty<String> getIncludeAnnotationClasses();
+
+        /**
+         * A set of full class name patterns of classes to exclude.
+         *
+         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         *
+         * '*' can be used to match zero or more characters in a class name.
+         */
+        SetProperty<String> getExcludeClasses();
+
+        /**
+         * A set of full annotation class name patterns to use to exclude a class for retry if annotated with an annotation matching the pattern.
+         *
+         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         *
+         * '*' can be used to match zero or more characters in a class name.
+         */
+        SetProperty<String> getExcludeAnnotationClasses();
+
+    }
 
 }

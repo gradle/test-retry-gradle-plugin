@@ -40,12 +40,7 @@ public final class TestTaskConfigurer {
     public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
         VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
 
-        TestRetryTaskExtension extension;
-        if (supportsGeneratedAbstractTypeImplementations(gradleVersion)) {
-            extension = objectFactory.newInstance(TestRetryTaskExtension.class);
-        } else {
-            extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
-        }
+        TestRetryTaskExtension extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
 
         TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, supportsPropertyConventions(gradleVersion));
 
@@ -68,10 +63,6 @@ public final class TestTaskConfigurer {
 
     private static void setTestExecuter(Test task, RetryTestExecuter retryTestExecuter) {
         invoke(declaredMethod(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
-    }
-
-    private static boolean supportsGeneratedAbstractTypeImplementations(VersionNumber gradleVersion) {
-        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 3 : gradleVersion.getMajor() > 5;
     }
 
     private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {

@@ -18,9 +18,11 @@ package org.gradle.testretry.internal.config;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.testretry.TestRetryTaskExtension;
-import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public final class TestRetryTaskExtensionAdapter {
@@ -57,6 +59,10 @@ public final class TestRetryTaskExtensionAdapter {
         extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
         extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
         extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+        extension.getFilters().getIncludeClasses().convention(Collections.emptySet());
+        extension.getFilters().getIncludeAnnotationClasses().convention(Collections.emptySet());
+        extension.getFilters().getExcludeClasses().convention(Collections.emptySet());
+        extension.getFilters().getExcludeAnnotationClasses().convention(Collections.emptySet());
     }
 
     Callable<Provider<Boolean>> getFailOnPassedAfterRetryInput() {
@@ -85,12 +91,32 @@ public final class TestRetryTaskExtensionAdapter {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
     }
 
+    public Set<String> getIncludeClasses() {
+        return read(extension.getFilters().getIncludeClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getIncludeAnnotationClasses() {
+        return read(extension.getFilters().getIncludeAnnotationClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getExcludeClasses() {
+        return read(extension.getFilters().getExcludeClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getExcludeAnnotationClasses() {
+        return read(extension.getFilters().getExcludeAnnotationClasses(), Collections.emptySet());
+    }
+
     public boolean getSimulateNotRetryableTest() {
         return simulateNotRetryableTest;
     }
 
-    @NotNull
     private <T> T read(Property<T> property, T defaultValue) {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
     }
+
+    private <T> Set<T> read(SetProperty<T> property, Set<T> defaultValue) {
+        return useConventions ? property.get() : property.getOrElse(defaultValue);
+    }
+
 }

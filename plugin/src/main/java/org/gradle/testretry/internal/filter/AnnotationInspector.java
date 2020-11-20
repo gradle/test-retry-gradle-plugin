@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.internal.executer;
+package org.gradle.testretry.internal.filter;
 
-final class RoundResult {
+import java.util.Set;
 
-    final TestNames failedTests;
-    final TestNames nonRetriedTests;
-    final boolean lastRound;
-    final boolean hasRetryFilteredFailures;
+public interface AnnotationInspector {
 
-    RoundResult(
-        TestNames failedTests,
-        TestNames nonRetriedTests,
-        boolean lastRound,
-        boolean hasRetryFilteredFailures
-    ) {
-        this.failedTests = failedTests;
-        this.nonRetriedTests = nonRetriedTests;
-        this.lastRound = lastRound;
-        this.hasRetryFilteredFailures = hasRetryFilteredFailures;
-    }
+    Set<String> getClassAnnotations(String className);
+
 }
