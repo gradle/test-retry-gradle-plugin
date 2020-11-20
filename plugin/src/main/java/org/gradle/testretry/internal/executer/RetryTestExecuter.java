@@ -66,7 +66,12 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
 
-        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(testFrameworkStrategy, testResultProcessor, maxFailures);
+        RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(
+            testFrameworkStrategy,
+            frameworkTemplate.testsReader,
+            testResultProcessor,
+            maxFailures
+        );
 
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;

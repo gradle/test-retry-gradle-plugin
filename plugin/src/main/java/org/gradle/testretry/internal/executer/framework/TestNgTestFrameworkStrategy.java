@@ -33,16 +33,34 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNgTestFrameworkStrategy.class);
 
+    private final Map<String, Optional<TestNgClassVisitor.ClassInfo>> classInfoCache = new HashMap<>();
+
     @Override
-    public boolean isSyntheticFailure(String testName) {
-        return false;
+    public boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName) {
+        return getClassInfo(testsReader, className)
+            .map(classInfo -> isLifecycleMethod(testsReader, testName, classInfo))
+            .orElse(false);
+    }
+
+    private boolean isLifecycleMethod(TestsReader testsReader, String testName, TestNgClassVisitor.ClassInfo classInfo) {
+        if (classInfo.getLifecycleMethods().contains(testName)) {
+            return true;
+        } else {
+            String superClass = classInfo.getSuperClass();
+            if (superClass == null || superClass.equals("java.lang.Object")) {
+                return false;
+            } else {
+                return isLifecycleFailureTest(testsReader, superClass, testName);
+            }
+        }
     }
 
     @Override
@@ -93,23 +111,34 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         failedTests.stream().forEach(entry -> {
             String className = entry.getKey();
             entry.getValue().forEach(test -> {
-                Optional<TestNgClassVisitor> classVisitor;
-                try {
-                    classVisitor = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
-                } catch (Throwable t) {
-                    LOGGER.warn("Unable to determine if class " + className + " has TestNG dependent tests", t);
-                    classVisitor = Optional.empty();
+                Optional<TestNgClassVisitor.ClassInfo> classInfoOpt = getClassInfo(testsReader, className);
+                if (classInfoOpt.isPresent()) {
+                    TestNgClassVisitor.ClassInfo classInfo = classInfoOpt.get();
+                    if (isLifecycleMethod(testsReader, test, classInfo)) {
+                        filters.clazz(className);
+                    } else {
+                        String parameterlessName = stripParameters(test);
+                        filters.test(className, parameterlessName);
+                        classInfo.dependsOn(parameterlessName)
+                            .forEach(methodName -> filters.test(className, methodName));
+                    }
+                } else {
+                    filters.clazz(className);
                 }
-
-                String parameterlessName = stripParameters(test);
-                filters.test(className, parameterlessName);
-
-                classVisitor
-                    .ifPresent(visitor ->
-                        visitor.dependsOn(parameterlessName)
-                            .forEach(methodName -> filters.test(className, methodName))
-                    );
             });
+        });
+    }
+
+    private Optional<TestNgClassVisitor.ClassInfo> getClassInfo(TestsReader testsReader, String className) {
+        return classInfoCache.computeIfAbsent(className, ignored -> {
+            Optional<TestNgClassVisitor.ClassInfo> classInfoOpt;
+            try {
+                classInfoOpt = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
+            } catch (Throwable t) {
+                LOGGER.warn("Unable to determine if class " + className + " has TestNG dependent tests", t);
+                classInfoOpt = Optional.empty();
+            }
+            return classInfoOpt;
         });
     }
 

@@ -19,7 +19,9 @@ import org.gradle.testretry.internal.executer.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,49 +32,81 @@ import java.util.stream.Collectors;
 
 import static org.objectweb.asm.Opcodes.ASM7;
 
-final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
+final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.ClassInfo> {
 
-    private final Map<String, List<String>> dependsOn = new HashMap<>();
-    private final Map<String, List<String>> dependedOn = new HashMap<>();
+    private static final List<String> LIFECYCLE_ANNOTATION_DESCRIPTORS = Arrays.asList(
+        "Lorg/testng/annotations/BeforeClass;",
+        "Lorg/testng/annotations/BeforeTest;",
+        "Lorg/testng/annotations/AfterTest;",
+        "Lorg/testng/annotations/AfterClass;"
+    );
 
     private String currentMethod;
+
+    private final ClassInfo classInfo = new ClassInfo();
+    private final TestNGMethodVisitor methodVisitor = new TestNGMethodVisitor();
+
+    final static class ClassInfo {
+
+        private final Map<String, List<String>> dependsOn = new HashMap<>();
+        private final Map<String, List<String>> dependedOn = new HashMap<>();
+        private final Set<String> lifecycleMethods = new HashSet<>();
+
+        private String superClass;
+
+        Set<String> dependsOn(String method) {
+            Set<String> dependentChain = new HashSet<>();
+
+            List<String> search = Collections.singletonList(method);
+            while (!search.isEmpty()) {
+                search = search.stream()
+                    .flatMap(upstream -> dependsOn.getOrDefault(upstream, Collections.emptyList()).stream())
+                    .filter(upstream -> !dependentChain.contains(upstream))
+                    .collect(Collectors.toList());
+                dependentChain.addAll(search);
+            }
+
+            search = Collections.singletonList(method);
+            while (!search.isEmpty()) {
+                search = search.stream()
+                    .flatMap(downstream -> dependedOn.getOrDefault(downstream, Collections.emptyList()).stream())
+                    .filter(downstream -> !dependentChain.contains(downstream))
+                    .collect(Collectors.toList());
+                dependentChain.addAll(search);
+            }
+
+            return dependentChain;
+        }
+
+        @Nullable
+        public String getSuperClass() {
+            return superClass;
+        }
+
+        public Set<String> getLifecycleMethods() {
+            return lifecycleMethods;
+        }
+    }
+
+    @Override
+    public ClassInfo getResult() {
+        return classInfo;
+    }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         this.currentMethod = name;
-        return new TestNGMethodVisitor();
+        return methodVisitor;
     }
 
     @Override
-    public TestNgClassVisitor getResult() {
-        return this;
-    }
-
-    Set<String> dependsOn(String method) {
-        Set<String> dependentChain = new HashSet<>();
-
-        List<String> search = Collections.singletonList(method);
-        while (!search.isEmpty()) {
-            search = search.stream()
-                .flatMap(upstream -> dependsOn.getOrDefault(upstream, Collections.emptyList()).stream())
-                .filter(upstream -> !dependentChain.contains(upstream))
-                .collect(Collectors.toList());
-            dependentChain.addAll(search);
-        }
-
-        search = Collections.singletonList(method);
-        while (!search.isEmpty()) {
-            search = search.stream()
-                .flatMap(downstream -> dependedOn.getOrDefault(downstream, Collections.emptyList()).stream())
-                .filter(downstream -> !dependentChain.contains(downstream))
-                .collect(Collectors.toList());
-            dependentChain.addAll(search);
-        }
-
-        return dependentChain;
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        classInfo.superClass = superName.replace('/', '.');
     }
 
     private final class TestNGMethodVisitor extends MethodVisitor {
+
+        private final TestNGTestAnnotationVisitor testAnnotationVisitor = new TestNGTestAnnotationVisitor();
 
         public TestNGMethodVisitor() {
             super(ASM7);
@@ -81,13 +115,17 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
         @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
             if (descriptor.contains("org/testng/annotations/Test")) {
-                return new TestNGTestAnnotationVisitor();
+                return testAnnotationVisitor;
+            } else if (LIFECYCLE_ANNOTATION_DESCRIPTORS.contains(descriptor)) {
+                classInfo.lifecycleMethods.add(currentMethod);
             }
             return null;
         }
     }
 
     private final class TestNGTestAnnotationVisitor extends AnnotationVisitor {
+
+        private final TestNGTestDependsOnAnnotationVisitor dependsOnAnnotationVisitor = new TestNGTestDependsOnAnnotationVisitor();
 
         public TestNGTestAnnotationVisitor() {
             super(ASM7);
@@ -96,7 +134,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
         @Override
         public AnnotationVisitor visitArray(String name) {
             if ("dependsOnMethods".equals(name)) {
-                return new TestNGTestDependsOnAnnotationVisitor();
+                return dependsOnAnnotationVisitor;
             }
             return null;
         }
@@ -110,7 +148,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
 
         @Override
         public void visit(String name, Object value) {
-            dependsOn.compute(currentMethod, (m, acc) -> {
+            classInfo.dependsOn.compute(currentMethod, (m, acc) -> {
                 if (acc == null) {
                     acc = new ArrayList<>();
                 }
@@ -118,7 +156,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor> {
                 return acc;
             });
 
-            dependedOn.compute((String) value, (m, acc) -> {
+            classInfo.dependedOn.compute((String) value, (m, acc) -> {
                 if (acc == null) {
                     acc = new ArrayList<>();
                 }

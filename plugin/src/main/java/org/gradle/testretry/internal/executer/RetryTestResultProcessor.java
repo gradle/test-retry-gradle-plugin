@@ -30,6 +30,7 @@ import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestFrameworkStrategy testFrameworkStrategy;
+    private final TestsReader testsReader;
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
@@ -42,8 +43,14 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private Object rootTestDescriptorId;
 
-    RetryTestResultProcessor(TestFrameworkStrategy testFrameworkStrategy, TestResultProcessor delegate, int maxFailures) {
+    RetryTestResultProcessor(
+        TestFrameworkStrategy testFrameworkStrategy,
+        TestsReader testsReader,
+        TestResultProcessor delegate,
+        int maxFailures
+    ) {
         this.testFrameworkStrategy = testFrameworkStrategy;
+        this.testsReader = testsReader;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
     }
@@ -78,8 +85,8 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 }
 
                 if (isClassDescriptor(descriptor)) {
-                    previousRoundFailedTests.remove(descriptor.getClassName(), n -> {
-                        if (testFrameworkStrategy.isSyntheticFailure(n)) {
+                    previousRoundFailedTests.remove(className, n -> {
+                        if (testFrameworkStrategy.isLifecycleFailureTest(testsReader, className, n)) {
                             emitFakePassedEvent(descriptor, testCompleteEvent, n);
                             return true;
                         } else {

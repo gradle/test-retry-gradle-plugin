@@ -31,7 +31,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     }
 
     @Unroll
-    def "does not handle failure in #lifecycle (gradle version #gradleVersion)"() {
+    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -52,18 +52,19 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         """
 
         when:
-        def result = gradleRunner(gradleVersion as String).buildAndFail()
+        def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('lifecycle FAILED') >= 1
-        result.output.contains("org.gradle.test-retry was unable to retry")
-        result.output.contains("acme.SuccessfulTests#lifecycle")
+        result.output.count('lifecycle FAILED') == 1
+        result.output.count('lifecycle PASSED') == 1
+        !result.output.contains("org.gradle.test-retry was unable to retry")
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest', 'BeforeSuite', 'AfterSuite']
+            ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest']
         ])
+        // Note: we don't handle BeforeSuite AfterSuite
     }
 
     @Unroll

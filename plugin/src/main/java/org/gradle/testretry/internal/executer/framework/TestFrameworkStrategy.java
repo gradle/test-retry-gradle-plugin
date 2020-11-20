@@ -21,8 +21,12 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
+import org.gradle.testretry.internal.executer.TestsReader;
 import org.gradle.util.GradleVersion;
 
+/**
+ * Instances are scoped to a test task execution and are reused between rounds.
+ */
 public interface TestFrameworkStrategy {
 
     static TestFrameworkStrategy of(TestFramework testFramework) {
@@ -41,7 +45,7 @@ public interface TestFrameworkStrategy {
         return GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version(version)) >= 0;
     }
 
-    boolean isSyntheticFailure(String testName);
+    boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName);
 
     TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests);
 

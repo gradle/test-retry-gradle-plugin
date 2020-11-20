@@ -41,7 +41,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
     );
 
     @Override
-    public boolean isSyntheticFailure(String testName) {
+    public boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName) {
         return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
     }
 
