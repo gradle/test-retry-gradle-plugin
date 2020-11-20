@@ -92,9 +92,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
         failedTests.stream().forEach(entry -> {
             String className = entry.getKey();
-            Set<String> tests = entry.getValue();
-
-            tests.forEach(test -> {
+            entry.getValue().forEach(test -> {
                 Optional<TestNgClassVisitor> classVisitor;
                 try {
                     classVisitor = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
