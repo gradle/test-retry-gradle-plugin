@@ -31,7 +31,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     }
 
     @Unroll
-    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+    def "does not handle failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -67,7 +67,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     }
 
     @Unroll
-    def "handles flaky static initializers (gradle version #gradleVersion)"() {
+    def "does not handle flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
             test.retry.maxRetries = 1
