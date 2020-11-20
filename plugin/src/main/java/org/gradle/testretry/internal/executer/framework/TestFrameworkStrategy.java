@@ -19,7 +19,6 @@ import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
-import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestName;
 import org.gradle.util.GradleVersion;
@@ -48,6 +47,8 @@ public interface TestFrameworkStrategy {
 
     TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests);
 
-    TestName getTestNameFrom(TestDescriptor descriptor);
+    default String normalizeTestMethodName(String testMethodName) {
+        return testMethodName;
+    }
 
 }

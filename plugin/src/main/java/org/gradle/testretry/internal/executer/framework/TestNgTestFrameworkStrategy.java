@@ -21,7 +21,6 @@ import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.api.tasks.testing.Test;
-import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.service.ServiceRegistry;
@@ -63,6 +62,12 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         TestNGTestFramework testFramework = createTestFramework(template, retriedTestFilter);
         copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
+    }
+
+    @Override
+    public String normalizeTestMethodName(String testMethodName) {
+        // strip parameter segment
+        return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
 
     private TestNGTestFramework createTestFramework(TestFrameworkTemplate template, DefaultTestFilter retriedTestFilter) {
@@ -109,7 +114,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                         .map(visitor ->
                             visitor.dependsOn(failedTest.getName())
                                 .stream()
-                                .map(method -> getTestNameFrom(failedTest.getClassName(), method))
+                                .map(method -> new TestName(failedTest.getClassName(), method))
                         )
                         .orElse(Stream.of(failedTest));
                 } catch (Throwable t) {
@@ -120,16 +125,4 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
             .collect(Collectors.toList());
     }
 
-    @Override
-    public TestName getTestNameFrom(TestDescriptor descriptor) {
-        return getTestNameFrom(descriptor.getClassName(), descriptor.getName());
-    }
-
-    private static TestName getTestNameFrom(String className, String name) {
-        return new TestName(className, stripParameterSegment(name));
-    }
-
-    private static String stripParameterSegment(String name) {
-        return name.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
-    }
 }

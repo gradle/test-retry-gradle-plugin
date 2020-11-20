@@ -69,11 +69,12 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         } else {
             TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
             if (descriptor != null && descriptor.getClassName() != null) {
-                TestName testName = testFrameworkStrategy.getTestNameFrom(descriptor);
+                String className = descriptor.getClassName();
+                String name = testFrameworkStrategy.normalizeTestMethodName(descriptor.getName());
 
-                boolean failedInPreviousRound = previousRoundFailedTests.remove(testName.getClassName(), testName.getName());
+                boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
-                    currentRoundFailedTests.add(testName.getClassName(), testName.getName());
+                    currentRoundFailedTests.add(className, name);
                 }
 
                 if (isClassDescriptor(descriptor)) {
@@ -114,8 +115,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            TestName testName = testFrameworkStrategy.getTestNameFrom(descriptor);
-            currentRoundFailedTests.add(testName.getClassName(), testName.getName());
+            currentRoundFailedTests.add(
+                descriptor.getClassName(),
+                testFrameworkStrategy.normalizeTestMethodName(descriptor.getName())
+            );
         }
 
         delegate.failure(testId, throwable);

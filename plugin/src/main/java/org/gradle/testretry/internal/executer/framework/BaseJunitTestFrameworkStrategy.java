@@ -17,7 +17,6 @@ package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
-import org.gradle.api.tasks.testing.TestDescriptor;
 import org.gradle.testretry.internal.executer.TestName;
 import org.gradle.testretry.internal.executer.TestsReader;
 import org.jetbrains.annotations.NotNull;
@@ -115,11 +114,6 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
             LOGGER.warn("Unable to determine if class " + failedTest.getClassName() + " is a Spock @Stepwise test", t);
             return false;
         }
-    }
-
-    @Override
-    public TestName getTestNameFrom(TestDescriptor descriptor) {
-        return new TestName(descriptor.getClassName(), descriptor.getName());
     }
 
 }
