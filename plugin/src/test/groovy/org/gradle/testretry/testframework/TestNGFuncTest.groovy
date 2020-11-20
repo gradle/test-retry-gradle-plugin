@@ -16,7 +16,6 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
-import org.spockframework.util.VersionNumber
 import spock.lang.Issue
 import spock.lang.Unroll
 
@@ -29,14 +28,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getTestAnnotation() {
         return "@org.testng.annotations.Test"
-    }
-
-    // TestNG only works with config cache starting with 6.7
-    boolean isFrameworkSupportedWithConfigCache(String gradleVersion) {
-        // We use VersionNumber here so that we can match 6.7 nightlies
-        return VersionNumber.parse(gradleVersion).with {
-            it.major > 6 || (it.major == 6 && it.minor >= 7)
-        }
     }
 
     @Unroll
