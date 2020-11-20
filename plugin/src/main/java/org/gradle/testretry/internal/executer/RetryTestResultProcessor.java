@@ -70,7 +70,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             TestDescriptorInternal descriptor = activeDescriptorsById.remove(testId);
             if (descriptor != null && descriptor.getClassName() != null) {
                 String className = descriptor.getClassName();
-                String name = testFrameworkStrategy.normalizeTestMethodName(descriptor.getName());
+                String name = descriptor.getName();
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
@@ -78,9 +78,9 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 }
 
                 if (isClassDescriptor(descriptor)) {
-                    previousRoundFailedTests.remove(descriptor.getClassName(), name -> {
-                        if (testFrameworkStrategy.isSyntheticFailure(name)) {
-                            emitFakePassedEvent(descriptor, testCompleteEvent, name);
+                    previousRoundFailedTests.remove(descriptor.getClassName(), n -> {
+                        if (testFrameworkStrategy.isSyntheticFailure(n)) {
+                            emitFakePassedEvent(descriptor, testCompleteEvent, n);
                             return true;
                         } else {
                             return false;
@@ -115,10 +115,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     public void failure(Object testId, Throwable throwable) {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null && descriptor.getClassName() != null) {
-            currentRoundFailedTests.add(
-                descriptor.getClassName(),
-                testFrameworkStrategy.normalizeTestMethodName(descriptor.getName())
-            );
+            currentRoundFailedTests.add(descriptor.getClassName(), descriptor.getName());
         }
 
         delegate.failure(testId, throwable);

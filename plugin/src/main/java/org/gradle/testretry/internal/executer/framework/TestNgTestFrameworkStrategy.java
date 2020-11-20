@@ -27,6 +27,7 @@ import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestName;
 import org.gradle.testretry.internal.executer.TestsReader;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests) {
         DefaultTestFilter retriedTestFilter = new DefaultTestFilter();
+
         retriesWithTestNGDependentsAdded(template.testsReader, failedTests)
             .forEach(failedTest -> {
                 if (failedTest.getName() == null) {
@@ -64,8 +66,8 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         return testFramework;
     }
 
-    @Override
-    public String normalizeTestMethodName(String testMethodName) {
+    @NotNull
+    private static String stripParameters(String testMethodName) {
         // strip parameter segment
         return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
@@ -105,8 +107,9 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         target.setSuiteXmlWriter(source.getSuiteXmlWriter());
     }
 
-    private static List<TestName> retriesWithTestNGDependentsAdded(TestsReader testsReader, Set<TestName> failedTests) {
+    private  List<TestName> retriesWithTestNGDependentsAdded(TestsReader testsReader, Set<TestName> failedTests) {
         return failedTests.stream()
+            .map(name -> new TestName(name.getClassName(), stripParameters(name.getName())))
             .flatMap(failedTest -> {
                 try {
                     Optional<TestNgClassVisitor> opt = testsReader.readTestClassDirClass(failedTest.getClassName(), TestNgClassVisitor::new);

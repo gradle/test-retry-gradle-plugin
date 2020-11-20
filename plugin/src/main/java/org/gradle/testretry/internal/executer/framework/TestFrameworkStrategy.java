@@ -47,8 +47,4 @@ public interface TestFrameworkStrategy {
 
     TestFramework createRetrying(TestFrameworkTemplate template, Set<TestName> failedTests);
 
-    default String normalizeTestMethodName(String testMethodName) {
-        return testMethodName;
-    }
-
 }
