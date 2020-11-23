@@ -70,50 +70,71 @@ public interface TestRetryTaskExtension {
     Property<Integer> getMaxFailures();
 
     /**
-     * Filtering for which tests may be retried.
+     * The filter for specifying which tests may be retried.
      */
-    Filters getFilters();
+    Filter getFilter();
 
     /**
-     * Filtering for which tests may be retried.
+     * The filter for specifying which tests may be retried.
      */
-    void filters(Action<? super Filters> action);
+    void filter(Action<? super Filter> action);
 
-    interface Filters {
+    /**
+     * A filter for specifying which tests may be retried.
+     *
+     * By default, all tests are eligible for retrying.
+     */
+    interface Filter {
 
         /**
-         * A set of full class name patterns of classes to include.
+         * The patterns used to include tests based on their class name.
          *
-         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
          *
-         * '*' can be used to match zero or more characters in a class name.
+         * A class name only has to match one pattern to be included.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
          */
         SetProperty<String> getIncludeClasses();
 
         /**
-         * A set of full annotation class name patterns to use to include a class for retry if annotated with an annotation matching the pattern.
+         * The patterns used to include tests based on their class level annotations.
          *
-         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
          *
-         * '*' can be used to match zero or more characters in a class name.
+         * A class need only have one annotation matching any of the patterns to be included.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
          */
         SetProperty<String> getIncludeAnnotationClasses();
 
         /**
-         * A set of full class name patterns of classes to exclude.
+         * The patterns used to exclude tests based on their class name.
          *
-         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
          *
-         * '*' can be used to match zero or more characters in a class name.
+         * A class name only has to match one pattern to be excluded.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
          */
         SetProperty<String> getExcludeClasses();
 
         /**
-         * A set of full annotation class name patterns to use to exclude a class for retry if annotated with an annotation matching the pattern.
+         * The patterns used to exclude tests based on their class level annotations.
          *
-         * If no patterns are specified, all classes (that meet other criteria) will be included.
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
          *
-         * '*' can be used to match zero or more characters in a class name.
+         * A class need only have one annotation matching any of the patterns to be excluded.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
          */
         SetProperty<String> getExcludeAnnotationClasses();
 

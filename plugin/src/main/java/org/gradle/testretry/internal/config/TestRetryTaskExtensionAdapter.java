@@ -59,10 +59,10 @@ public final class TestRetryTaskExtensionAdapter {
         extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
         extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
         extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
-        extension.getFilters().getIncludeClasses().convention(Collections.emptySet());
-        extension.getFilters().getIncludeAnnotationClasses().convention(Collections.emptySet());
-        extension.getFilters().getExcludeClasses().convention(Collections.emptySet());
-        extension.getFilters().getExcludeAnnotationClasses().convention(Collections.emptySet());
+        extension.getFilter().getIncludeClasses().convention(Collections.emptySet());
+        extension.getFilter().getIncludeAnnotationClasses().convention(Collections.emptySet());
+        extension.getFilter().getExcludeClasses().convention(Collections.emptySet());
+        extension.getFilter().getExcludeAnnotationClasses().convention(Collections.emptySet());
     }
 
     Callable<Provider<Boolean>> getFailOnPassedAfterRetryInput() {
@@ -92,19 +92,19 @@ public final class TestRetryTaskExtensionAdapter {
     }
 
     public Set<String> getIncludeClasses() {
-        return read(extension.getFilters().getIncludeClasses(), Collections.emptySet());
+        return read(extension.getFilter().getIncludeClasses(), Collections.emptySet());
     }
 
     public Set<String> getIncludeAnnotationClasses() {
-        return read(extension.getFilters().getIncludeAnnotationClasses(), Collections.emptySet());
+        return read(extension.getFilter().getIncludeAnnotationClasses(), Collections.emptySet());
     }
 
     public Set<String> getExcludeClasses() {
-        return read(extension.getFilters().getExcludeClasses(), Collections.emptySet());
+        return read(extension.getFilter().getExcludeClasses(), Collections.emptySet());
     }
 
     public Set<String> getExcludeAnnotationClasses() {
-        return read(extension.getFilters().getExcludeAnnotationClasses(), Collections.emptySet());
+        return read(extension.getFilter().getExcludeAnnotationClasses(), Collections.emptySet());
     }
 
     public boolean getSimulateNotRetryableTest() {

@@ -15,26 +15,26 @@
  */
 package org.gradle.testretry.internal.filter;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class RetryFilter {
 
     private final AnnotationInspector annotationInspector;
 
-    private final Set<Pattern> includeClasses;
-    private final Set<Pattern> includeAnnotationClasses;
-    private final Set<Pattern> excludeClasses;
-    private final Set<Pattern> excludeAnnotationClasses;
+    private final Set<GlobPattern> includeClasses;
+    private final Set<GlobPattern> includeAnnotationClasses;
+    private final Set<GlobPattern> excludeClasses;
+    private final Set<GlobPattern> excludeAnnotationClasses;
 
     public RetryFilter(
         AnnotationInspector annotationInspector,
-        Set<String> includeClasses,
-        Set<String> includeAnnotationClasses,
-        Set<String> excludeClasses,
-        Set<String> excludeAnnotationClasses
+        Collection<String> includeClasses,
+        Collection<String> includeAnnotationClasses,
+        Collection<String> excludeClasses,
+        Collection<String> excludeAnnotationClasses
     ) {
         this.annotationInspector = annotationInspector;
         this.includeClasses = toPatterns(includeClasses);
@@ -45,55 +45,40 @@ public class RetryFilter {
 
     public boolean canRetry(String className) {
         if (!includeClasses.isEmpty()) {
-            boolean matchesNoIncludeClasses = includeClasses.stream()
-                .noneMatch(pattern -> pattern.matcher(className).matches());
-
-            if (matchesNoIncludeClasses) {
+            if (!anyMatch(includeClasses, className)) {
                 return false;
             }
         }
 
-        if (excludeClasses.stream().anyMatch(pattern -> pattern.matcher(className).matches())) {
+        if (anyMatch(excludeClasses, className)) {
             return false;
         }
 
-        Set<String> annotations = null;
+        Set<String> annotations = null; // fetching annotations is expensive, don't do it unnecessarily.
         if (!includeAnnotationClasses.isEmpty()) {
             annotations = annotationInspector.getClassAnnotations(className);
-            boolean hasNoIncludeAnnotation = annotations.stream()
-                .noneMatch(annotation ->
-                    includeAnnotationClasses.stream()
-                        .anyMatch(pattern -> pattern.matcher(annotation).matches())
-                );
-
-            if (!hasNoIncludeAnnotation) {
+            if (annotations.isEmpty() || !anyMatch(includeAnnotationClasses, annotations)) {
                 return false;
             }
         }
 
         if (!excludeAnnotationClasses.isEmpty()) {
             annotations = annotations == null ? annotationInspector.getClassAnnotations(className) : annotations;
-            boolean hasAnyExcludeAnnotation = annotations.stream()
-                .anyMatch(annotation ->
-                    includeAnnotationClasses.stream()
-                        .anyMatch(pattern -> pattern.matcher(annotation).matches())
-                );
-
-            return !hasAnyExcludeAnnotation;
+            return !anyMatch(excludeAnnotationClasses, annotations);
         }
 
         return true;
     }
 
-    private static Set<Pattern> toPatterns(Set<String> strings) {
-        return strings.stream()
-            .map(string ->
-                Arrays.stream(string.split("\\*"))
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining(".*?"))
-                    + (string.endsWith("*") ? ".*?" : "")
-            )
-            .map(Pattern::compile)
-            .collect(Collectors.toSet());
+    private static boolean anyMatch(Set<GlobPattern> patterns, String string) {
+        return anyMatch(patterns, Collections.singleton(string));
+    }
+
+    private static boolean anyMatch(Set<GlobPattern> patterns, Set<String> strings) {
+        return patterns.stream().anyMatch(p -> strings.stream().anyMatch(p::matches));
+    }
+
+    private static Set<GlobPattern> toPatterns(Collection<String> strings) {
+        return strings.stream().map(GlobPattern::from).collect(Collectors.toSet());
     }
 }

@@ -40,6 +40,7 @@ dependencies {
     testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
+    testImplementation("org.ow2.asm:asm:8.0.1")
 
     codenarc("org.codenarc:CodeNarc:1.0")
 }

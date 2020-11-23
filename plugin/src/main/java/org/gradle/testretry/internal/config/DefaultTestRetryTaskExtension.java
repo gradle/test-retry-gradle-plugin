@@ -28,14 +28,14 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     private final Property<Boolean> failOnPassedAfterRetry;
     private final Property<Integer> maxRetries;
     private final Property<Integer> maxFailures;
-    private final Filters filters;
+    private final Filter filter;
 
     @Inject
     public DefaultTestRetryTaskExtension(ObjectFactory objects) {
         this.failOnPassedAfterRetry = objects.property(Boolean.class);
         this.maxRetries = objects.property(Integer.class);
         this.maxFailures = objects.property(Integer.class);
-        this.filters = new FiltersImpl(objects);
+        this.filter = new FilterImpl(objects);
     }
 
     public Property<Boolean> getFailOnPassedAfterRetry() {
@@ -51,23 +51,23 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     }
 
     @Override
-    public void filters(Action<? super Filters> action) {
-        action.execute(filters);
+    public void filter(Action<? super Filter> action) {
+        action.execute(filter);
     }
 
     @Override
-    public Filters getFilters() {
-        return filters;
+    public Filter getFilter() {
+        return filter;
     }
 
-    private static final class FiltersImpl implements Filters {
+    private static final class FilterImpl implements Filter {
 
         private final SetProperty<String> includeClasses;
         private final SetProperty<String> includeAnnotationClasses;
         private final SetProperty<String> excludeClasses;
         private final SetProperty<String> excludeAnnotationClasses;
 
-        public FiltersImpl(ObjectFactory objects) {
+        public FilterImpl(ObjectFactory objects) {
             this.includeClasses = objects.setProperty(String.class);
             this.includeAnnotationClasses = objects.setProperty(String.class);
             this.excludeClasses = objects.setProperty(String.class);

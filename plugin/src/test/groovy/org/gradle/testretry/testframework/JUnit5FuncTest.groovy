@@ -25,11 +25,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         return 'java'
     }
 
-    @Override
-    String getTestAnnotation() {
-        return "@org.junit.jupiter.api.Test"
-    }
-
     protected String afterClassErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "executionError"
     }

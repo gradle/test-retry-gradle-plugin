@@ -41,13 +41,16 @@ public class AnnotationInspectorImpl implements AnnotationInspector {
 
     @Override
     public Set<String> getClassAnnotations(String className) {
-        return cache.computeIfAbsent(className, ignored ->
-            testsReader.readClass(className, ClassAnnotationVisitor::new)
+        Set<String> annotations = cache.get(className);
+        if (annotations == null) {
+            annotations = testsReader.readClass(className, ClassAnnotationVisitor::new)
                 .orElseGet(() -> {
                     LOGGER.warn("Unable to find annotations of " + className);
                     return Collections.emptySet();
-                })
-        );
+                });
+            cache.put(className, annotations);
+        }
+        return annotations;
     }
 
     private boolean isInherited(String annotationClassName) {
@@ -71,8 +74,8 @@ public class AnnotationInspectorImpl implements AnnotationInspector {
 
         @Override
         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
-            if (!superName.equals("Ljava/lang/Object;")) {
-                getClassAnnotations(classDescriptorToClassName(superName))
+            if (!superName.equals("java/lang/Object")) {
+                getClassAnnotations(superName.replace('/', '.'))
                     .stream()
                     .filter(AnnotationInspectorImpl.this::isInherited)
                     .forEach(found::add);
@@ -98,7 +101,7 @@ public class AnnotationInspectorImpl implements AnnotationInspector {
 
         @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-            if (descriptor.equals("Ljava/lang.annotation/Inherited;")) {
+            if (descriptor.equals("Ljava/lang/annotation/Inherited;")) {
                 inherited = true;
             }
             return null;
