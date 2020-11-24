@@ -81,7 +81,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
         if (superName != null) {
             if (superName.equals("spock/lang/Specification")) {
                 isSpec = true;
-            } else {
+            } else if (!superName.equals("java/lang/Object")) {
                 testsReader.readClass(superName.replace('/', '.'), () -> this);
             }
         }
