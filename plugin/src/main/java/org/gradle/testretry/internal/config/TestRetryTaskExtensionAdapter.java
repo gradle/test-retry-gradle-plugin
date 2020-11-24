@@ -18,9 +18,12 @@ package org.gradle.testretry.internal.config;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.testretry.TestRetryTaskExtension;
-import org.jetbrains.annotations.NotNull;
+import org.gradle.util.VersionNumber;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 public final class TestRetryTaskExtensionAdapter {
@@ -34,29 +37,44 @@ public final class TestRetryTaskExtensionAdapter {
 
     private final ProviderFactory providerFactory;
     private final TestRetryTaskExtension extension;
-    private final boolean useConventions;
     private final boolean simulateNotRetryableTest;
+    private boolean useConventions;
 
     public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
-        boolean useConventions
+        VersionNumber gradleVersion
+
     ) {
         this.providerFactory = providerFactory;
         this.extension = extension;
-        this.useConventions = useConventions;
+        this.simulateNotRetryableTest = Boolean.getBoolean(SIMULATE_NOT_RETRYABLE_PROPERTY);
 
-        simulateNotRetryableTest = Boolean.getBoolean(SIMULATE_NOT_RETRYABLE_PROPERTY);
+        boolean gradle51OrLater = gradleVersion.getMajor() == 5
+            ? gradleVersion.getMinor() >= 1
+            : gradleVersion.getMajor() > 5;
 
-        if (useConventions) {
-            setDefaults(extension);
-        }
+        this.useConventions = gradle51OrLater;
+
+        initialize(extension, gradle51OrLater);
     }
 
-    private void setDefaults(TestRetryTaskExtension extension) {
-        extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
-        extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
-        extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+    private void initialize(TestRetryTaskExtension extension, boolean gradle51OrLater) {
+        if (gradle51OrLater) {
+            extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
+            extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
+            extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+            extension.getFilter().getIncludeClasses().convention(Collections.emptySet());
+            extension.getFilter().getIncludeAnnotationClasses().convention(Collections.emptySet());
+            extension.getFilter().getExcludeClasses().convention(Collections.emptySet());
+            extension.getFilter().getExcludeAnnotationClasses().convention(Collections.emptySet());
+        } else {
+            // https://github.com/gradle/gradle/issues/7485
+            extension.getFilter().getIncludeClasses().empty();
+            extension.getFilter().getIncludeAnnotationClasses().empty();
+            extension.getFilter().getExcludeClasses().empty();
+            extension.getFilter().getExcludeAnnotationClasses().empty();
+        }
     }
 
     Callable<Provider<Boolean>> getFailOnPassedAfterRetryInput() {
@@ -85,12 +103,32 @@ public final class TestRetryTaskExtensionAdapter {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
     }
 
+    public Set<String> getIncludeClasses() {
+        return read(extension.getFilter().getIncludeClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getIncludeAnnotationClasses() {
+        return read(extension.getFilter().getIncludeAnnotationClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getExcludeClasses() {
+        return read(extension.getFilter().getExcludeClasses(), Collections.emptySet());
+    }
+
+    public Set<String> getExcludeAnnotationClasses() {
+        return read(extension.getFilter().getExcludeAnnotationClasses(), Collections.emptySet());
+    }
+
     public boolean getSimulateNotRetryableTest() {
         return simulateNotRetryableTest;
     }
 
-    @NotNull
     private <T> T read(Property<T> property, T defaultValue) {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
     }
+
+    private <T> Set<T> read(SetProperty<T> property, Set<T> defaultValue) {
+        return useConventions ? property.get() : property.getOrElse(defaultValue);
+    }
+
 }

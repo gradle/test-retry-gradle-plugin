@@ -15,7 +15,7 @@
  */
 package org.gradle.testretry.internal.executer.framework;
 
-import org.gradle.testretry.internal.executer.TestsReader;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 

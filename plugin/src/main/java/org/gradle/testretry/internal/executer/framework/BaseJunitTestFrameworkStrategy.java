@@ -17,7 +17,7 @@ package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestNames;
-import org.gradle.testretry.internal.executer.TestsReader;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

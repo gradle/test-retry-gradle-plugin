@@ -57,7 +57,9 @@ The `retry` extension is of the following type:
 ----
 package org.gradle.testretry;
 
+import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.testing.Test;
 
 /**
@@ -68,6 +70,11 @@ import org.gradle.api.tasks.testing.Test;
 public interface TestRetryTaskExtension {
 
     /**
+     * The name of the extension added to each test task.
+     */
+    String NAME = "retry";
+
+    /**
      * Whether tests that initially fail and then pass on retry should fail the task.
      * <p>
      * This setting defaults to {@code false},
@@ -75,7 +82,7 @@ public interface TestRetryTaskExtension {
      * <p>
      * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
      *
-     * @return whether tests that initially fail and then pass on retry should fail the task
+     * @return whether tests that initially fails and then pass on retry should fail the task
      */
     Property<Boolean> getFailOnPassedAfterRetry();
 
@@ -103,6 +110,77 @@ public interface TestRetryTaskExtension {
      * @return the maximum number of test failures that are allowed before retrying is disabled
      */
     Property<Integer> getMaxFailures();
+
+    /**
+     * The filter for specifying which tests may be retried.
+     */
+    Filter getFilter();
+
+    /**
+     * The filter for specifying which tests may be retried.
+     */
+    void filter(Action<? super Filter> action);
+
+    /**
+     * A filter for specifying which tests may be retried.
+     *
+     * By default, all tests are eligible for retrying.
+     */
+    interface Filter {
+
+        /**
+         * The patterns used to include tests based on their class name.
+         *
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class name only has to match one pattern to be included.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeClasses();
+
+        /**
+         * The patterns used to include tests based on their class level annotations.
+         *
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class need only have one annotation matching any of the patterns to be included.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeAnnotationClasses();
+
+        /**
+         * The patterns used to exclude tests based on their class name.
+         *
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class name only has to match one pattern to be excluded.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getExcludeClasses();
+
+        /**
+         * The patterns used to exclude tests based on their class level annotations.
+         *
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class need only have one annotation matching any of the patterns to be excluded.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getExcludeAnnotationClasses();
+
+    }
 
 }
 ----
@@ -142,6 +220,34 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 * Upstream tests (those that the failed test depends on) are run because a flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
+
+== Filtering
+
+By default, all tests are eligible for retrying.
+The `filter` component of the test retry extension can be used to control which tests should be retried and which should not.
+
+The decision to retry a test or not is based on the tests reported class name, regardless of the name of the test case or method.
+The annotations present or not on this class can also be used as the criteria.
+
+.build.gradle:
+[source,groovy]
+----
+test {
+    retry {
+        maxRetries = 3
+        filter {
+            // filter by qualified class name (* matches zero or more of any character)
+            includeClasses.add("*IntegrationTest")
+            excludeClasses.add("*DatabaseTest")
+
+            // filter by class level annotations
+            // Note: @Inherited annotations are respected
+            includeAnnotationClasses.add("*Retryable")
+            excludeAnnotationClasses.add("*NonRetryable")
+        }
+    }
+}
+----
 
 == Reporting
 

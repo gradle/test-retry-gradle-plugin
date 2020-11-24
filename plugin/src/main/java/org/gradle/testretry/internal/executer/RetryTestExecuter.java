@@ -24,6 +24,8 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
+import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
+import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.util.stream.Collectors;
 
@@ -66,8 +68,17 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
         TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
 
+        RetryFilter filter = new RetryFilter(
+            new AnnotationInspectorImpl(frameworkTemplate.testsReader),
+            extension.getIncludeClasses(),
+            extension.getIncludeAnnotationClasses(),
+            extension.getExcludeClasses(),
+            extension.getExcludeAnnotationClasses()
+        );
+
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(
             testFrameworkStrategy,
+            filter,
             frameworkTemplate.testsReader,
             testResultProcessor,
             maxFailures
@@ -86,7 +97,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 testTask.setIgnoreFailures(true);
                 break;
             } else if (result.failedTests.isEmpty()) {
-                if (retryCount > 0 && !failOnPassedAfterRetry) {
+                if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
                     testTask.setIgnoreFailures(true);
                 }
                 break;

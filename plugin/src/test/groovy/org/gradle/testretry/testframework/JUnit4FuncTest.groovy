@@ -26,11 +26,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         return 'java'
     }
 
-    @Override
-    String getTestAnnotation() {
-        return "@org.junit.Test"
-    }
-
     protected isRerunsAllParameterizedIterations() {
         false
     }

@@ -21,6 +21,8 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
+import org.gradle.testretry.internal.filter.RetryFilter;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,11 +32,13 @@ import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestFrameworkStrategy testFrameworkStrategy;
+    private final RetryFilter filter;
     private final TestsReader testsReader;
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
     private boolean lastRetry;
+    private boolean hasRetryFilteredFailures;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
 
@@ -45,11 +49,13 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     RetryTestResultProcessor(
         TestFrameworkStrategy testFrameworkStrategy,
+        RetryFilter filter,
         TestsReader testsReader,
         TestResultProcessor delegate,
         int maxFailures
     ) {
         this.testFrameworkStrategy = testFrameworkStrategy;
+        this.filter = filter;
         this.testsReader = testsReader;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
@@ -121,8 +127,15 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void failure(Object testId, Throwable throwable) {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
-        if (descriptor != null && descriptor.getClassName() != null) {
-            currentRoundFailedTests.add(descriptor.getClassName(), descriptor.getName());
+        if (descriptor != null) {
+            String className = descriptor.getClassName();
+            if (className != null) {
+                if (filter.canRetry(className)) {
+                    currentRoundFailedTests.add(className, descriptor.getName());
+                } else {
+                    hasRetryFilteredFailures = true;
+                }
+            }
         }
 
         delegate.failure(testId, throwable);
@@ -135,7 +148,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     public RoundResult getResult() {
-        return new RoundResult(currentRoundFailedTests, previousRoundFailedTests, lastRun());
+        return new RoundResult(currentRoundFailedTests, previousRoundFailedTests, lastRun(), hasRetryFilteredFailures);
     }
 
     public void reset(boolean lastRetry) {

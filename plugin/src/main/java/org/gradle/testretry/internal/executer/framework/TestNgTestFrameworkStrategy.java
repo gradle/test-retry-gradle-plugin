@@ -27,7 +27,7 @@ import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
-import org.gradle.testretry.internal.executer.TestsReader;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -21,7 +21,7 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
-import org.gradle.testretry.internal.executer.TestsReader;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.gradle.util.GradleVersion;
 
 /**

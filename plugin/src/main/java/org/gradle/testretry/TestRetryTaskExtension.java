@@ -15,7 +15,9 @@
  */
 package org.gradle.testretry;
 
+import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.testing.Test;
 
 /**
@@ -66,5 +68,76 @@ public interface TestRetryTaskExtension {
      * @return the maximum number of test failures that are allowed before retrying is disabled
      */
     Property<Integer> getMaxFailures();
+
+    /**
+     * The filter for specifying which tests may be retried.
+     */
+    Filter getFilter();
+
+    /**
+     * The filter for specifying which tests may be retried.
+     */
+    void filter(Action<? super Filter> action);
+
+    /**
+     * A filter for specifying which tests may be retried.
+     *
+     * By default, all tests are eligible for retrying.
+     */
+    interface Filter {
+
+        /**
+         * The patterns used to include tests based on their class name.
+         *
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class name only has to match one pattern to be included.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeClasses();
+
+        /**
+         * The patterns used to include tests based on their class level annotations.
+         *
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class need only have one annotation matching any of the patterns to be included.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeAnnotationClasses();
+
+        /**
+         * The patterns used to exclude tests based on their class name.
+         *
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class name only has to match one pattern to be excluded.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getExcludeClasses();
+
+        /**
+         * The patterns used to exclude tests based on their class level annotations.
+         *
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class need only have one annotation matching any of the patterns to be excluded.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getExcludeAnnotationClasses();
+
+    }
 
 }

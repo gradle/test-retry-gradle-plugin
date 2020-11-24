@@ -17,10 +17,6 @@ package org.gradle.testretry
 
 abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
 
-    String getTestAnnotation() {
-        return '@org.junit.Test'
-    }
-
     String getLanguagePlugin() {
         return 'java'
     }
@@ -30,7 +26,7 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class SuccessfulTests {
-                ${testAnnotation}
+                @org.junit.Test
                 public void successTest() {}
             }
         """
@@ -56,7 +52,7 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
             package acme;
 
             public class FlakyTests {
-                ${testAnnotation}
+                @org.junit.Test
                 public void flaky() {
                     ${flakyAssert()}
                 }

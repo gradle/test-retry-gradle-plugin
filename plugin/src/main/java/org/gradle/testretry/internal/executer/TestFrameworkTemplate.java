@@ -18,6 +18,7 @@ package org.gradle.testretry.internal.executer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 
 public class TestFrameworkTemplate {
 

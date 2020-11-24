@@ -27,11 +27,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         return 'groovy'
     }
 
-    @Override
-    String getTestAnnotation() {
-        return ''
-    }
-
     boolean isRerunsParameterizedMethods() {
         true
     }

@@ -25,11 +25,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         return 'java'
     }
 
-    @Override
-    String getTestAnnotation() {
-        return "@org.testng.annotations.Test"
-    }
-
     @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:

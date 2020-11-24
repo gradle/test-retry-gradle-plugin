@@ -15,8 +15,10 @@
  */
 package org.gradle.testretry.internal.config;
 
+import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.SetProperty;
 import org.gradle.testretry.TestRetryTaskExtension;
 
 import javax.inject.Inject;
@@ -26,12 +28,14 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     private final Property<Boolean> failOnPassedAfterRetry;
     private final Property<Integer> maxRetries;
     private final Property<Integer> maxFailures;
+    private final Filter filter;
 
     @Inject
     public DefaultTestRetryTaskExtension(ObjectFactory objects) {
         this.failOnPassedAfterRetry = objects.property(Boolean.class);
         this.maxRetries = objects.property(Integer.class);
         this.maxFailures = objects.property(Integer.class);
+        this.filter = new FilterImpl(objects);
     }
 
     public Property<Boolean> getFailOnPassedAfterRetry() {
@@ -44,6 +48,51 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
 
     public Property<Integer> getMaxFailures() {
         return maxFailures;
+    }
+
+    @Override
+    public void filter(Action<? super Filter> action) {
+        action.execute(filter);
+    }
+
+    @Override
+    public Filter getFilter() {
+        return filter;
+    }
+
+    private static final class FilterImpl implements Filter {
+
+        private final SetProperty<String> includeClasses;
+        private final SetProperty<String> includeAnnotationClasses;
+        private final SetProperty<String> excludeClasses;
+        private final SetProperty<String> excludeAnnotationClasses;
+
+        public FilterImpl(ObjectFactory objects) {
+            this.includeClasses = objects.setProperty(String.class);
+            this.includeAnnotationClasses = objects.setProperty(String.class);
+            this.excludeClasses = objects.setProperty(String.class);
+            this.excludeAnnotationClasses = objects.setProperty(String.class);
+        }
+
+        @Override
+        public SetProperty<String> getIncludeClasses() {
+            return includeClasses;
+        }
+
+        @Override
+        public SetProperty<String> getIncludeAnnotationClasses() {
+            return includeAnnotationClasses;
+        }
+
+        @Override
+        public SetProperty<String> getExcludeClasses() {
+            return excludeClasses;
+        }
+
+        @Override
+        public SetProperty<String> getExcludeAnnotationClasses() {
+            return excludeAnnotationClasses;
+        }
     }
 
 }
