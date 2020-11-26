@@ -34,7 +34,7 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    plugin("org.ow2.asm:asm:8.0.1")
+    plugin("org.ow2.asm:asm:9.0")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
