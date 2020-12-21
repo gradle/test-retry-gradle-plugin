@@ -29,7 +29,7 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2019.2"
+version = "2020.2"
 
 project {
     params {
