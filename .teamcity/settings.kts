@@ -110,11 +110,16 @@ project {
         buildType("Publish") {
             description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
 
+            params {
+                param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%artifactoryUsername%")
+                param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%artifactoryPassword%")
+            }
+
             steps {
                 gradle {
                     tasks = "clean devSnapshot publishPluginPublicationToGradleBuildInternalSnapshotsRepository -x test"
                     gradleParams =
-                        "-s $useGradleInternalScansServer $buildCacheSetup -PartifactoryUsername=%artifactoryUsername% -PartifactoryPassword=%artifactoryPassword% $useGradleInternalScansServer"
+                        "-s $useGradleInternalScansServer $buildCacheSetup $useGradleInternalScansServer"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                     buildFile = ""
                 }

@@ -18,7 +18,7 @@ fun ParametrizedWithType.java8Home(os: Os) {
 
 const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan.init.gradle.kts"
 
-const val buildCacheSetup = "--build-cache -Dgradle.cache.remote.url=%gradle.cache.remote.url% -Dgradle.cache.remote.username=%gradle.cache.remote.username% -Dgradle.cache.remote.password=%gradle.cache.remote.password%"
+const val buildCacheSetup = "--build-cache"
 /**
  * Creates a new subproject with the given name, automatically deriving the [Project.id] from the name.
  *
@@ -46,6 +46,10 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
 
         params {
             java8Home(Os.linux)
+
+            param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
+            param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
+            param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
         }
 
         vcs {
