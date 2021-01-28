@@ -15,18 +15,13 @@
  */
 package org.gradle.testretry.testframework
 
+import org.gradle.util.VersionNumber
+
 class Spock2FuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
-    boolean canTargetInheritedMethods() {
-        // https://github.com/spockframework/spock/issues/1235
-        false
-    }
-
-    @Override
-    boolean nonParameterizedMethodsCanHaveCustomIterationNames() {
-        // // https://github.com/spockframework/spock/issues/1236
-        false
+    boolean canTargetInheritedMethods(String gradleVersion) {
+        VersionNumber.parse(gradleVersion).major >= 7
     }
 
     @Override
@@ -47,6 +42,36 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
             }
             test {
                 useJUnitPlatform()
+            }
+        """
+    }
+
+    @Override
+    protected String contextualTestExtension() {
+        """
+            package acme
+
+            import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
+            import org.spockframework.runtime.model.SpecInfo
+
+            class ContextualTestExtension extends AbstractAnnotationDrivenExtension<ContextualTest> {
+
+                @Override
+                void visitSpecAnnotation(ContextualTest annotation, SpecInfo spec) {
+
+                    spec.features.each { feature ->
+                        feature.reportIterations = true
+                        if (feature.parameterized) {
+                            def currentNameProvider = feature.iterationNameProvider
+                            feature.iterationNameProvider = {
+                                def defaultName = currentNameProvider != null ? currentNameProvider.getName(it) : feature.name
+                                defaultName + " [suffix]"
+                            }
+                        } else {
+                            feature.name = feature.name + " [suffix]" 
+                        }
+                    }
+                }
             }
         """
     }
