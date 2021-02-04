@@ -51,6 +51,19 @@ test {
 }
 ----
 
+
+.build.gradle.kts:
+[source,kotlin]
+----
+test {
+    retry {
+        maxRetries.set(3)
+        maxFailures.set(20)
+        failOnPassedAfterRetry.set(true)
+    }
+}
+----
+
 The `retry` extension is of the following type:
 
 [source,java]
