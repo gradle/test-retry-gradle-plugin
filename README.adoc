@@ -67,6 +67,7 @@ test {
 
 You may find that local developer builds do not benefit much from retry behaviour, particularly when those tests are invoked via your IDE. In that case we recommend enabling retry only for CI builds.
 
+.build.gradle:
 [source,groovy]
 ----
 boolean isCiServer = System.getenv().containsKey("CI")
