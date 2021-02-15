@@ -64,6 +64,7 @@ test {
 }
 ----
 
+=== Limiting retry to CI builds
 
 You may find that local developer builds do not benefit much from retry behaviour, particularly when those tests are invoked via your IDE. In that case we recommend enabling retry only for CI builds.
 
@@ -82,6 +83,7 @@ test {
 }
 ----
 
+== The `retry` extension
 
 The `retry` extension is of the following type:
 
