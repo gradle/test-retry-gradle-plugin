@@ -64,6 +64,24 @@ test {
 }
 ----
 
+
+You may find that local developer builds do not benefit much from retry behaviour, particularly when those tests are invoked via your IDE. In that case we recommend enabling retry only for CI builds.
+
+[source,groovy]
+----
+boolean isCiServer = System.getenv().containsKey("CI")
+test {
+    if (isCiServer) {
+        retry {
+            maxRetries = 3
+            maxFailures = 20
+            failOnPassedAfterRetry = true
+        }
+    }
+}
+----
+
+
 The `retry` extension is of the following type:
 
 [source,java]
