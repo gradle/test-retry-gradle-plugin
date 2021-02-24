@@ -51,8 +51,6 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
             param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
             param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
             param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
-            param("env.GRADLE_PUBLISH_KEY", "%pluginPortalPublishKey%")
-            password("env.GRADLE_PUBLISH_SECRET", "%pluginPortalPublishSecret%", display = NORMAL)
         }
 
         vcs {

@@ -1,6 +1,7 @@
 import jetbrains.buildServer.configs.kotlin.v2019_2.*
 import jetbrains.buildServer.configs.kotlin.v2019_2.FailureAction
-import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay
+import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.NORMAL
+import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.PROMPT
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2019_2.project
 import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.schedule
@@ -146,12 +147,16 @@ project {
         buildType("Development") {
             description =
                 "Publishes Gradle test retry plugin to development plugin portal (plugins.grdev.net)"
+            params {
+                param("env.GRADLE_PUBLISH_KEY", "%development.plugin.portal.publish.key%")
+                password("env.GRADLE_PUBLISH_SECRET", "%development.plugin.portal.publish.secret%", display = NORMAL)
+            }
             steps {
                 gradle {
                     tasks = "clean devSnapshot :plugin:publishPlugins -x test"
                     buildFile = ""
                     gradleParams =
-                        "-s $useGradleInternalScansServer -Dgradle.portal.url=https://plugins.grdev.net -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% %pluginPortalPublishingFlags%"
+                        "-s $useGradleInternalScansServer -Dgradle.portal.url=https://plugins.grdev.net %pluginPortalPublishingFlags%"
                 }
             }
             dependencies {
@@ -168,23 +173,25 @@ project {
             params {
                 select(
                     "releaseScope", "", label = "releaseScope", description = "The scope of the release",
-                    display = ParameterDisplay.PROMPT, options = listOf("major", "minor", "patch")
+                    display = PROMPT, options = listOf("major", "minor", "patch")
                 )
                 text(
-                    "githubUsername",
+                    "env.GRGIT_USER",
                     "",
                     label = "GitHub Username",
-                    display = ParameterDisplay.PROMPT,
+                    display = PROMPT,
                     allowEmpty = false
                 )
-                password("githubToken", "", label = "GitHub Access Token", display = ParameterDisplay.PROMPT)
+                password("env.GRGIT_PASS", "", label = "GitHub Access Token", display = PROMPT)
+                param("env.GRADLE_PUBLISH_KEY", "%plugin.portal.publish.key%")
+                password("env.GRADLE_PUBLISH_SECRET", "%plugin.portal.publish.secret%", display = NORMAL)
             }
             steps {
                 gradle {
                     tasks = "clean final -x test"
                     buildFile = ""
                     gradleParams =
-                        "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% -Dgradle.publish.key=%pluginPortalPublishKey% -Dgradle.publish.secret=%pluginPortalPublishSecret% -Dorg.ajoberstar.grgit.auth.username=%githubUsername% -Dorg.ajoberstar.grgit.auth.password=%githubToken% %pluginPortalPublishingFlags%"
+                        "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% %pluginPortalPublishingFlags%"
                 }
             }
             dependencies {
