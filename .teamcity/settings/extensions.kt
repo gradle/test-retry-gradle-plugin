@@ -1,6 +1,7 @@
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
 import jetbrains.buildServer.configs.kotlin.v2019_2.CheckoutMode
 import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
+import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.NORMAL
 import jetbrains.buildServer.configs.kotlin.v2019_2.ParametrizedWithType
 import jetbrains.buildServer.configs.kotlin.v2019_2.Project
 import jetbrains.buildServer.configs.kotlin.v2019_2.RelativeId
@@ -50,6 +51,8 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
             param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
             param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
             param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
+            param("env.GRADLE_PUBLISH_KEY", "%%pluginPortalPublishKey%%")
+            password("env.GRADLE_PUBLISH_SECRET", "%%pluginPortalPublishSecret%", display = NORMAL)
         }
 
         vcs {
