@@ -12,7 +12,7 @@ plugins {
     codenarc
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "0.12.0"
+    id("com.gradle.plugin-publish") version "0.13.0"
     id("com.github.hierynomus.license") version "0.15.0"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
