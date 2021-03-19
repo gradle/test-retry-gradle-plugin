@@ -1,7 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
-import java.net.URI
 
 plugins {
     java
@@ -52,8 +51,7 @@ shadowJar.configure {
         include(dependency("org.ow2.asm:asm"))
     }
     relocate("org.objectweb.asm", "org.gradle.testretry.org.objectweb.asm")
-    @Suppress("DEPRECATION")
-    classifier = ""
+    archiveClassifier.set("")
     from(file("../LICENSE")) {
         into("META-INF")
     }
@@ -115,7 +113,7 @@ publishing {
     repositories {
         maven {
             name = "GradleBuildInternalSnapshots"
-            url = URI.create("https://repo.gradle.org/gradle/libs-snapshots-local")
+            url = uri("https://repo.gradle.org/gradle/libs-snapshots-local")
             credentials {
                 username = project.findProperty("artifactoryUsername") as String?
                 password = project.findProperty("artifactoryPassword") as String?
@@ -124,24 +122,37 @@ publishing {
     }
 }
 
+configurations {
+    configureEach {
+        outgoing {
+            val removed = artifacts.removeIf { it.classifier.isNullOrEmpty() }
+            if (removed) {
+                artifact(tasks.shadowJar) {
+                    classifier = ""
+                }
+            }
+        }
+    }
+    // used by plugin-publish plugin
+    archives {
+        extendsFrom(signatures.get())
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
+    sign(configurations.archives.get())
+}
+
 tasks.withType<Sign>().configureEach {
     enabled = System.getenv("CI") != null
 }
 
-configure<SigningExtension> {
-    useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
-}
-
-configurations.archives.get().extendsFrom(configurations.signatures.get())
-signing {
-    sign(configurations.archives.get())
-}
-
-tasks.withType(Test::class).configureEach {
+tasks.withType<Test>().configureEach {
     maxParallelForks = 4
 }
 
-tasks.named<Test>("test") {
+tasks.test {
     systemProperty(
         GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
         project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
