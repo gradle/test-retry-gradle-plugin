@@ -29,6 +29,7 @@ import org.gradle.testretry.internal.executer.RetryTestExecuter;
 import org.gradle.util.VersionNumber;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -47,14 +48,14 @@ public final class TestTaskConfigurer {
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory)));
+        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory, test.getProject().getRootDir())));
         test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
     }
 
-    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
+    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory, File rootDir) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory);
+        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, rootDir);
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
@@ -117,15 +118,17 @@ public final class TestTaskConfigurer {
 
         private final TestRetryTaskExtensionAdapter adapter;
         private final ObjectFactory objectFactory;
+        private final File rootDir;
 
-        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory) {
+        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory, File rootDir) {
             this.adapter = adapter;
             this.objectFactory = objectFactory;
+            this.rootDir = rootDir;
         }
 
         @Override
         public void execute(@NotNull Test task) {
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory, rootDir);
             setTestExecuter(task, retryTestExecuter);
         }
     }

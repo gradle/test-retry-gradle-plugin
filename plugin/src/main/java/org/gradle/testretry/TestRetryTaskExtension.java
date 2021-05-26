@@ -70,6 +70,22 @@ public interface TestRetryTaskExtension {
     Property<Integer> getMaxFailures();
 
     /**
+     * Whether tests that has been modified should be retried.
+     * <p>
+     * Discovers modification of test by git diff with local master branch.
+     * All test cases in modified class are rerun until rich maxRetries or
+     * to the first fail execution.
+     * <p>
+     * This setting defaults to {@code false},
+     * which disables that feature.
+     * <p>
+     * This setting has no effect if gradle isn't run in git repository context.
+     *
+     * @return whether modified/new tests should be retried
+     */
+    Property<Boolean> getModifiedTestRetry();
+
+    /**
      * The filter for specifying which tests may be retried.
      */
     Filter getFilter();

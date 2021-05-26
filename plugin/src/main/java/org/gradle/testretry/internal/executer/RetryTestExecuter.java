@@ -27,6 +27,7 @@ import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
+import java.io.File;
 import java.util.stream.Collectors;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
@@ -35,6 +36,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
+    private final GitRepository gitRepository;
 
     private RoundResult lastResult;
 
@@ -43,11 +45,13 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         TestRetryTaskExtensionAdapter extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
         Instantiator instantiator,
-        ObjectFactory objectFactory
+        ObjectFactory objectFactory,
+        File rootDir
     ) {
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
+        this.gitRepository = GitRepository.create(rootDir, extension);
         this.frameworkTemplate = new TestFrameworkTemplate(
             testTask,
             instantiator,
@@ -81,7 +85,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             filter,
             frameworkTemplate.testsReader,
             testResultProcessor,
-            maxFailures
+            maxFailures,
+            gitRepository
         );
 
         int retryCount = 0;

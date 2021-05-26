@@ -34,12 +34,14 @@ configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
     plugin("org.ow2.asm:asm:9.0")
+    plugin("org.eclipse.jgit:org.eclipse.jgit:5.11.1.202105131744-r")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
     testImplementation("org.ow2.asm:asm:8.0.1")
+    testImplementation("org.eclipse.jgit:org.eclipse.jgit:5.11.1.202105131744-r")
 
     codenarc("org.codenarc:CodeNarc:1.0")
 }

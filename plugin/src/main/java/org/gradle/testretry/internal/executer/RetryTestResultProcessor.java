@@ -37,6 +37,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
+    private final GitRepository gitRepository;
     private boolean lastRetry;
     private boolean hasRetryFilteredFailures;
 
@@ -44,6 +45,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private TestNames currentRoundFailedTests = new TestNames();
     private TestNames previousRoundFailedTests = new TestNames();
+    private TestNames currentRoundFilteredTests = new TestNames();
 
     private Object rootTestDescriptorId;
 
@@ -52,13 +54,15 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         RetryFilter filter,
         TestsReader testsReader,
         TestResultProcessor delegate,
-        int maxFailures
+        int maxFailures,
+        GitRepository gitRepository
     ) {
         this.testFrameworkStrategy = testFrameworkStrategy;
         this.filter = filter;
         this.testsReader = testsReader;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
+        this.gitRepository = gitRepository;
     }
 
     @Override
@@ -87,6 +91,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
+                    currentRoundFailedTests.add(className, name);
+                }
+                if (gitRepository.wasModified(className) && !isClassDescriptor(descriptor)
+                        && !currentRoundFilteredTests.remove(className, name)) {
                     currentRoundFailedTests.add(className, name);
                 }
 
@@ -130,9 +138,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         if (descriptor != null) {
             String className = descriptor.getClassName();
             if (className != null) {
-                if (filter.canRetry(className)) {
+                if (filter.canRetry(className) && !gitRepository.wasModified(className)) {
                     currentRoundFailedTests.add(className, descriptor.getName());
                 } else {
+                    currentRoundFilteredTests.add(className, descriptor.getName());
                     hasRetryFilteredFailures = true;
                 }
             }
