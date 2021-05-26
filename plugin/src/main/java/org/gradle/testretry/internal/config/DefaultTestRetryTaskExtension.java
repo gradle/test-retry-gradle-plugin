@@ -26,6 +26,7 @@ import javax.inject.Inject;
 public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
 
     private final Property<Boolean> failOnPassedAfterRetry;
+    private final Property<Boolean> modifiedTestRetry;
     private final Property<Integer> maxRetries;
     private final Property<Integer> maxFailures;
     private final Filter filter;
@@ -33,6 +34,7 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     @Inject
     public DefaultTestRetryTaskExtension(ObjectFactory objects) {
         this.failOnPassedAfterRetry = objects.property(Boolean.class);
+        this.modifiedTestRetry = objects.property(Boolean.class);
         this.maxRetries = objects.property(Integer.class);
         this.maxFailures = objects.property(Integer.class);
         this.filter = new FilterImpl(objects);
@@ -40,6 +42,11 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
 
     public Property<Boolean> getFailOnPassedAfterRetry() {
         return failOnPassedAfterRetry;
+    }
+
+    @Override
+    public Property<Boolean> getModifiedTestRetry() {
+        return modifiedTestRetry;
     }
 
     public Property<Integer> getMaxRetries() {
