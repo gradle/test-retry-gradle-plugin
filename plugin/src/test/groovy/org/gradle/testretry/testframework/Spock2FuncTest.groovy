@@ -38,7 +38,7 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation 'org.spockframework:spock-core:2.0-M2-groovy-3.0'
+                implementation 'org.spockframework:spock-core:2.0-groovy-3.0'
             }
             test {
                 useJUnitPlatform()
@@ -68,7 +68,7 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
                                 defaultName + " [suffix]"
                             }
                         } else {
-                            feature.name = feature.name + " [suffix]" 
+                            feature.name = feature.name + " [suffix]"
                         }
                     }
                 }

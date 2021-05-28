@@ -304,19 +304,23 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        result.output.with {
+            assert count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-        result.output.count('unrolled[0] PASSED') == 2
-        result.output.count('unrolled[1] FAILED') == 2
-        result.output.count('unrolled[2] PASSED') == 2
+            readLines().with {
+                assert count { it =~ /unrolled ?\[.*?0] PASSED/ } == 2
+                assert count { it =~ /unrolled ?\[.*?1] FAILED/ } == 2
+                assert count { it =~ /unrolled ?\[.*?2] PASSED/ } == 2
+            }
 
-        result.output.count('unrolled with param foo PASSED') == 2
-        result.output.count('unrolled with param bar FAILED') == 2
-        result.output.count('unrolled with param baz PASSED') == 2
+            assert count('unrolled with param foo PASSED') == 2
+            assert count('unrolled with param bar FAILED') == 2
+            assert count('unrolled with param baz PASSED') == 2
 
-        result.output.count('unrolled with param [foo] PASSED') == 2
-        result.output.count('unrolled with param [bar] FAILED') == 2
-        result.output.count('unrolled with param [baz] PASSED') == 2
+            assert count('unrolled with param [foo] PASSED') == 2
+            assert count('unrolled with param [bar] FAILED') == 2
+            assert count('unrolled with param [baz] PASSED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -686,7 +690,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         file("dep/src/main/groovy/acme/FlakyAssert.java") << flakyAssertClass()
         file("dep/src/main/groovy/acme/AbstractTest.groovy") << """
             package acme;
-            
+
             class AbstractTest extends spock.lang.Specification {
                 @spock.lang.Unroll
                 def "unrolled [#param] parent"() {
