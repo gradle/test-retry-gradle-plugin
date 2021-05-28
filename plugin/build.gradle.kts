@@ -65,7 +65,7 @@ tasks.getByName("jar").apply {
 
 gradlePlugin {
     plugins {
-        create("testRetry") {
+        register("testRetry") {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
@@ -106,7 +106,7 @@ license {
 
 publishing {
     publications {
-        create<MavenPublication>("plugin") {
+        register<MavenPublication>("plugin") {
             artifactId = "test-retry-gradle-plugin"
             artifact(shadowJar.get()) {
                 classifier = null
