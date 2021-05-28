@@ -43,12 +43,6 @@ final class TestDescriptorImpl implements TestDescriptorInternal {
 
     @Nullable
     @Override
-    public Object getOwnerBuildOperationId() {
-        return parent.getOwnerBuildOperationId();
-    }
-
-    @Nullable
-    @Override
     public String getClassName() {
         return parent.getClassName();
     }
