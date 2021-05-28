@@ -11,9 +11,9 @@ plugins {
     codenarc
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "0.13.0"
+    id("com.gradle.plugin-publish") version "0.15.0"
     id("com.github.hierynomus.license") version "0.16.1"
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 repositories {
@@ -33,16 +33,16 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    plugin("org.ow2.asm:asm:9.0")
+    plugin("org.ow2.asm:asm:9.1")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
     testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
-    testImplementation("org.ow2.asm:asm:8.0.1")
+    testImplementation("org.ow2.asm:asm:9.1")
 
-    codenarc("org.codenarc:CodeNarc:1.0")
+    codenarc("org.codenarc:CodeNarc:2.1.0")
 }
 
 val shadowJar = tasks.named<ShadowJar>("shadowJar")
@@ -58,8 +58,10 @@ shadowJar.configure {
     }
 }
 
-tasks.getByName("jar").enabled = false
-tasks.getByName("jar").dependsOn(shadowJar)
+tasks.getByName("jar").apply {
+    enabled = false
+    dependsOn(shadowJar)
+}
 
 gradlePlugin {
     plugins {

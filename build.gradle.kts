@@ -1,5 +1,5 @@
 plugins {
-    id("nebula.release") version "13.2.1"
+    id("nebula.release") version "15.3.1"
 }
 
 buildScan {
@@ -18,7 +18,7 @@ val publishPlugins = tasks.findByPath(":plugin:publishPlugins")
 
 tasks.named("releaseCheck") {
     doFirst {
-        if(!JavaVersion.current().isJava8) {
+        if (!JavaVersion.current().isJava8) {
             throw GradleException("Plugin releases should use Java 8.")
         }
     }
