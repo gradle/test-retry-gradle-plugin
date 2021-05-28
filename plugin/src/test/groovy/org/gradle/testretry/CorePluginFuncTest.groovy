@@ -16,11 +16,9 @@
 package org.gradle.testretry
 
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter
-import spock.lang.Unroll
 
 class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
 
-    @Unroll
     def "has no effect when all tests pass (gradle version #gradleVersion)"() {
         when:
         buildFile << """
@@ -39,7 +37,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "is benign when unconfigured (gradle version #gradleVersion)"() {
         when:
         successfulTest()
@@ -52,7 +49,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "does not retry by default (gradle version #gradleVersion)"() {
         when:
         failedTest()
@@ -66,7 +62,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "retries failed tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -92,7 +87,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "still publishes test report when test is un-retryable (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -116,7 +110,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "stops when all tests pass (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -138,7 +131,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "optionally fail when flaky tests are detected (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -161,7 +153,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "default behaviour is to not retry (gradle version #gradleVersion)"() {
         when:
         flakyTest()
@@ -177,7 +168,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "retries stop after max failures is reached (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -200,5 +190,4 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 }

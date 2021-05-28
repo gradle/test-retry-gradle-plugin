@@ -15,15 +15,12 @@
  */
 package org.gradle.testretry
 
-import spock.lang.Unroll
-
 class KotlinDslFuncTest extends AbstractPluginFuncTest {
     @Override
     String getLanguagePlugin() {
         return 'java'
     }
 
-    @Unroll
     def "kotlin extension configuration (gradle version #gradleVersion)"() {
         given:
         buildFile.delete()
@@ -47,5 +44,4 @@ class KotlinDslFuncTest extends AbstractPluginFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 }

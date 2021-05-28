@@ -15,11 +15,10 @@
  */
 package org.gradle.testretry.testframework
 
-
 import org.gradle.testretry.AbstractFrameworkFuncTest
-import org.junit.Assume
 import spock.lang.Issue
-import spock.lang.Unroll
+
+import static org.junit.Assume.assumeTrue
 
 class SpockFuncTest extends AbstractFrameworkFuncTest {
     @Override
@@ -47,7 +46,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         "classMethod"
     }
 
-    @Unroll
+
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -95,7 +94,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-    @Unroll
+
     def "handles flaky static initializers exhaustive = #exhaust (gradle version #gradleVersion)"(String gradleVersion, boolean exhaust) {
         given:
         buildFile << """
@@ -140,7 +139,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     }
 
 
-    @Unroll
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -213,7 +211,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "handles non-parameterized test names matching a parameterized name (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -251,7 +249,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -326,7 +324,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "handles unrolled tests with method call on param (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -369,7 +367,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "handles unrolled tests with reserved regex chars (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -412,7 +410,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "handles unrolled tests with additional test context method suffix (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -461,10 +459,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods(gradleVersion))
+        assumeTrue(canTargetInheritedMethods(gradleVersion))
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -508,10 +506,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods(gradleVersion))
+        assumeTrue(canTargetInheritedMethods(gradleVersion))
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -550,10 +548,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def 'can rerun parameterized test method in super class (gradle version #gradleVersion)'() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods(gradleVersion))
+        assumeTrue(canTargetInheritedMethods(gradleVersion))
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -609,7 +607,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
     def "can rerun on failure in super super class (gradle version #gradleVersion)"() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods(gradleVersion))
+        assumeTrue(canTargetInheritedMethods(gradleVersion))
         buildFile << """
             test.retry.maxRetries = 1
         """
@@ -663,10 +661,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
         given:
-        Assume.assumeTrue(canTargetInheritedMethods(gradleVersion))
+        assumeTrue(canTargetInheritedMethods(gradleVersion))
         settingsFile << """
             include 'dep'
         """
@@ -713,7 +711,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
@@ -751,7 +749,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is ignored after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
@@ -790,7 +788,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
+
     def "build is successful if a test is ignored but never failed (gradle version #gradleVersion)"() {
         given:
         buildFile << """

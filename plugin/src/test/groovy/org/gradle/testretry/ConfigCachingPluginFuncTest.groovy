@@ -18,13 +18,12 @@ package org.gradle.testretry
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
-import org.junit.Assume
 import org.spockframework.util.VersionNumber
-import spock.lang.Unroll
+
+import static org.junit.Assume.assumeTrue
 
 class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
 
-    @Unroll
     def "compatible with configuration cache when tests pass (gradle version #gradleVersion)"() {
         shouldTestConfigCache(gradleVersion)
 
@@ -51,7 +50,6 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "compatible with configuration cache when failed tests are retried (gradle version #gradleVersion)"() {
         shouldTestConfigCache(gradleVersion)
 
@@ -81,7 +79,7 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
 
     void shouldTestConfigCache(String gradleVersion) {
         // Configuration cache is supported after 6.1
-        Assume.assumeTrue("$gradleVersion does not support configuration cache", isAtLeastGradle6_1(gradleVersion))
+        assumeTrue("$gradleVersion does not support configuration cache", isAtLeastGradle6_1(gradleVersion))
     }
 
     boolean isAtLeastGradle6_1(String gradleVersion) {

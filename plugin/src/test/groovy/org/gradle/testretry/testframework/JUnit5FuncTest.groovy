@@ -15,9 +15,7 @@
  */
 package org.gradle.testretry.testframework
 
-
 import org.gradle.testretry.AbstractFrameworkFuncTest
-import spock.lang.Unroll
 
 class JUnit5FuncTest extends AbstractFrameworkFuncTest {
     @Override
@@ -33,7 +31,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion == "5.0" ? "classMethod" : "initializationError"
     }
 
-    @Unroll
     def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
         given:
         buildFile << """
@@ -103,7 +100,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-    @Unroll
     def "handles flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -134,7 +130,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -177,7 +172,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -217,7 +211,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -270,5 +263,4 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             }
         """
     }
-
 }

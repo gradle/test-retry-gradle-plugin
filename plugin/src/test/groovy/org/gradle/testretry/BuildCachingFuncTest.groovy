@@ -16,11 +16,9 @@
 package org.gradle.testretry
 
 import org.gradle.testkit.runner.TaskOutcome
-import spock.lang.Unroll
 
 class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
 
-    @Unroll
     def "test task is still cacheable (gradle version #gradleVersion)"() {
         given:
         successfulTest()
@@ -44,7 +42,6 @@ class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "maxRetries and maxFailures are not treated as inputs (gradle version #gradleVersion)"() {
         given:
         successfulTest()
@@ -75,7 +72,6 @@ class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "failOnPassedAfterRetry is input (gradle version #gradleVersion)"() {
         given:
         flakyTest()
@@ -105,7 +101,6 @@ class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "removing plugin invalidates cached result (gradle version #gradleVersion)"() {
         given:
         flakyTest()
@@ -130,5 +125,4 @@ class BuildCachingFuncTest extends AbstractGeneralPluginFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 }

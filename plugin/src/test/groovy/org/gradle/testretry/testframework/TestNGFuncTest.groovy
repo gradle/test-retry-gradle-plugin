@@ -17,7 +17,6 @@ package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
-import spock.lang.Unroll
 
 class TestNGFuncTest extends AbstractFrameworkFuncTest {
     @Override
@@ -25,7 +24,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         return 'java'
     }
 
-    @Unroll
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -62,7 +60,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         // Note: we don't handle BeforeSuite AfterSuite
     }
 
-    @Unroll
     def "does not handle flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -94,7 +91,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -140,7 +136,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -180,7 +175,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles test dependencies (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -221,7 +215,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -260,7 +253,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/66")
     def "handles parameters with #parameterRepresentation.name() toString() representation (gradle version #gradleVersion)"() {
         given:
@@ -315,7 +307,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-    @Unroll
     def "uses configured test listeners for test retry (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -367,7 +358,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "build failed if a test has failed once but never passed (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -401,7 +391,6 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     @Override
     protected String buildConfiguration() {
         return """
@@ -419,15 +408,14 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         NULL('null'),
         MISSING('super.toString()')
 
-        String representation;
+        String representation
 
         ParameterExceptionString(String representation) {
-            this.representation = representation;
+            this.representation = representation
         }
 
         String getRepresentation() {
             return representation
         }
     }
-
 }
