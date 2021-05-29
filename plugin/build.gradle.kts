@@ -12,12 +12,12 @@ plugins {
     `kotlin-dsl`
     signing
     id("com.gradle.plugin-publish") version "0.13.0"
-    id("com.github.hierynomus.license") version "0.15.0"
+    id("com.github.hierynomus.license") version "0.16.1"
     id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 group = "org.gradle"
@@ -37,7 +37,8 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
+    testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
+    testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
     testImplementation("org.ow2.asm:asm:8.0.1")
 
@@ -150,6 +151,7 @@ tasks.withType<Sign>().configureEach {
 
 tasks.withType<Test>().configureEach {
     maxParallelForks = 4
+    useJUnitPlatform()
 }
 
 tasks.test {
