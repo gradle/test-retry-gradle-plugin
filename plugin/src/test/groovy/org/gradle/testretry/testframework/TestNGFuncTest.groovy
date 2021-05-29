@@ -384,7 +384,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
                 public void flakyAssumeTest() {
                    ${flakyAssert()};
                    if (${markerFileExistsCheck()}) {
-                    throw new org.testng.SkipException("Skip me");
+                       throw new org.testng.SkipException("Skip me");
                    }
                 }
             }
