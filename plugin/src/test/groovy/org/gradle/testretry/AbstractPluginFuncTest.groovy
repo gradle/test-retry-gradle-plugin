@@ -16,6 +16,7 @@
 package org.gradle.testretry
 
 import groovy.json.StringEscapeUtils
+import groovy.xml.XmlSlurper
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
@@ -71,7 +72,7 @@ abstract class AbstractPluginFuncTest extends Specification {
                         } else {
                             Files.write(marker, "0".getBytes());
                         }
-                        throw new RuntimeException("fail me!");                        
+                        throw new RuntimeException("fail me!");
                     } catch (java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
                     }
