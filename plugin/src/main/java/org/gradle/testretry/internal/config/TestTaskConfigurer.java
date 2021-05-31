@@ -65,10 +65,6 @@ public final class TestTaskConfigurer {
         invoke(declaredMethod(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
     }
 
-    private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
-        return gradleVersion.getMajor() == 5 ? gradleVersion.getMinor() >= 1 : gradleVersion.getMajor() > 5;
-    }
-
     private static class ConditionalTaskAction implements Action<Task> {
 
         private final Action<Test> delegate;
