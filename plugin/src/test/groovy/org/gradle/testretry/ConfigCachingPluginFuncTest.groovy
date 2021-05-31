@@ -104,7 +104,7 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         return arguments + [configCacheArgument]
     }
 
-    GradleRunner gradleRunnerWithConfigurationCache(String gradleVersion, String[] arguments = ['-s', 'test']) {
+    GradleRunner gradleRunnerWithConfigurationCache(String gradleVersion, String... arguments = ['-s', 'test']) {
         return gradleRunner(gradleVersion, withConfigurationCacheArguments(gradleVersion, arguments))
     }
 

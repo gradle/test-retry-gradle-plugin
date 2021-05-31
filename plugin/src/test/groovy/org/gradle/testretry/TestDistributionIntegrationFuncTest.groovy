@@ -39,10 +39,11 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         """
 
         when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
+        def result = gradleRunner(gradleVersion, 'test', '--info').buildAndFail()
 
         then:
         assertNotRetried(result)
+        result.output.contains("handled by the test-distribution plugin")
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
