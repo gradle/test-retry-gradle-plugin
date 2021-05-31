@@ -77,20 +77,20 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    void shouldTestConfigCache(String gradleVersion) {
+    static void shouldTestConfigCache(String gradleVersion) {
         // Configuration cache is supported after 6.1
         assumeTrue("$gradleVersion does not support configuration cache", isAtLeastGradle6_1(gradleVersion))
     }
 
-    boolean isAtLeastGradle6_1(String gradleVersion) {
+    static boolean isAtLeastGradle6_1(String gradleVersion) {
         GradleVersion.version(gradleVersion) >= GradleVersion.version("6.1")
     }
 
-    void assertConfigurationCacheIsReused(BuildResult result, String gradleVersion) {
+    static void assertConfigurationCacheIsReused(BuildResult result, String gradleVersion) {
         assert result.output.contains(getConfigurationCacheMessage(gradleVersion))
     }
 
-    String[] withConfigurationCacheArguments(String gradleVersion, String[] arguments) {
+    static String[] withConfigurationCacheArguments(String gradleVersion, String[] arguments) {
         String configCacheArgument
         // We need to use VersionNumber here to match 6.6 nightlies
         def version = VersionNumber.parse(gradleVersion)
@@ -108,7 +108,7 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         return gradleRunner(gradleVersion, withConfigurationCacheArguments(gradleVersion, arguments))
     }
 
-    String getConfigurationCacheMessage(String gradleVersion) {
+    static String getConfigurationCacheMessage(String gradleVersion) {
         if (GradleVersion.version(gradleVersion) >= GradleVersion.version("6.5")) {
             return 'Reusing configuration cache.'
         } else {
