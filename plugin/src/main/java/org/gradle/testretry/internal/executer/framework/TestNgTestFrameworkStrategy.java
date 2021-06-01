@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+
 final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNgTestFrameworkStrategy.class);
@@ -73,7 +75,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     private TestNGTestFramework createTestFramework(TestFrameworkTemplate template, DefaultTestFilter retriedTestFilter) {
-        if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.6")) {
+        if (gradleVersionIsAtLeast("6.6")) {
             return new TestNGTestFramework(template.task, template.task.getClasspath(), retriedTestFilter, template.objectFactory);
         } else {
             try {

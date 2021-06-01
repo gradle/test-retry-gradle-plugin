@@ -48,7 +48,8 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
-        Provider<Boolean> isDeactivatedByTestDistributionPlugin = shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory);
+        Provider<Boolean> isDeactivatedByTestDistributionPlugin =
+            shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
         test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
@@ -57,11 +58,29 @@ public final class TestTaskConfigurer {
         test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
     }
 
-    private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
-        Provider<Boolean> provider = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
-        Property<Boolean> result = objectFactory.property(Boolean.class).convention(provider);
-        result.finalizeValueOnRead();
+    private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(
+        Test test,
+        ObjectFactory objectFactory,
+        ProviderFactory providerFactory,
+        VersionNumber gradleVersion
+    ) {
+        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
+        if (supportsPropertyConventions(gradleVersion)) {
+            Property<Boolean> property = objectFactory.property(Boolean.class).convention(result);
+            if (supportsFinalizeValueOnRead(gradleVersion)) {
+                property.finalizeValueOnRead();
+            }
+            result = property;
+        }
         return result;
+    }
+
+    public static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
+        return gradleVersion.compareTo(VersionNumber.parse("5.1")) >= 0;
+    }
+
+    private static boolean supportsFinalizeValueOnRead(VersionNumber gradleVersion) {
+        return gradleVersion.compareTo(VersionNumber.parse("6.1")) >= 0;
     }
 
     private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
