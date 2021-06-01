@@ -38,28 +38,26 @@ public final class TestRetryTaskExtensionAdapter {
     private final ProviderFactory providerFactory;
     private final TestRetryTaskExtension extension;
     private final boolean simulateNotRetryableTest;
-    private boolean useConventions;
+    private final boolean useConventions;
 
     public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
         VersionNumber gradleVersion
-
     ) {
         this.providerFactory = providerFactory;
         this.extension = extension;
         this.simulateNotRetryableTest = Boolean.getBoolean(SIMULATE_NOT_RETRYABLE_PROPERTY);
+        this.useConventions = supportsPropertyConventions(gradleVersion);
 
-        boolean gradle51OrLater = gradleVersion.getMajor() == 5
-            ? gradleVersion.getMinor() >= 1
-            : gradleVersion.getMajor() > 5;
-
-        this.useConventions = gradle51OrLater;
-
-        initialize(extension, gradle51OrLater);
+        initialize(extension, this.useConventions);
     }
 
-    private void initialize(TestRetryTaskExtension extension, boolean gradle51OrLater) {
+    private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
+        return gradleVersion.compareTo(VersionNumber.parse("5.1")) >= 0;
+    }
+
+    private static void initialize(TestRetryTaskExtension extension, boolean gradle51OrLater) {
         if (gradle51OrLater) {
             extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
             extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);

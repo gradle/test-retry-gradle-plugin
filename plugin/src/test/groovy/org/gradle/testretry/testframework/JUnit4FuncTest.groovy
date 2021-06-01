@@ -15,10 +15,8 @@
  */
 package org.gradle.testretry.testframework
 
-
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
-import spock.lang.Unroll
 
 class JUnit4FuncTest extends AbstractFrameworkFuncTest {
     @Override
@@ -42,7 +40,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         "classMethod"
     }
 
-    @Unroll
     def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
         given:
         buildFile << """
@@ -89,7 +86,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-    @Unroll
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -155,7 +151,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -195,7 +190,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles flaky runner (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -243,7 +237,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles flaky static initializer (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -276,7 +269,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles parameterized tests (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -331,7 +323,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
@@ -363,7 +354,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "handles failure in rule before = #failBefore (gradle version #gradleVersion)"(String gradleVersion, boolean failBefore) {
         given:
         buildFile << """
@@ -377,7 +367,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             public class FlakyTests {
 
                 public static class FailingRule implements org.junit.rules.TestRule {
-                 
+
                     @Override
                     public org.junit.runners.model.Statement apply(org.junit.runners.model.Statement base, org.junit.runner.Description description) {
                         return new org.junit.runners.model.Statement() {
@@ -392,7 +382,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
                             }
                         };
                     }
-                 
+
                 }
 
                 @org.junit.Rule
@@ -419,7 +409,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-    @Unroll
     def "handles failure in class rule before = #failBefore (gradle version #gradleVersion)"(String gradleVersion, boolean failBefore) {
         given:
         buildFile << """
@@ -433,7 +422,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             public class FlakyTests {
 
                 public static class FailingRule implements org.junit.rules.TestRule {
-                 
+
                     @Override
                     public org.junit.runners.model.Statement apply(org.junit.runners.model.Statement base, org.junit.runner.Description description) {
                         return new org.junit.runners.model.Statement() {
@@ -448,7 +437,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
                             }
                         };
                     }
-                 
+
                 }
 
                 @org.junit.ClassRule
@@ -479,6 +468,4 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             [true, false]
         ])
     }
-
-
 }

@@ -11,13 +11,13 @@ plugins {
     codenarc
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "0.13.0"
-    id("com.github.hierynomus.license") version "0.15.0"
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.gradle.plugin-publish") version "0.15.0"
+    id("com.github.hierynomus.license") version "0.16.1"
+    id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 group = "org.gradle"
@@ -33,15 +33,17 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    plugin("org.ow2.asm:asm:9.0")
+    val asmVersion = "9.1"
+    plugin("org.ow2.asm:asm:${asmVersion}")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation("org.spockframework:spock-core:1.3-groovy-2.5")
+    testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
+    testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
-    testImplementation("org.ow2.asm:asm:8.0.1")
+    testImplementation("org.ow2.asm:asm:${asmVersion}")
 
-    codenarc("org.codenarc:CodeNarc:1.0")
+    codenarc("org.codenarc:CodeNarc:2.1.0")
 }
 
 val shadowJar = tasks.named<ShadowJar>("shadowJar")
@@ -57,12 +59,14 @@ shadowJar.configure {
     }
 }
 
-tasks.getByName("jar").enabled = false
-tasks.getByName("jar").dependsOn(shadowJar)
+tasks.jar {
+    enabled = false
+    dependsOn(shadowJar)
+}
 
 gradlePlugin {
     plugins {
-        create("testRetry") {
+        register("testRetry") {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
@@ -103,7 +107,7 @@ license {
 
 publishing {
     publications {
-        create<MavenPublication>("plugin") {
+        register<MavenPublication>("plugin") {
             artifactId = "test-retry-gradle-plugin"
             artifact(shadowJar.get()) {
                 classifier = null
@@ -150,6 +154,7 @@ tasks.withType<Sign>().configureEach {
 
 tasks.withType<Test>().configureEach {
     maxParallelForks = 4
+    useJUnitPlatform()
 }
 
 tasks.test {

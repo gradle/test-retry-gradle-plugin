@@ -15,13 +15,10 @@
  */
 package org.gradle.testretry
 
-import spock.lang.Unroll
-
 import javax.annotation.Nullable
 
 class FilterFuncTest extends AbstractGeneralPluginFuncTest {
 
-    @Unroll
     def "can filter what is retried (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -77,7 +74,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             import java.lang.annotation.Retention;
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
-            
+
             @Retention(RetentionPolicy.RUNTIME)
             @Target({ ElementType.TYPE })
             public @interface $name { }
@@ -91,7 +88,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             import java.lang.annotation.Retention;
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
-            
+
             @Retention(RetentionPolicy.RUNTIME)
             @Target({ ElementType.TYPE })
             @java.lang.annotation.Inherited

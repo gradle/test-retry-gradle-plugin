@@ -31,18 +31,15 @@ class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation "org.codehaus.groovy:groovy-all:2.5.8", {
-                    exclude group: "org.junit.jupiter"
-                }
+                implementation "org.codehaus.groovy:groovy:2.5.8"
                 testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
-                testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
-                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
+                testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.0-M1"
+                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.0-M1"
             }
 
             test {
                 useJUnitPlatform()
             }
-        """
+        """.stripIndent()
     }
-
 }

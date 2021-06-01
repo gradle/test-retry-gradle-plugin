@@ -16,6 +16,7 @@
 package org.gradle.testretry
 
 import groovy.json.StringEscapeUtils
+import groovy.xml.XmlSlurper
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
@@ -71,7 +72,7 @@ abstract class AbstractPluginFuncTest extends Specification {
                         } else {
                             Files.write(marker, "0".getBytes());
                         }
-                        throw new RuntimeException("fail me!");                        
+                        throw new RuntimeException("fail me!");
                     } catch (java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
                     }
@@ -119,10 +120,10 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     protected String buildConfiguration() {
-        return 'dependencies { testImplementation "junit:junit:4.12" }'
+        return 'dependencies { testImplementation "junit:junit:4.13.2" }'
     }
 
-    String flakyAssert(String id = "id", int failures = 1) {
+    static String flakyAssert(String id = "id", int failures = 1) {
         return "acme.FlakyAssert.flakyAssert(\"${StringEscapeUtils.escapeJava(id)}\", $failures);"
     }
 
@@ -135,7 +136,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
     }
 
-    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s']) {
+    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-S']) {
         GradleRunner.create()
             .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .withProjectDir(testProjectDir.root)

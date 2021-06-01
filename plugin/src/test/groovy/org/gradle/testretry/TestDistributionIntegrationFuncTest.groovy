@@ -16,7 +16,6 @@
 package org.gradle.testretry
 
 import org.gradle.testkit.runner.BuildResult
-import spock.lang.Unroll
 
 class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest {
 
@@ -27,7 +26,6 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         failedTest()
     }
 
-    @Unroll
     def "is deactivated when decorated distribution extension returns true (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -41,16 +39,16 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         """
 
         when:
-        def result = gradleRunner(gradleVersion).buildAndFail()
+        def result = gradleRunner(gradleVersion, 'test', '--info').buildAndFail()
 
         then:
         assertNotRetried(result)
+        result.output.contains("handled by the test-distribution plugin")
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "is deactivated when undecorated distribution extension returns true (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -72,7 +70,6 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "is not deactivated when distribution extension returns false (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -95,7 +92,6 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    @Unroll
     def "is not deactivated when distribution extension does not declare the expected method (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -127,5 +123,4 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         assert result.output.count('FAILED') == 1 + retries + 1 + 1
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries)
     }
-
 }
