@@ -120,10 +120,10 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     protected String buildConfiguration() {
-        return 'dependencies { testImplementation "junit:junit:4.12" }'
+        return 'dependencies { testImplementation "junit:junit:4.13.2" }'
     }
 
-    String flakyAssert(String id = "id", int failures = 1) {
+    static String flakyAssert(String id = "id", int failures = 1) {
         return "acme.FlakyAssert.flakyAssert(\"${StringEscapeUtils.escapeJava(id)}\", $failures);"
     }
 
@@ -136,7 +136,7 @@ abstract class AbstractPluginFuncTest extends Specification {
         testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
     }
 
-    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-s']) {
+    GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-S']) {
         GradleRunner.create()
             .withDebug(ManagementFactory.getRuntimeMXBean().getInputArguments().toString().indexOf("-agentlib:jdwp") > 0)
             .withProjectDir(testProjectDir.root)

@@ -24,6 +24,15 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         return 'java'
     }
 
+    @Override
+    def setup() {
+        buildFile << """
+            dependencies {
+                testImplementation 'org.testng:testng:7.4.0'
+            }
+        """
+    }
+
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """

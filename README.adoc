@@ -229,16 +229,16 @@ Other versions are likely to work as well, but are not tested.
 |Version Tested
 
 |JUnit4
-|4.12
+|4.13.2
 
 |JUnit5
-|5.5.2
+|5.8.0-M1
 
 |Spock
-|1.3-groovy-2.5
+|2.0-groovy-3.0
 
 |TestNG
-|7.0.0
+|7.4.0
 |===
 
 === Parameterized tests

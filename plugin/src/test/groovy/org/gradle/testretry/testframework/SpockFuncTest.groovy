@@ -822,7 +822,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation "org.codehaus.groovy:groovy-all:2.5.8"
+                implementation "org.codehaus.groovy:groovy:2.5.8"
                 testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
