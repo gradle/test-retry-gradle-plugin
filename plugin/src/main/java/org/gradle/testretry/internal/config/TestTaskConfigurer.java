@@ -48,9 +48,11 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
+        Provider<Boolean> isDeactivatedByTestDistributionPlugin = shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory);
+        test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
+
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
 
-        Provider<Boolean> isDeactivatedByTestDistributionPlugin = shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory);
         test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
         test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
     }
