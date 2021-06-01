@@ -654,7 +654,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         settingsFile << """
             include 'dep'
         """
-        file("dep/build.gradle") << baseBuildScript()
+        file("dep/build.gradle") << baseBuildScript().replaceAll("testImplementation", "implementation")
 
         file("dep/src/main/groovy/acme/FlakyAssert.java") << flakyAssertClass()
         file("dep/src/main/groovy/acme/AbstractTest.groovy") << """
@@ -823,7 +823,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         return """
             dependencies {
                 implementation "org.codehaus.groovy:groovy-all:2.5.8"
-                implementation "org.spockframework:spock-core:1.3-groovy-2.5"
+                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
             }
         """
     }

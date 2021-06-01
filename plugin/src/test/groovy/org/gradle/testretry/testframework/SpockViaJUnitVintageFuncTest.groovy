@@ -32,7 +32,7 @@ class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
         return """
             dependencies {
                 implementation "org.codehaus.groovy:groovy-all:2.5.8"
-                implementation "org.spockframework:spock-core:1.3-groovy-2.5"
+                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
                 testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.2"
                 testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.2"
             }
