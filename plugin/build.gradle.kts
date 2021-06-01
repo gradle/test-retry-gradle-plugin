@@ -33,14 +33,15 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    plugin("org.ow2.asm:asm:9.1")
+    val asmVersion = "9.1"
+    plugin("org.ow2.asm:asm:${asmVersion}")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
     testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
     testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
-    testImplementation("org.ow2.asm:asm:9.1")
+    testImplementation("org.ow2.asm:asm:${asmVersion}")
 
     codenarc("org.codenarc:CodeNarc:2.1.0")
 }
@@ -58,7 +59,7 @@ shadowJar.configure {
     }
 }
 
-tasks.getByName("jar").apply {
+tasks.jar {
     enabled = false
     dependsOn(shadowJar)
 }

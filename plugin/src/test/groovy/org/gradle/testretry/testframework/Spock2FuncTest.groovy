@@ -75,5 +75,4 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
             }
         """
     }
-
 }

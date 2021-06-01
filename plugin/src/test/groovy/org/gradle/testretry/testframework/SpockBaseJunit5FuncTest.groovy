@@ -47,5 +47,4 @@ abstract class SpockBaseJunit5FuncTest extends SpockFuncTest {
             }
         """
     }
-
 }

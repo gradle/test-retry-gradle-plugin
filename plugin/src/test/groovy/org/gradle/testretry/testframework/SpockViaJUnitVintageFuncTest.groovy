@@ -40,7 +40,6 @@ class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
             test {
                 useJUnitPlatform()
             }
-        """
+        """.stripIndent()
     }
-
 }

@@ -46,7 +46,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         "classMethod"
     }
 
-
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -94,7 +93,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         ])
     }
 
-
     def "handles flaky static initializers exhaustive = #exhaust (gradle version #gradleVersion)"(String gradleVersion, boolean exhaust) {
         given:
         buildFile << """
@@ -135,9 +133,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             GRADLE_VERSIONS_UNDER_TEST,
             [true, false]
         ])
-
     }
-
 
     def "handles @Stepwise tests (gradle version #gradleVersion)"() {
         given:
@@ -211,7 +207,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     def "handles non-parameterized test names matching a parameterized name (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -248,7 +243,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     def "handles unrolled tests (gradle version #gradleVersion)"() {
         given:
@@ -302,28 +296,27 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.with {
-            assert count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-            readLines().with {
-                assert count { it =~ /unrolled ?\[.*?0] PASSED/ } == 2
-                assert count { it =~ /unrolled ?\[.*?1] FAILED/ } == 2
-                assert count { it =~ /unrolled ?\[.*?2] PASSED/ } == 2
+            with(readLines()) {
+                count { it =~ /unrolled ?\[.*?0] PASSED/ } == 2
+                count { it =~ /unrolled ?\[.*?1] FAILED/ } == 2
+                count { it =~ /unrolled ?\[.*?2] PASSED/ } == 2
             }
 
-            assert count('unrolled with param foo PASSED') == 2
-            assert count('unrolled with param bar FAILED') == 2
-            assert count('unrolled with param baz PASSED') == 2
+            count('unrolled with param foo PASSED') == 2
+            count('unrolled with param bar FAILED') == 2
+            count('unrolled with param baz PASSED') == 2
 
-            assert count('unrolled with param [foo] PASSED') == 2
-            assert count('unrolled with param [bar] FAILED') == 2
-            assert count('unrolled with param [baz] PASSED') == 2
+            count('unrolled with param [foo] PASSED') == 2
+            count('unrolled with param [bar] FAILED') == 2
+            count('unrolled with param [baz] PASSED') == 2
         }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     def "handles unrolled tests with method call on param (gradle version #gradleVersion)"() {
         given:
@@ -367,7 +360,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     def "handles unrolled tests with reserved regex chars (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -409,7 +401,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     def "handles unrolled tests with additional test context method suffix (gradle version #gradleVersion)"() {
         given:
@@ -459,7 +450,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
         assumeTrue(canTargetInheritedMethods(gradleVersion))
@@ -506,7 +496,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     def "can rerun on failure in super class (gradle version #gradleVersion)"() {
         given:
         assumeTrue(canTargetInheritedMethods(gradleVersion))
@@ -547,7 +536,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     def 'can rerun parameterized test method in super class (gradle version #gradleVersion)'() {
         given:
@@ -602,7 +590,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-
     }
 
     def "can rerun on failure in super super class (gradle version #gradleVersion)"() {
@@ -661,7 +648,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     def "can rerun parameterized test in inherited class defined in a binary (gradle version #gradleVersion)"() {
         given:
         assumeTrue(canTargetInheritedMethods(gradleVersion))
@@ -711,7 +697,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
@@ -748,7 +733,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is ignored after failure is considered to be still failing (gradle version #gradleVersion)"() {
@@ -787,7 +771,6 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
-
 
     def "build is successful if a test is ignored but never failed (gradle version #gradleVersion)"() {
         given:
