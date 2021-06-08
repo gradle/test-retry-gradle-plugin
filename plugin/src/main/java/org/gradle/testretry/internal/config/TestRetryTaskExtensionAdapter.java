@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import static org.gradle.testretry.internal.config.TestTaskConfigurer.supportsPropertyConventions;
+
 public final class TestRetryTaskExtensionAdapter {
 
     // for testing only
@@ -51,10 +53,6 @@ public final class TestRetryTaskExtensionAdapter {
         this.useConventions = supportsPropertyConventions(gradleVersion);
 
         initialize(extension, this.useConventions);
-    }
-
-    private static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
-        return gradleVersion.compareTo(VersionNumber.parse("5.1")) >= 0;
     }
 
     private static void initialize(TestRetryTaskExtension extension, boolean gradle51OrLater) {

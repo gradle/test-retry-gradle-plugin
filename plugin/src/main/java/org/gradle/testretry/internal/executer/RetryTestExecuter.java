@@ -29,6 +29,8 @@ import org.gradle.testretry.internal.filter.RetryFilter;
 
 import java.util.stream.Collectors;
 
+import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     private final TestRetryTaskExtensionAdapter extension;
@@ -121,7 +123,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     }
 
     private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
-        if (TestFrameworkStrategy.gradleVersionIsAtLeast("6.4")) {
+        if (gradleVersionIsAtLeast("6.4")) {
             // This constructor is in Gradle 6.4+
             return new JvmTestExecutionSpec(
                 retryTestFramework,

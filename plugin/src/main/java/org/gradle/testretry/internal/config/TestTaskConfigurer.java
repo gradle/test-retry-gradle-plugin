@@ -20,6 +20,8 @@ import org.gradle.api.Task;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
@@ -46,9 +48,53 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
+        Provider<Boolean> isDeactivatedByTestDistributionPlugin =
+            shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
+        test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
+
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
-        test.doFirst(new ConditionalTaskAction(new InitTaskAction(adapter, objectFactory)));
-        test.doLast(new ConditionalTaskAction(new FinalizeTaskAction()));
+
+        test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
+        test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
+    }
+
+    private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(
+        Test test,
+        ObjectFactory objectFactory,
+        ProviderFactory providerFactory,
+        VersionNumber gradleVersion
+    ) {
+        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
+        if (supportsPropertyConventions(gradleVersion)) {
+            Property<Boolean> property = objectFactory.property(Boolean.class).convention(result);
+            if (supportsFinalizeValueOnRead(gradleVersion)) {
+                property.finalizeValueOnRead();
+            }
+            result = property;
+        }
+        return result;
+    }
+
+    public static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
+        return gradleVersion.compareTo(VersionNumber.parse("5.1")) >= 0;
+    }
+
+    private static boolean supportsFinalizeValueOnRead(VersionNumber gradleVersion) {
+        return gradleVersion.compareTo(VersionNumber.parse("6.1")) >= 0;
+    }
+
+    private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
+        Object distributionExtension = test.getExtensions().findByName("distribution");
+        if (distributionExtension == null) {
+            return false;
+        }
+        try {
+            Method result = makeAccessible(distributionExtension.getClass().getMethod("shouldTestRetryPluginBeDeactivated"));
+            return invoke(result, distributionExtension);
+        } catch (Exception e) {
+            test.getLogger().warn("Failed to determine whether test-retry plugin should be deactivated from distribution extension", e);
+            return false;
+        }
     }
 
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
@@ -67,31 +113,20 @@ public final class TestTaskConfigurer {
 
     private static class ConditionalTaskAction implements Action<Task> {
 
+        private final Provider<Boolean> isDeactivatedByTestDistributionPlugin;
         private final Action<Test> delegate;
 
-        public ConditionalTaskAction(Action<Test> delegate) {
+        public ConditionalTaskAction(Provider<Boolean> isDeactivatedByTestDistributionPlugin, Action<Test> delegate) {
+            this.isDeactivatedByTestDistributionPlugin = isDeactivatedByTestDistributionPlugin;
             this.delegate = delegate;
         }
 
         @Override
         public void execute(@NotNull Task task) {
-            if (isDeactivatedByTestDistributionPlugin(task)) {
+            if (isDeactivatedByTestDistributionPlugin.get()) {
                 task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
             } else {
                 delegate.execute((Test) task);
-            }
-        }
-
-        private boolean isDeactivatedByTestDistributionPlugin(Task task) {
-            Object distributionExtension = task.getExtensions().findByName("distribution");
-            if (distributionExtension == null) {
-                return false;
-            }
-            try {
-                return invoke(method(distributionExtension.getClass(), "shouldTestRetryPluginBeDeactivated"), distributionExtension);
-            } catch (Exception e) {
-                task.getLogger().warn("Failed to determine whether test-retry plugin should be deactivated from distribution extension", e);
-                return false;
             }
         }
     }
@@ -129,14 +164,6 @@ public final class TestTaskConfigurer {
     private static Method declaredMethod(Class<?> type, String methodName, Class<?>... paramTypes) {
         try {
             return makeAccessible(type.getDeclaredMethod(methodName, paramTypes));
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static Method method(Class<?> type, String methodName, Class<?>... paramTypes) {
-        try {
-            return makeAccessible(type.getMethod(methodName, paramTypes));
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
         }

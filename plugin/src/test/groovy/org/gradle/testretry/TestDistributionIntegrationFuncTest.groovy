@@ -23,11 +23,11 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         buildFile << """
             test.retry.maxRetries = 1
         """
-        failedTest()
     }
 
     def "is deactivated when decorated distribution extension returns true (gradle version #gradleVersion)"() {
         given:
+        failedTest()
         buildFile << """
             interface TestDistributionExtension {}
             class DefaultTestDistributionExtension implements TestDistributionExtension {
@@ -49,8 +49,43 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "is deactivated when decorated distribution extension changes to true (gradle version #gradleVersion)"() {
+        given:
+        successfulTest() // a failing one prohibit task outputs from being cached
+        buildFile << """
+            interface TestDistributionExtension {}
+            class DefaultTestDistributionExtension implements TestDistributionExtension {
+                boolean shouldTestRetryPluginBeDeactivated() {
+                    Boolean.getBoolean("shouldTestRetryPluginBeDeactivated")
+                }
+            }
+            test.extensions.create(TestDistributionExtension.class, "distribution", DefaultTestDistributionExtension.class)
+        """
+
+        when:
+        System.setProperty("shouldTestRetryPluginBeDeactivated", "${true}")
+        def result = gradleRunner(gradleVersion, 'test', '--info').build()
+
+        then:
+        result.output.contains("handled by the test-distribution plugin")
+
+        when:
+        System.setProperty("shouldTestRetryPluginBeDeactivated", "${false}")
+        result = gradleRunner(gradleVersion, 'test', '--info').build()
+
+        then:
+        with(result.output) {
+            !contains("handled by the test-distribution plugin")
+            !contains("> Task :test UP-TO-DATE")
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "is deactivated when undecorated distribution extension returns true (gradle version #gradleVersion)"() {
         given:
+        failedTest()
         buildFile << """
             class TestDistributionExtension {
                 boolean shouldTestRetryPluginBeDeactivated() {
@@ -72,6 +107,7 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
 
     def "is not deactivated when distribution extension returns false (gradle version #gradleVersion)"() {
         given:
+        failedTest()
         buildFile << """
             interface TestDistributionExtension {}
             class DefaultTestDistributionExtension implements TestDistributionExtension {
@@ -94,6 +130,7 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
 
     def "is not deactivated when distribution extension does not declare the expected method (gradle version #gradleVersion)"() {
         given:
+        failedTest()
         buildFile << """
             class TestDistributionExtension {
             }

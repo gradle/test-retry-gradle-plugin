@@ -44,7 +44,7 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
-        assertConfigurationCacheIsReused(result, gradleVersion)
+        configurationCacheIsReused(result, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -71,7 +71,39 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
-        assertConfigurationCacheIsReused(result, gradleVersion)
+        configurationCacheIsReused(result, gradleVersion)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "compatible with configuration cache when Test Distribution is also present (gradle version #gradleVersion)"() {
+        shouldTestConfigCache(gradleVersion)
+        buildFile << """
+            interface TestDistributionExtension {}
+            class DefaultTestDistributionExtension implements TestDistributionExtension {
+                boolean shouldTestRetryPluginBeDeactivated() {
+                    true
+                }
+            }
+            test.extensions.create(TestDistributionExtension, "distribution", DefaultTestDistributionExtension)
+        """
+
+        failedTest()
+
+        when:
+        def result = gradleRunnerWithConfigurationCache(gradleVersion, 'test', '--info').buildAndFail()
+
+        then:
+        !configurationCacheIsReused(result, gradleVersion)
+        result.output.contains('handled by the test-distribution plugin')
+
+        when:
+        result = gradleRunnerWithConfigurationCache(gradleVersion, 'test', '--info').buildAndFail()
+
+        then:
+        configurationCacheIsReused(result, gradleVersion)
+        result.output.contains('handled by the test-distribution plugin')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -86,8 +118,8 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         GradleVersion.version(gradleVersion) >= GradleVersion.version("6.1")
     }
 
-    static void assertConfigurationCacheIsReused(BuildResult result, String gradleVersion) {
-        assert result.output.contains(getConfigurationCacheMessage(gradleVersion))
+    private static boolean configurationCacheIsReused(BuildResult result, String gradleVersion) {
+        result.output.contains(getConfigurationCacheMessage(gradleVersion))
     }
 
     static String[] withConfigurationCacheArguments(String gradleVersion, String[] arguments) {
