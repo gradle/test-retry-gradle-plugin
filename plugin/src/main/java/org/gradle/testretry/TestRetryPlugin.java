@@ -39,9 +39,16 @@ public class TestRetryPlugin implements Plugin<Project> {
 
     @Override
     public void apply(Project project) {
+        if (pluginAlreadyApplied(project)) {
+            return;
+        }
+
         project.getTasks()
             .withType(Test.class)
             .configureEach(task -> configureTestTask(task, objectFactory, providerFactory));
     }
 
+    private static boolean pluginAlreadyApplied(Project project) {
+        return project.getPlugins().stream().anyMatch(plugin -> plugin.getClass().getName().equals(TestRetryPlugin.class.getName()));
+    }
 }
