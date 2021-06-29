@@ -404,7 +404,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.testng:testng:7.0.0'
+                testImplementation 'org.testng:testng:7.4.0'
             }
             test {
                 useTestNG()
