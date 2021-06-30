@@ -36,7 +36,8 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         new HashSet<>(Arrays.asList(
             "classMethod",
             "executionError",
-            "initializationError"
+            "initializationError",
+            "unnecessary Mockito stubbings"
         ))
     );
 
