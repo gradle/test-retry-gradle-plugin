@@ -311,7 +311,7 @@ image:gradle-enterprise-flaky-test-reporting.png[Gradle Enterprise top tests rep
 
 === IDEs
 
-The plugin has been tested with link:url[IDEA, https://www.jetbrains.com/idea], link:url[Eclipse IDE, https://www.eclipse.org] and link:url[Netbeans, https://www.netbeans.org].
+The plugin has been tested with https://www.jetbrains.com/idea[IDEA], https://www.eclipse.org[Eclipse IDE] and https://www.netbeans.org[Netbeans].
 
 ==== IDEA
 
@@ -333,14 +333,14 @@ image:netbeans-test-retry-reporting.png[Netbeans test reporting, align="center",
 
 === CI tools
 
-The plugin has been tested with the reporting of link:url[TeamCity, https://www.jetbrains.com/teamcity] and link:url[Jenkins, https://www.jenkins.io].
+The plugin has been tested with the reporting of https://www.jetbrains.com/teamcity[TeamCity] and https://www.jenkins.io[Jenkins].
 
 ==== TeamCity
 
 Flaky tests (tests being executed multiple times but with different results) are detected by TeamCity and marked as flaky.
 TeamCity lists each test that was executed and how often it was run in the build.
 
-By default, TeamCity will fail your build link:url[if at least one test fails, https://www.jetbrains.com/help/teamcity/build-failure-conditions.html#BuildFailureConditions-Commonbuildfailureconditions].
+By default, TeamCity will fail your build https://www.jetbrains.com/help/teamcity/build-failure-conditions.html#BuildFailureConditions-Commonbuildfailureconditions[if at least one test fails].
 When using `failOnPassedAfterRetry = false` (ie. the default for this plugin), this failure condition should be disabled.
 
 image:teamcity-test-retry-reporting.png[Teamcity test reporting, align="center", title=TeamCity test retry reporting including flaky test detection]
