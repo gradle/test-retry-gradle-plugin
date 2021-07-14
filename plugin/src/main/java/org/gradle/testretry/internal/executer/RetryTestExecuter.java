@@ -52,6 +52,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         this.testTask = task;
         this.frameworkTemplate = new TestFrameworkTemplate(
             testTask,
+            extension,
             instantiator,
             objectFactory
         );
