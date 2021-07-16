@@ -16,7 +16,6 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
-import spock.lang.Issue
 
 class MockitoFuncTest extends AbstractFrameworkFuncTest {
 
@@ -37,25 +36,25 @@ class MockitoFuncTest extends AbstractFrameworkFuncTest {
 
         writeTestSource """
             package acme;
-            
+
             import org.junit.*;
             import org.junit.runner.*;
             import org.mockito.*;
             import org.mockito.junit.*;
-            
-            
+
+
             import static org.mockito.Mockito.*;
 
             @RunWith(MockitoJUnitRunner.class)
             public class TestWithUnnecessaryStubbings {
                 @Mock
                 CharSequence s;
-                
+
                 @Before
                 public void setup() {
                   when(s.length()).thenReturn(3);
                 }
-                
+
                 @Test
                 public void someTest() {
                 }
