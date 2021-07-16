@@ -20,9 +20,18 @@ import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 public final class TestFilterBuilder {
 
     private final DefaultTestFilter filter = new DefaultTestFilter();
+    private final boolean alwaysIncludeEntireTestClass;
+
+    public TestFilterBuilder(boolean alwaysIncludeEntireTestClass) {
+        this.alwaysIncludeEntireTestClass = alwaysIncludeEntireTestClass;
+    }
 
     public void test(String className, String methodName) {
-        filter.includeTest(className, methodName);
+        if (alwaysIncludeEntireTestClass) {
+            clazz(className);
+        } else {
+            filter.includeTest(className, methodName);
+        }
     }
 
     public void clazz(String className) {

@@ -32,6 +32,24 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
         """
     }
 
+    protected void mixedTest() {
+        writeTestSource """
+            package acme;
+
+            import static org.junit.Assert.assertTrue;
+
+            public class MixedTests {
+                @org.junit.Test
+                public void successTest() {}
+
+                @org.junit.Test
+                public void failedTest() {
+                    assertTrue(false);
+                }
+            }
+        """
+    }
+
     protected void failedTest() {
         writeTestSource """
             package acme;

@@ -18,23 +18,26 @@ package org.gradle.testretry.internal.executer;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
 public class TestFrameworkTemplate {
 
     public final Test task;
+    public final TestRetryTaskExtensionAdapter extension;
     public final Instantiator instantiator;
     public final ObjectFactory objectFactory;
     public final TestsReader testsReader;
 
-    public TestFrameworkTemplate(Test task, Instantiator instantiator, ObjectFactory objectFactory) {
+    public TestFrameworkTemplate(Test task, TestRetryTaskExtensionAdapter extension, Instantiator instantiator, ObjectFactory objectFactory) {
         this.task = task;
+        this.extension = extension;
         this.instantiator = instantiator;
         this.objectFactory = objectFactory;
         this.testsReader = new TestsReader(task.getTestClassesDirs().getFiles(), task.getClasspath());
     }
 
     public TestFilterBuilder filterBuilder() {
-        return new TestFilterBuilder();
+        return new TestFilterBuilder(extension.getRetryEntireTestClass());
     }
 }

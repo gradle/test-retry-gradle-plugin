@@ -146,6 +146,15 @@ public interface TestRetryTaskExtension {
     Property<Integer> getMaxFailures();
 
     /**
+     * Whether test classes should be retried in entirety, or if individual tests methods can be retried.
+     * <p>
+     * This setting defaults to {@code false}, meaning that only the test methods that actually fail will be retried.
+     *
+     * @return whether individual test methods or entire test classes should be retried
+     */
+    Property<Boolean> getRetryEntireTestClass();
+
+    /**
      * The filter for specifying which tests may be retried.
      */
     Filter getFilter();

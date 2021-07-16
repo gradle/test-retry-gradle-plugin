@@ -87,6 +87,31 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "can retry entire test classes (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+            test.retry.retryEntireTestClass = true
+        """
+
+        mixedTest()
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then: 'Entire test class is retried a second time'
+        result.output.count('PASSED') == 2
+
+        // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
+        result.output.count('FAILED') == 2 + 1 + 1
+
+        assertTestReportContains("MixedTests", reportedTestName("successTest"), 2, 0)
+        assertTestReportContains("MixedTests", reportedTestName("failedTest"), 0, 2)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "still publishes test report when test is un-retryable (gradle version #gradleVersion)"() {
         given:
         buildFile << """

@@ -173,9 +173,10 @@ abstract class AbstractPluginFuncTest extends Specification {
         xml.'**'.find { it.name() == 'testsuite' && it.@name == "acme.${testClazz}" && it.@tests == "${expectedFailCount + expectedSuccessCount}" }
 
         // assert details
-        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.@name == testName }
-        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty() }.size() == expectedFailCount
-        assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty() }.size() == expectedSuccessCount
+        def testDetails = xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.@name == testName }
+        assert testDetails
+        assert testDetails.findAll { it.failure.isEmpty() }.size() == expectedSuccessCount
+        assert testDetails.findAll { !it.failure.isEmpty() }.size() == expectedFailCount
         true
     }
 
