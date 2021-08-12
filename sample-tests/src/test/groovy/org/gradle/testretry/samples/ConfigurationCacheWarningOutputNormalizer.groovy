@@ -1,7 +1,7 @@
 package org.gradle.testretry.samples
 
-import org.gradle.samples.executor.ExecutionMetadata
-import org.gradle.samples.test.normalizer.OutputNormalizer
+import org.gradle.exemplar.executor.ExecutionMetadata
+import org.gradle.exemplar.test.normalizer.OutputNormalizer
 
 class ConfigurationCacheWarningOutputNormalizer implements OutputNormalizer {
     @Override

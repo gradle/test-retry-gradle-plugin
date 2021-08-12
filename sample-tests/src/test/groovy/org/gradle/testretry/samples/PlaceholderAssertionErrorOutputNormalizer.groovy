@@ -1,7 +1,7 @@
 package org.gradle.testretry.samples
 
-import org.gradle.samples.executor.ExecutionMetadata
-import org.gradle.samples.test.normalizer.OutputNormalizer
+import org.gradle.exemplar.executor.ExecutionMetadata
+import org.gradle.exemplar.test.normalizer.OutputNormalizer
 
 /**
  This Normalizer is required to workaround a gradle issue that will be fixed with <a href=https://github.com/gradle/gradle/pull/13995>GBT PR#13995</a>

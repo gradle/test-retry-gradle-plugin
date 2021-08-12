@@ -1,10 +1,10 @@
 package org.gradle.testretry.samples;
 
-import org.gradle.samples.test.normalizer.FileSeparatorOutputNormalizer;
-import org.gradle.samples.test.normalizer.GradleOutputNormalizer;
-import org.gradle.samples.test.runner.GradleSamplesRunner;
-import org.gradle.samples.test.runner.SamplesOutputNormalizers;
-import org.gradle.samples.test.runner.SamplesRoot;
+import org.gradle.exemplar.test.normalizer.FileSeparatorOutputNormalizer;
+import org.gradle.exemplar.test.normalizer.GradleOutputNormalizer;
+import org.gradle.exemplar.test.runner.GradleSamplesRunner;
+import org.gradle.exemplar.test.runner.SamplesOutputNormalizers;
+import org.gradle.exemplar.test.runner.SamplesRoot;
 import org.junit.runner.RunWith;
 
 @RunWith(GradleSamplesRunner.class)
