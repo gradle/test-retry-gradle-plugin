@@ -1,13 +1,12 @@
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        maven { url = uri("https://repo.gradle.org/gradle/libs-releases") }
-    }
-}
-
 plugins {
     id("com.gradle.enterprise").version("3.6.3")
     id("com.gradle.enterprise.gradle-enterprise-conventions-plugin").version("0.8-alpha1")
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+    }
 }
 
 gradleEnterprise {
