@@ -16,10 +16,6 @@ plugins {
     id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
-repositories {
-    mavenCentral()
-}
-
 group = "org.gradle"
 description = "Mitigate flaky tests by retrying tests when they fail"
 

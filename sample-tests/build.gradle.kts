@@ -4,10 +4,6 @@ plugins {
     id("groovy")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     testImplementation(localGroovy())
     testImplementation(gradleTestKit())
