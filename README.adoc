@@ -44,7 +44,7 @@ Retrying is configured per test task via the `retry` extension added to each tas
 ----
 test {
     retry {
-        maxRetries = 3
+        maxRetries = 2
         maxFailures = 20
         failOnPassedAfterRetry = true
     }
@@ -57,7 +57,7 @@ test {
 ----
 test {
     retry {
-        maxRetries.set(3)
+        maxRetries.set(2)
         maxFailures.set(20)
         failOnPassedAfterRetry.set(true)
     }
@@ -75,11 +75,11 @@ boolean isCiServer = System.getenv().containsKey("CI")
 test {
     if (isCiServer) {
         retry {
-            maxRetries = 3
+            maxRetries = 2
             maxFailures = 20
-            failOnPassedAfterRetry = true
         }
     }
+    failOnPassedAfterRetry = true
 }
 ----
 
