@@ -68,7 +68,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
         TestFilterBuilder testFilterBuilder = template.filterBuilder();
-        addFilters(template.testsReader, failedTests, testFilterBuilder);
+        addFilters(template, failedTests, testFilterBuilder);
         TestNGTestFramework testFramework = createTestFramework(template, testFilterBuilder.build());
         copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;
@@ -109,14 +109,18 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         target.setSuiteXmlWriter(source.getSuiteXmlWriter());
     }
 
-    private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
+    private void addFilters(TestFrameworkTemplate template, TestNames failedTests, TestFilterBuilder filters) {
         failedTests.stream().forEach(entry -> {
             String className = entry.getKey();
+            if (template.extension.getRetryOnClassLevel()) {
+                filters.clazz(className);
+                return;
+            }
             entry.getValue().forEach(test -> {
-                Optional<TestNgClassVisitor.ClassInfo> classInfoOpt = getClassInfo(testsReader, className);
+                Optional<TestNgClassVisitor.ClassInfo> classInfoOpt = getClassInfo(template.testsReader, className);
                 if (classInfoOpt.isPresent()) {
                     TestNgClassVisitor.ClassInfo classInfo = classInfoOpt.get();
-                    if (isLifecycleMethod(testsReader, test, classInfo)) {
+                    if (isLifecycleMethod(template.testsReader, test, classInfo)) {
                         filters.clazz(className);
                     } else {
                         String parameterlessName = stripParameters(test);

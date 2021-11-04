@@ -36,6 +36,7 @@ public final class TestRetryTaskExtensionAdapter {
     private static final int DEFAULT_MAX_RETRIES = 0;
     private static final int DEFAULT_MAX_FAILURES = 0;
     private static final boolean DEFAULT_FAIL_ON_PASSED_AFTER_RETRY = false;
+    private static final boolean DEFAULT_RETRY_ON_CLASS_LEVEL = false;
 
     private final ProviderFactory providerFactory;
     private final TestRetryTaskExtension extension;
@@ -60,6 +61,7 @@ public final class TestRetryTaskExtensionAdapter {
             extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
             extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
             extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+            extension.getRetryOnClassLevel().convention(DEFAULT_RETRY_ON_CLASS_LEVEL);
             extension.getFilter().getIncludeClasses().convention(Collections.emptySet());
             extension.getFilter().getIncludeAnnotationClasses().convention(Collections.emptySet());
             extension.getFilter().getExcludeClasses().convention(Collections.emptySet());
@@ -89,6 +91,24 @@ public final class TestRetryTaskExtensionAdapter {
 
     public boolean getFailOnPassedAfterRetry() {
         return read(extension.getFailOnPassedAfterRetry(), DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+    }
+
+    Callable<Provider<Boolean>> getRetryOnClassLevelInput() {
+        if (useConventions) {
+            return extension::getRetryOnClassLevel;
+        } else {
+            return () -> {
+                if (extension.getRetryOnClassLevel().isPresent()) {
+                    return extension.getRetryOnClassLevel();
+                } else {
+                    return providerFactory.provider(TestRetryTaskExtensionAdapter.this::getRetryOnClassLevel);
+                }
+            };
+        }
+    }
+
+    public boolean getRetryOnClassLevel() {
+        return read(extension.getRetryOnClassLevel(), DEFAULT_RETRY_ON_CLASS_LEVEL);
     }
 
     public int getMaxRetries() {

@@ -27,7 +27,7 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
         TestFilterBuilder filters = template.filterBuilder();
-        addFilters(filters, template.testsReader, failedTests, true);
+        addFilters(filters, template, failedTests, true);
         JUnitTestFramework testFramework = new JUnitTestFramework(template.task, filters.build());
         copyTestOptions((JUnitOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
         return testFramework;

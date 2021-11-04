@@ -47,6 +47,7 @@ public final class TestTaskConfigurer {
         TestRetryTaskExtensionAdapter adapter = new TestRetryTaskExtensionAdapter(providerFactory, extension, gradleVersion);
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
+        test.getInputs().property("retry.retryOnClassLevel", adapter.getRetryOnClassLevelInput());
 
         Provider<Boolean> isDeactivatedByTestDistributionPlugin =
             shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);

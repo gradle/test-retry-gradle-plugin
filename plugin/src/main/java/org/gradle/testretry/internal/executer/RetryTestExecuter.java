@@ -59,7 +59,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             instantiator,
             objectFactory,
             testClassesDir,
-            resolvedClasspath
+            resolvedClasspath,
+            extension
         );
     }
 

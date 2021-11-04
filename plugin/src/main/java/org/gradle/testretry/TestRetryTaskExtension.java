@@ -45,6 +45,16 @@ public interface TestRetryTaskExtension {
     Property<Boolean> getFailOnPassedAfterRetry();
 
     /**
+     * If tests should always be retried on a class level.
+     * <p>
+     * This setting defaults to {@code false},
+     * which results in retrying the failed method instead of the entire class.
+     *
+     * @return if tests should always be retried on a class level
+     */
+    Property<Boolean> getRetryOnClassLevel();
+
+    /**
      * The maximum number of times to retry an individual test.
      * <p>
      * This setting defaults to {@code 0}, which results in no retries.

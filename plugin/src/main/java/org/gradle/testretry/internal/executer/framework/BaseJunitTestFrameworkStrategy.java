@@ -16,6 +16,7 @@
 package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.testretry.internal.executer.TestFilterBuilder;
+import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.slf4j.Logger;
@@ -46,18 +47,23 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
     }
 
-    protected void addFilters(TestFilterBuilder filters, TestsReader testsReader, TestNames failedTests, boolean canRunParameterizedSpockMethods) {
+    protected void addFilters(TestFilterBuilder filters, TestFrameworkTemplate template, TestNames failedTests, boolean canRunParameterizedSpockMethods) {
         failedTests.stream()
             .forEach(entry -> {
                 String className = entry.getKey();
                 Set<String> tests = entry.getValue();
+
+                if (template.extension.getRetryOnClassLevel()) {
+                    filters.clazz(className);
+                    return;
+                }
 
                 if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
                     filters.clazz(className);
                     return;
                 }
 
-                if (processSpockTest(filters, testsReader, canRunParameterizedSpockMethods, className, tests)) {
+                if (processSpockTest(filters, template.testsReader, canRunParameterizedSpockMethods, className, tests)) {
                     return;
                 }
 
