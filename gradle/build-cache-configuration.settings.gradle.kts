@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,35 +15,38 @@
  */
 import java.net.URI
 
+
+fun systemProperty(propertyName: String) =
+    providers.systemProperty(propertyName).forUseAtConfigurationTime()
 /*
  * This script is applied to the settings in buildSrc and the main build. That is why we
  * need this to be a script unless we can model dual usage better with composite/included builds or another solution.
  */
+val remoteCacheUrl = systemProperty("gradle.cache.remote.url").map { URI(it) }
+val isCiServer = systemProperty("CI").isPresent
+val remotePush = systemProperty("gradle.cache.remote.push").map { it != "false" }
+val remoteCacheUsername = systemProperty("gradle.cache.remote.username")
+val remoteCachePassword = systemProperty("gradle.cache.remote.password")
 
-val remoteCacheUrl = System.getProperty("gradle.cache.remote.url")?.let { URI(it) }
-val isCiServer = System.getenv().containsKey("CI")
-val remotePush = System.getProperty("gradle.cache.remote.push") != "false"
-val remoteCacheUsername = System.getProperty("gradle.cache.remote.username", "")
-val remoteCachePassword = System.getProperty("gradle.cache.remote.password", "")
-
-val isRemoteBuildCacheEnabled = remoteCacheUrl != null && gradle.startParameter.isBuildCacheEnabled && !gradle.startParameter.isOffline
-val disableLocalCache = System.getProperty("disableLocalCache")?.toBoolean() ?: false
+val isRemoteBuildCacheEnabled =
+    remoteCacheUrl.isPresent && gradle.startParameter.isBuildCacheEnabled && !gradle.startParameter.isOffline
+val disableLocalCache = systemProperty("disableLocalCache").map { it.toBoolean() }.orElse(false)
 if (isRemoteBuildCacheEnabled) {
     buildCache {
         remote(HttpBuildCache::class.java) {
-            url = remoteCacheUrl
-            isPush = isCiServer && remotePush
-            if (remoteCacheUsername.isNotEmpty() && remoteCachePassword.isNotEmpty()) {
+            url = remoteCacheUrl.get()
+            isPush = isCiServer && remotePush.get()
+            if (remoteCacheUsername.isPresent && remoteCachePassword.isPresent) {
                 credentials {
-                    username = remoteCacheUsername
-                    password = remoteCachePassword
+                    username = remoteCacheUsername.get()
+                    password = remoteCachePassword.get()
                 }
             }
         }
     }
 }
 
-if (disableLocalCache) {
+if (disableLocalCache.get()) {
     buildCache {
         local {
             isEnabled = false
