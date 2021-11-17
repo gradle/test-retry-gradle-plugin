@@ -1,4 +1,5 @@
 import jetbrains.buildServer.configs.kotlin.v2019_2.BuildType
+import jetbrains.buildServer.configs.kotlin.v2019_2.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.v2019_2.CheckoutMode
 import jetbrains.buildServer.configs.kotlin.v2019_2.DslContext
 import jetbrains.buildServer.configs.kotlin.v2019_2.ParametrizedWithType
@@ -64,4 +65,17 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
 
 fun stripRootProject(id: String): String {
     return id.replace("${DslContext.projectId.value}_", "")
+}
+
+fun Project.commitStatus() {
+    features {
+        commitStatusPublisher {
+            publisher = github {
+                githubUrl = "https://api.github.com"
+                authType = personalToken {
+                    token = "%githubTeamcityBotApiKey%"
+                }
+            }
+        }
+    }
 }

@@ -38,6 +38,8 @@ project {
         text("systemProp.org.gradle.internal.publish.checksums.insecure", "true")
     }
 
+    commitStatus()
+
     val quickFeedbackBuildType = buildType("Quick Feedback") {
         steps {
             gradle {
@@ -108,6 +110,8 @@ project {
     }
 
     subProject("Release") {
+        commitStatus()
+
         buildType("Publish") {
             description = "Publish Gradle Test Retry Plugin snapshot to Gradle's Artifactory repository"
 
