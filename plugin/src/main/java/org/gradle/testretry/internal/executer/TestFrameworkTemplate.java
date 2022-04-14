@@ -20,6 +20,9 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
+import java.io.File;
+import java.util.Set;
+
 public class TestFrameworkTemplate {
 
     public final Test task;
@@ -27,11 +30,11 @@ public class TestFrameworkTemplate {
     public final ObjectFactory objectFactory;
     public final TestsReader testsReader;
 
-    public TestFrameworkTemplate(Test task, Instantiator instantiator, ObjectFactory objectFactory) {
+    public TestFrameworkTemplate(Test task, Instantiator instantiator, ObjectFactory objectFactory, Set<File> testClassesDir, Set<File> resolvedClasspath) {
         this.task = task;
         this.instantiator = instantiator;
         this.objectFactory = objectFactory;
-        this.testsReader = new TestsReader(task.getTestClassesDirs().getFiles(), task.getClasspath());
+        this.testsReader = new TestsReader(testClassesDir, resolvedClasspath);
     }
 
     public TestFilterBuilder filterBuilder() {

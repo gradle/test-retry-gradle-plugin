@@ -27,6 +27,8 @@ import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
 
+import java.io.File;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
@@ -45,7 +47,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         TestRetryTaskExtensionAdapter extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
         Instantiator instantiator,
-        ObjectFactory objectFactory
+        ObjectFactory objectFactory,
+        Set<File> testClassesDir,
+        Set<File> resolvedClasspath
     ) {
         this.extension = extension;
         this.delegate = delegate;
@@ -53,7 +57,9 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         this.frameworkTemplate = new TestFrameworkTemplate(
             testTask,
             instantiator,
-            objectFactory
+            objectFactory,
+            testClassesDir,
+            resolvedClasspath
         );
     }
 
