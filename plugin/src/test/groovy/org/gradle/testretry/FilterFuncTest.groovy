@@ -67,6 +67,67 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "annotation can be inherited from classpath"() {
+        given:
+        settingsFile << """
+            include "lib"
+        """
+
+        file("lib/build.gradle") << """
+            plugins { id "java" }
+        """
+
+        buildFile << """
+            dependencies {
+                testImplementation(project(":lib"))
+            }
+            
+            test.retry {
+                maxRetries = 2
+                filter {
+                    excludeAnnotationClasses.add("*Excluded*")
+                }
+            }
+        """
+
+        and:
+        file("lib/src/main/java/InheritedExcludedAnnotation.java") << """
+            package acme;
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+            import java.lang.annotation.Target;
+            import java.lang.annotation.Inherited;
+
+            @Retention(RetentionPolicy.RUNTIME)
+            @Target({ ElementType.TYPE })
+            @Inherited
+            public @interface InheritedExcludedAnnotation { }
+        """
+
+        file("lib/src/main/java/acme/BaseTest.java") << """
+            package acme;
+            @InheritedExcludedAnnotation
+            public class BaseTest {
+            
+            }
+        """
+
+        and:
+        def noRetry = []
+        noRetry << test("ExcludedTest", "BaseTest",)
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        result.output.count("acme.ExcludedTest > flakyTest FAILED") == 1
+        result.output.count("acme.ExcludedTest > flakyTest PASSED") == 0
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     private void nonInheritedAnnotation(String name) {
         file("src/test/java/acme/${name}.java") << """
             package acme;
@@ -81,17 +142,18 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         """
     }
 
-    private void inheritedAnnotation(String name) {
-        file("src/test/java/${name}.java") << """
+    private void inheritedAnnotation(String name, String project = "") {
+        file("${project ? project + "/" : ""}src/test/java/${name}.java") << """
             package acme;
             import java.lang.annotation.ElementType;
             import java.lang.annotation.Retention;
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
+            import java.lang.annotation.Inherited;
 
             @Retention(RetentionPolicy.RUNTIME)
             @Target({ ElementType.TYPE })
-            @java.lang.annotation.Inherited
+            @Inherited
             public @interface $name { }
         """
     }

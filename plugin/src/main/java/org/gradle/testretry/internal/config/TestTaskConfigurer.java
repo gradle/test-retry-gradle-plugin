@@ -100,7 +100,7 @@ public final class TestTaskConfigurer {
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory);
+        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
