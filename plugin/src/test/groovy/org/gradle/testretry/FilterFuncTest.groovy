@@ -67,7 +67,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "annotation can be inherited from lasspath"() {
+    def "annotation can be inherited from classpath"() {
         given:
         settingsFile << """
             include "lib"
