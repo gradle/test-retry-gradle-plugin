@@ -97,10 +97,11 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             import java.lang.annotation.Retention;
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
+            import java.lang.annotation.Inherited;
 
             @Retention(RetentionPolicy.RUNTIME)
             @Target({ ElementType.TYPE })
-            @java.lang.annotation.Inherited
+            @Inherited
             public @interface InheritedExcludedAnnotation { }
         """
 
@@ -148,10 +149,11 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             import java.lang.annotation.Retention;
             import java.lang.annotation.RetentionPolicy;
             import java.lang.annotation.Target;
+            import java.lang.annotation.Inherited;
 
             @Retention(RetentionPolicy.RUNTIME)
             @Target({ ElementType.TYPE })
-            @java.lang.annotation.Inherited
+            @Inherited
             public @interface $name { }
         """
     }
