@@ -41,6 +41,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private final int maxFailures;
     private boolean lastRetry;
     private boolean hasRetryFilteredFailures;
+    private Method failureMethod;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
 
@@ -133,11 +134,18 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         // on the delegate via reflection.
         failure(testId);
         try {
-            Method failureMethod = delegate.getClass().getMethod("failure", Object.class, Throwable.class);
+            Method failureMethod = lookupFailureMethod();
             failureMethod.invoke(delegate, testId, throwable);
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Method lookupFailureMethod() throws ReflectiveOperationException {
+        if (failureMethod == null) {
+            failureMethod = delegate.getClass().getMethod("failure", Object.class, Throwable.class);
+        }
+        return failureMethod;
     }
 
     @Override
