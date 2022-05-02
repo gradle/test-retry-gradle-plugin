@@ -25,7 +25,6 @@ import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -136,7 +135,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         try {
             Method failureMethod = delegate.getClass().getMethod("failure", Object.class, Throwable.class);
             failureMethod.invoke(delegate, testId, throwable);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+        } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
     }
