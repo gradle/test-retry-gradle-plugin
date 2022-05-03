@@ -171,7 +171,11 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private boolean lastRun() {
         return currentRoundFailedTests.isEmpty()
             || lastRetry
-            || maxFailures > 0 && currentRoundFailedTests.size() >= maxFailures;
+            || currentRoundFailedTestsExceedsMaxFailures();
+    }
+
+    private boolean currentRoundFailedTestsExceedsMaxFailures() {
+        return maxFailures > 0 && currentRoundFailedTests.size() >= maxFailures;
     }
 
     public RoundResult getResult() {
