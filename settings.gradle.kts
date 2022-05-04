@@ -18,8 +18,6 @@ gradleEnterprise {
     }
 }
 
-apply(from = "gradle/build-cache-configuration.settings.gradle.kts")
-
 rootProject.name = "test-retry-plugin"
 
 include("plugin")
