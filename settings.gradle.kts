@@ -1,6 +1,6 @@
 plugins {
-    id("com.gradle.enterprise").version("3.6.3")
-    id("com.gradle.enterprise.gradle-enterprise-conventions-plugin").version("0.8-alpha1")
+    id("com.gradle.enterprise").version("3.10")
+    id("io.github.gradle.gradle-enterprise-conventions-plugin").version("0.7.6")
 }
 
 dependencyResolutionManagement {
@@ -17,8 +17,6 @@ gradleEnterprise {
         }
     }
 }
-
-apply(from = "gradle/build-cache-configuration.settings.gradle.kts")
 
 rootProject.name = "test-retry-plugin"
 

@@ -113,7 +113,7 @@ publishing {
     repositories {
         maven {
             name = "GradleBuildInternalSnapshots"
-            url = uri("https://repo.gradle.org/gradle/libs-snapshots-local")
+            url = uri("https://repo.grdev.net/gradle/libs-snapshots-local")
             credentials {
                 username = project.findProperty("artifactoryUsername") as String?
                 password = project.findProperty("artifactoryPassword") as String?

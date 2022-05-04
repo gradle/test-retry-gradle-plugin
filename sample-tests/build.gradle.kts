@@ -1,3 +1,4 @@
+import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.testretry.build.PluginsVersionData
 
 plugins {
@@ -8,6 +9,7 @@ dependencies {
     testImplementation(localGroovy())
     testImplementation(gradleTestKit())
     testImplementation("org.gradle.exemplar:samples-check:1.0.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 val snippetsDir = file("../samples")
@@ -22,11 +24,17 @@ val tokens: Map<String, Provider<String>> = mapOf(
 
 tasks {
     val replaceTokensInSnippets by registering(Copy::class) {
-        from(snippetsDir)
         into(processedSnippetsDir)
         inputs.properties(tokens)
-        doFirst {
-            filter(org.apache.tools.ant.filters.ReplaceTokens::class, "tokens" to tokens.mapValues { it.value.get() })
+        from(snippetsDir) {
+            // First copy all non-filtered files to preserve binaries such as the gradle-wrapper.jar
+            exclude("**/*.gradle.kts")
+        }
+        from(snippetsDir) {
+            include("**/*.gradle.kts")
+            doFirst {
+                filter(ReplaceTokens::class, "tokens" to tokens.mapValues { it.value.get() })
+            }
         }
     }
     test {
