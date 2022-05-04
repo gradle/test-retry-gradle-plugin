@@ -19,11 +19,13 @@ import org.gradle.api.internal.tasks.testing.TestCompleteEvent;
 import org.gradle.api.internal.tasks.testing.TestDescriptorInternal;
 import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
+import org.gradle.api.tasks.testing.TestFailure;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +41,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private final int maxFailures;
     private boolean lastRetry;
     private boolean hasRetryFilteredFailures;
+    private Method failureMethod;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
 
@@ -124,8 +127,34 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         delegate.output(testId, testOutputEvent);
     }
 
-    @Override
+    @SuppressWarnings("unused")
     public void failure(Object testId, Throwable throwable) {
+        // Gradle 7.6 changed the method signature from failure(Object, Throwable) to failure(Object, TestFailure).
+        // To maintain compatibility with older versions, the original method needs to exist and needs to call failure()
+        // on the delegate via reflection.
+        failure(testId);
+        try {
+            Method failureMethod = lookupFailureMethod();
+            failureMethod.invoke(delegate, testId, throwable);
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Method lookupFailureMethod() throws ReflectiveOperationException {
+        if (failureMethod == null) {
+            failureMethod = delegate.getClass().getMethod("failure", Object.class, Throwable.class);
+        }
+        return failureMethod;
+    }
+
+    @Override
+    public void failure(Object testId, TestFailure result) {
+        failure(testId);
+        delegate.failure(testId, result);
+    }
+
+    private void failure(Object testId) {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null) {
             String className = descriptor.getClassName();
@@ -137,14 +166,16 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 }
             }
         }
-
-        delegate.failure(testId, throwable);
     }
 
     private boolean lastRun() {
         return currentRoundFailedTests.isEmpty()
             || lastRetry
-            || (maxFailures > 0 && currentRoundFailedTests.size() >= maxFailures);
+            || currentRoundFailedTestsExceedsMaxFailures();
+    }
+
+    private boolean currentRoundFailedTestsExceedsMaxFailures() {
+        return maxFailures > 0 && currentRoundFailedTests.size() >= maxFailures;
     }
 
     public RoundResult getResult() {
