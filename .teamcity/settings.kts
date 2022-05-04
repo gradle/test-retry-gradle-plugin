@@ -1,4 +1,5 @@
 import jetbrains.buildServer.configs.kotlin.v2019_2.*
+import jetbrains.buildServer.configs.kotlin.v2019_2.BuildTypeSettings.Type.COMPOSITE
 import jetbrains.buildServer.configs.kotlin.v2019_2.FailureAction
 import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.NORMAL
 import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.PROMPT
@@ -90,6 +91,8 @@ project {
             triggerBuild = always()
             withPendingChangesOnly = false
         }
+
+        type = COMPOSITE
 
         dependencies {
             snapshot(quickFeedbackBuildType) {
@@ -199,4 +202,3 @@ project {
 
 
 }
-
