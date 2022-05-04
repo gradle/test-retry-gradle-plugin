@@ -5,7 +5,7 @@
 > Task :processTestResources NO-SOURCE
 > Task :testClasses
 
-> Task :test
+> Task :test FAILED
 
 SampleTests > failing() FAILED
     org.opentest4j.AssertionFailedError at SampleTests.java:21
@@ -21,8 +21,6 @@ SampleTests > failing() FAILED
 
 6 tests completed, 4 failed
 
-> Task :test FAILED
-
 FAILURE: Build failed with an exception.
 
 * What went wrong:
@@ -30,7 +28,9 @@ Execution failed for task ':test'.
 > There were failing tests. See the report at: file:///build/reports/tests/test/index.html
 
 * Try:
-Run with --stacktrace option to get the stack trace. Run with --info or --debug option to get more log output. Run with --scan to get full insights.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
 
 * Get more help at https://help.gradle.org
 
