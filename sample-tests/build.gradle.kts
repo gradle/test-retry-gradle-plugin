@@ -8,6 +8,7 @@ dependencies {
     testImplementation(localGroovy())
     testImplementation(gradleTestKit())
     testImplementation("org.gradle.exemplar:samples-check:1.0.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 val snippetsDir = file("../samples")
