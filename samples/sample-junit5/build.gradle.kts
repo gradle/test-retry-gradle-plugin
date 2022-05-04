@@ -19,6 +19,9 @@ tasks.test {
         file("marker.file").delete()
     }
 
+    // to avoid flaky output from Gradle which sometimes reports the task as failed before emitting failed test events
+    ignoreFailures = true
+
     useJUnitPlatform()
     retry {
         maxRetries.set(2)
