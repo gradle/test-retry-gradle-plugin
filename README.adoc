@@ -232,7 +232,7 @@ Other versions are likely to work as well, but are not tested.
 |4.13.2
 
 |JUnit5
-|5.8.0-M1
+|5.8.2
 
 |Spock
 |2.0-groovy-3.0
