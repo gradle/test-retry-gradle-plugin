@@ -1,3 +1,4 @@
+import org.apache.tools.ant.filters.ReplaceTokens
 import org.gradle.testretry.build.PluginsVersionData
 
 plugins {
@@ -32,9 +33,7 @@ tasks {
         from(snippetsDir) {
             include("**/*.gradle.kts")
             doFirst {
-                filter(
-                    org.apache.tools.ant.filters.ReplaceTokens::class,
-                    "tokens" to tokens.mapValues { it.value.get() })
+                filter(ReplaceTokens::class, "tokens" to tokens.mapValues { it.value.get() })
             }
         }
     }
