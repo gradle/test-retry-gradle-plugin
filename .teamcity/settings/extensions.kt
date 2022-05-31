@@ -9,6 +9,11 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.toId
 fun BuildType.agentRequirement(os: Os) {
     requirements {
         contains("teamcity.agent.jvm.os.name", os.requirementName)
+    }
+}
+
+fun BuildType.notEc2Requirement() {
+    requirements {
         doesNotContain("teamcity.agent.name", "ec2")
     }
 }
