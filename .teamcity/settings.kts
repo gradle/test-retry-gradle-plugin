@@ -145,6 +145,7 @@ project {
                 withPendingChangesOnly = false
             }
 
+            notEc2Requirement()
         }
 
         buildType("Development") {

@@ -12,6 +12,12 @@ fun BuildType.agentRequirement(os: Os) {
     }
 }
 
+fun BuildType.notEc2Requirement() {
+    requirements {
+        doesNotContain("teamcity.agent.name", "ec2")
+    }
+}
+
 fun ParametrizedWithType.java8Home(os: Os) {
     param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
 }
