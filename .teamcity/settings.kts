@@ -87,7 +87,7 @@ project {
             schedulingPolicy = daily {
                 hour = 2
             }
-            branchFilter = "+:refs/head/master"
+            branchFilter = "+:refs/head/main"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -140,7 +140,7 @@ project {
                 schedulingPolicy = daily {
                     hour = 2
                 }
-                branchFilter = "+:refs/head/master"
+                branchFilter = "+:refs/head/main"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
