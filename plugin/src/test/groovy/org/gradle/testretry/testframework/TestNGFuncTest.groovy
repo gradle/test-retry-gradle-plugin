@@ -64,7 +64,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeClass', 'BeforeTest', 'AfterClass', 'AfterTest']
+            ['BeforeClass', 'BeforeTest', 'BeforeMethod', 'AfterClass', 'AfterTest', 'AfterMethod']
         ])
         // Note: we don't handle BeforeSuite AfterSuite
     }
