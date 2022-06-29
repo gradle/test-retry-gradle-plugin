@@ -37,8 +37,10 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.Cl
     private static final List<String> LIFECYCLE_ANNOTATION_DESCRIPTORS = Arrays.asList(
         "Lorg/testng/annotations/BeforeClass;",
         "Lorg/testng/annotations/BeforeTest;",
+        "Lorg/testng/annotations/BeforeMethod;",
         "Lorg/testng/annotations/AfterTest;",
-        "Lorg/testng/annotations/AfterClass;"
+        "Lorg/testng/annotations/AfterClass;",
+        "Lorg/testng/annotations/AfterMethod;"
     );
 
     private String currentMethod;
