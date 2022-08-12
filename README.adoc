@@ -257,7 +257,7 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 
 === Projects with multiple test frameworks
 Some projects may use multiple test frameworks to execute tests. In the scenario where one of the test frameworks is not
-supported, but is providing test tasks extending from Gradle `Test` task, we can skip the configuration with:
+supported, and is providing test tasks extending from Gradle task `Test`, we can skip the configuration with:
 
 ```
 tasks.withType(Test).configureEach {
