@@ -255,6 +255,22 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 * Upstream tests (those that the failed test depends on) are run because a flaky test may depend on state from the prior execution of an upstream test.
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
+=== Projects with multiple test frameworks
+Some projects may use multiple test frameworks to execute tests. In the scenario where one of the test frameworks is not
+supported, and is providing test tasks extending from Gradle task `Test`, we can skip the configuration with:
+
+```
+tasks.withType(Test).configureEach {
+    if (testFramework !instanceof com.foo.UnsupportedTestFramework) {
+        retry {
+            maxRetries.set(1)
+            maxFailures.set(5)
+            failOnPassedAfterRetry.set(true)
+        }
+    }
+}
+```
+
 == Filtering
 
 By default, all tests are eligible for retrying.
