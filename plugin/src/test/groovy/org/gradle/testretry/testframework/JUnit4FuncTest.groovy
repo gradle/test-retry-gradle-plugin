@@ -323,6 +323,51 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+	def "handles junitparams tests (gradle version #gradleVersion)"() {
+		given:
+		buildFile << """
+            test.retry.maxRetries = 1
+            dependencies {
+                testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
+            }
+        """
+
+		writeTestSource """
+            package acme;
+
+			import junitparams.JUnitParamsRunner;
+			import junitparams.Parameters;
+			import junitparams.naming.TestCaseName;
+			import org.junit.Test;
+			import org.junit.experimental.categories.Category;
+			import org.junit.runner.RunWith;
+
+			import static org.junit.Assert.assertTrue;
+
+			@RunWith(JUnitParamsRunner.class)
+			public class MainTest {
+				@Test
+				@Parameters({
+					"0, true",
+					"1, false" })
+				@TestCaseName("{method}[{index}: {method}({0})={1}]")
+				public void test(int input, boolean expected) {
+					assertTrue(expected);
+				}
+			}
+        """
+
+		when:
+		def result = gradleRunner(gradleVersion).buildAndFail()
+
+		then:
+		result.output.count('test[0: test(0)=true] PASSED') == 2
+		result.output.count('test[1: test(1)=false] FAILED') == 2
+
+		where:
+		gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+	}
+
     @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/52")
     def "test that is skipped after failure is considered to be still failing (gradle version #gradleVersion)"() {
         given:
