@@ -24,11 +24,14 @@ import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.gradle.util.GradleVersion;
 
+import javax.annotation.Nullable;
+
 /**
  * Instances are scoped to a test task execution and are reused between rounds.
  */
 public interface TestFrameworkStrategy {
 
+    @Nullable
     static TestFrameworkStrategy of(TestFramework testFramework) {
         if (testFramework instanceof JUnitTestFramework) {
             return new JunitTestFrameworkStrategy();
@@ -37,7 +40,7 @@ public interface TestFrameworkStrategy {
         } else if (testFramework instanceof TestNGTestFramework) {
             return new TestNgTestFrameworkStrategy();
         } else {
-            throw new UnsupportedOperationException("Unknown test framework: " + testFramework);
+            return null;
         }
     }
 

@@ -26,6 +26,8 @@ import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Set;
@@ -35,6 +37,7 @@ import static org.gradle.testretry.internal.executer.framework.TestFrameworkStra
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RetryTestExecuter.class);
     private final TestRetryTaskExtensionAdapter extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
@@ -75,6 +78,11 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         }
 
         TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
+        if (testFrameworkStrategy == null) {
+            LOGGER.warn("Test retry requested for task {} with unsupported test framework {} - failing tests will not be retried", spec.getIdentityPath(), spec.getTestFramework().getClass().getName());
+            delegate.execute(spec, testResultProcessor);
+            return;
+        }
 
         RetryFilter filter = new RetryFilter(
             new AnnotationInspectorImpl(frameworkTemplate.testsReader),
