@@ -256,7 +256,7 @@ The plugin supports retrying Spock `@Stepwise` tests and TestNG `@Test(dependsOn
 * Downstream tests are run because a flaky test causes any downstream tests to be skipped in the initial test run.
 
 === Projects with multiple test frameworks
-Some projects may use multiple test frameworks to execute tests. In the scenario where one of the test frameworks is not
+Some projects may use multiple test tasks with different frameworks to execute tests. In the scenario where one of the test frameworks is not
 supported, and is providing test tasks extending from Gradle task `Test`, we can skip the configuration with:
 
 ```
