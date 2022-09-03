@@ -350,7 +350,6 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 				@Parameters({
 					"0, true",
 					"1, false" })
-				@TestCaseName("{method}[{index}: {method}({0})={1}]")
 				public void test(int input, boolean expected) {
 					assertTrue(expected);
 				}
@@ -361,8 +360,8 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 		def result = gradleRunner(gradleVersion).buildAndFail()
 
 		then:
-		result.output.count('test[0: test(0)=true] PASSED') == 2
-		result.output.count('test[1: test(1)=false] FAILED') == 2
+		result.output.count('test(0, true) [0] PASSED') == 2
+		result.output.count('test(1, false) [1] FAILED') == 2
 
 		where:
 		gradleVersion << GRADLE_VERSIONS_UNDER_TEST
