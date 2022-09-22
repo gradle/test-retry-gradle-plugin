@@ -50,6 +50,6 @@ public interface TestFrameworkStrategy {
 
     boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName);
 
-    TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests);
+    TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests);
 
 }

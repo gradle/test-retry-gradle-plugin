@@ -15,7 +15,9 @@
  */
 package org.gradle.testretry.internal.executer.framework;
 
+import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.testretry.internal.executer.TestFilterBuilder;
+import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.slf4j.Logger;
@@ -44,6 +46,13 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
     @Override
     public boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName) {
         return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
+    }
+
+    protected DefaultTestFilter testFilterFor(TestNames failedTests, boolean canRunParameterizedSpockMethods, TestFrameworkTemplate template) {
+        TestFilterBuilder filter = template.filterBuilder();
+        addFilters(filter, template.testsReader, failedTests, canRunParameterizedSpockMethods);
+
+        return filter.build();
     }
 
     protected void addFilters(TestFilterBuilder filters, TestsReader testsReader, TestNames failedTests, boolean canRunParameterizedSpockMethods) {

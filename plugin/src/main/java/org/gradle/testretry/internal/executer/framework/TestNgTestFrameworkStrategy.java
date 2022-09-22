@@ -15,11 +15,13 @@
  */
 package org.gradle.testretry.internal.executer.framework;
 
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.initialization.loadercache.ClassLoaderCache;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.testng.TestNGTestFramework;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.testng.TestNGOptions;
 import org.gradle.internal.reflect.Instantiator;
@@ -66,31 +68,64 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
-        TestFilterBuilder testFilterBuilder = template.filterBuilder();
-        addFilters(template.testsReader, failedTests, testFilterBuilder);
-        TestNGTestFramework testFramework = createTestFramework(template, testFilterBuilder.build());
-        copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), testFramework.getOptions());
-        return testFramework;
-    }
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, template);
 
-    private TestNGTestFramework createTestFramework(TestFrameworkTemplate template, DefaultTestFilter retriedTestFilter) {
-        if (gradleVersionIsAtLeast("6.6")) {
-            return new TestNGTestFramework(template.task, template.task.getClasspath(), retriedTestFilter, template.objectFactory);
+        if (gradleVersionIsAtLeast("8.0")) {
+            return retryTestFramework(testFramework, failedTestsFilter);
+        } else if (gradleVersionIsAtLeast("6.6")) {
+            return retryTestFrameworkForGradleOlderThanV8_0(template, failedTestsFilter);
         } else {
-            try {
-                ServiceRegistry serviceRegistry = ((ProjectInternal) template.task.getProject()).getServices();
-                ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
-                Class<?> testNGTestFramework = TestNGTestFramework.class;
-                @SuppressWarnings("JavaReflectionMemberAccess") final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
-                return (TestNGTestFramework) constructor.newInstance(template.task, retriedTestFilter, template.instantiator, classLoaderCache);
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+            return retryTestFrameworkForGradleOlderThanV6_6(template, failedTestsFilter);
         }
     }
 
-    private void copyTestNGOptions(TestNGOptions source, TestNGOptions target) {
+    private static TestFramework retryTestFramework(TestFramework testFramework, DefaultTestFilter failedTestsFilter) {
+        return testFramework.copyWithFilters(failedTestsFilter);
+    }
+
+    private static TestNGTestFramework retryTestFrameworkForGradleOlderThanV8_0(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
+        TestNGTestFramework retryTestFramework = newTestNGTestFrameworkInstanceForGradleOlderThanV8_0(template, failedTestsFilter);
+        copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
+
+        return retryTestFramework;
+    }
+
+    private static TestNGTestFramework newTestNGTestFrameworkInstanceForGradleOlderThanV8_0(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
+        try {
+            Class<?> testNGTestFramework = TestNGTestFramework.class;
+            @SuppressWarnings("JavaReflectionMemberAccess") final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, FileCollection.class, DefaultTestFilter.class, ObjectFactory.class);
+
+            return (TestNGTestFramework) constructor.newInstance(template.task, template.task.getClasspath(), failedTestsFilter, template.objectFactory);
+
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                 InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static TestNGTestFramework retryTestFrameworkForGradleOlderThanV6_6(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
+        TestNGTestFramework retryTestFramework = newTestNGTestFrameworkInstanceForGradleOlderThanV6_6(template, failedTestsFilter);
+        copyTestNGOptions((TestNGOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
+
+        return retryTestFramework;
+    }
+
+    private static TestNGTestFramework newTestNGTestFrameworkInstanceForGradleOlderThanV6_6(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
+        try {
+            ServiceRegistry serviceRegistry = ((ProjectInternal) template.task.getProject()).getServices();
+            ClassLoaderCache classLoaderCache = serviceRegistry.get(ClassLoaderCache.class);
+            Class<?> testNGTestFramework = TestNGTestFramework.class;
+            @SuppressWarnings("JavaReflectionMemberAccess") final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
+
+            return (TestNGTestFramework) constructor.newInstance(template.task, failedTestsFilter, template.instantiator, classLoaderCache);
+        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static void copyTestNGOptions(TestNGOptions source, TestNGOptions target) {
         target.setOutputDirectory(source.getOutputDirectory());
         target.setIncludeGroups(source.getIncludeGroups());
         target.setExcludeGroups(source.getExcludeGroups());
@@ -107,6 +142,13 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         target.setSuiteXmlFiles(source.getSuiteXmlFiles());
         target.setSuiteXmlBuilder(source.getSuiteXmlBuilder());
         target.setSuiteXmlWriter(source.getSuiteXmlWriter());
+    }
+
+    private DefaultTestFilter testFilterFor(TestNames failedTests, TestFrameworkTemplate template) {
+        TestFilterBuilder filter = template.filterBuilder();
+        addFilters(template.testsReader, failedTests, filter);
+
+        return filter.build();
     }
 
     private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
