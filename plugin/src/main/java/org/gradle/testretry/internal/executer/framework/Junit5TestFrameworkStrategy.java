@@ -18,7 +18,6 @@ package org.gradle.testretry.internal.executer.framework;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
-import org.gradle.api.tasks.testing.Test;
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
@@ -26,6 +25,7 @@ import org.gradle.testretry.internal.executer.TestNames;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import static org.gradle.testretry.internal.executer.framework.Junit5TestFrameworkStrategy.TestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
@@ -33,41 +33,67 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
         DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, false, template);
+        return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
+    }
 
-        if (gradleVersionIsAtLeast("8.0")) {
-            return retryTestFramework(testFramework, failedTestsFilter);
-        } else {
-            return retryTestFrameworkForGradleOlderThanV8_0(template, failedTestsFilter);
+    interface TestFrameworkProvider {
+        class ProviderForCurrentGradleVersion implements TestFrameworkProvider {
+
+            private final TestFramework testFramework;
+
+            ProviderForCurrentGradleVersion(TestFramework testFramework) {
+                this.testFramework = testFramework;
+            }
+
+            @Override
+            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
+                return testFramework.copyWithFilters(failedTestsFilter);            }
         }
-    }
 
-    private static TestFramework retryTestFramework(TestFramework testFramework, DefaultTestFilter failedTestsFilter) {
-        return testFramework.copyWithFilters(failedTestsFilter);
-    }
+        class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
 
-    private static TestFramework retryTestFrameworkForGradleOlderThanV8_0(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
-        JUnitPlatformTestFramework retryTestFramework = newJUnitPlatformTestFrameworkInstanceForGradleOlderThanV8_0(template.task, failedTestsFilter);
-        copyTestOptions((JUnitPlatformOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
+            private final TestFrameworkTemplate template;
 
-        return retryTestFramework;
-    }
+            ProviderForGradleOlderThanV8(TestFrameworkTemplate template) {
+                this.template = template;
+            }
 
-    private static JUnitPlatformTestFramework newJUnitPlatformTestFrameworkInstanceForGradleOlderThanV8_0(Test task, DefaultTestFilter failedTestsFilter) {
-        try {
-            Class<?> jUnitPlatformTestFrameworkClass = JUnitPlatformTestFramework.class;
-            Constructor<?> constructor = jUnitPlatformTestFrameworkClass.getConstructor(DefaultTestFilter.class);
+            @Override
+            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
+                JUnitPlatformTestFramework retryTestFramework = newInstance(failedTestsFilter);
+                copyOptions((JUnitPlatformOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
 
-            return (JUnitPlatformTestFramework) constructor.newInstance(failedTestsFilter);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                 InvocationTargetException e) {
-            throw new RuntimeException(e);
+                return retryTestFramework;
+            }
+
+            private static JUnitPlatformTestFramework newInstance(DefaultTestFilter failedTestsFilter) {
+                try {
+                    Class<?> jUnitPlatformTestFrameworkClass = JUnitPlatformTestFramework.class;
+                    Constructor<?> constructor = jUnitPlatformTestFrameworkClass.getConstructor(DefaultTestFilter.class);
+
+                    return (JUnitPlatformTestFramework) constructor.newInstance(failedTestsFilter);
+                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                         InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            private static void copyOptions(JUnitPlatformOptions source, JUnitPlatformOptions target) {
+                target.setIncludeEngines(source.getIncludeEngines());
+                target.setExcludeEngines(source.getExcludeEngines());
+                target.setIncludeTags(source.getIncludeTags());
+                target.setExcludeTags(source.getExcludeTags());
+            }
         }
-    }
 
-    private static void copyTestOptions(JUnitPlatformOptions source, JUnitPlatformOptions target) {
-        target.setIncludeEngines(source.getIncludeEngines());
-        target.setExcludeEngines(source.getExcludeEngines());
-        target.setIncludeTags(source.getIncludeTags());
-        target.setExcludeTags(source.getExcludeTags());
+        static TestFrameworkProvider testFrameworkProvider(TestFrameworkTemplate template, TestFramework testFramework) {
+            if (gradleVersionIsAtLeast("8.0")) {
+                return new ProviderForCurrentGradleVersion(testFramework);
+            } else {
+                return new ProviderForGradleOlderThanV8(template);
+            }
+        }
+
+        TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter);
     }
 }

@@ -26,47 +26,76 @@ import org.gradle.testretry.internal.executer.TestNames;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import static org.gradle.testretry.internal.executer.framework.JunitTestFrameworkStrategy.TestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
-        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, false, template);
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, true, template);
+        return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
+    }
 
-        if (gradleVersionIsAtLeast("8.0")) {
-            return retryTestFramework(testFramework, failedTestsFilter);
-        } else {
-            return retryTestFrameworkForGradleOlderThanV8_0(template, failedTestsFilter);
+    interface TestFrameworkProvider {
+
+        class ProviderForCurrentGradleVersion implements TestFrameworkProvider {
+
+            private final TestFramework testFramework;
+
+            ProviderForCurrentGradleVersion(TestFramework testFramework) {
+                this.testFramework = testFramework;
+            }
+
+            @Override
+            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
+                return testFramework.copyWithFilters(failedTestsFilter);
+            }
         }
-    }
 
-    private static TestFramework retryTestFramework(TestFramework testFramework, DefaultTestFilter failedTestsFilter) {
-        return testFramework.copyWithFilters(failedTestsFilter);
-    }
+        class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
 
-    private static TestFramework retryTestFrameworkForGradleOlderThanV8_0(TestFrameworkTemplate template, DefaultTestFilter failedTestsFilter) {
-        JUnitTestFramework retryTestFramework = newJUnitTestFrameworkInstanceForGradleOlderThanV8_0(template.task, failedTestsFilter);
-        copyTestOptions((JUnitOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
+            private final TestFrameworkTemplate template;
 
-        return retryTestFramework;
-    }
+            ProviderForGradleOlderThanV8(TestFrameworkTemplate template) {
+                this.template = template;
+            }
 
-    private static JUnitTestFramework newJUnitTestFrameworkInstanceForGradleOlderThanV8_0(Test task, DefaultTestFilter failedTestsFilter) {
-        try {
-            Class<?> jUnitTestFrameworkClass = JUnitTestFramework.class;
-            Constructor<?> constructor = jUnitTestFrameworkClass.getConstructor(Test.class, DefaultTestFilter.class);
+            @Override
+            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
+                JUnitTestFramework retryTestFramework = newInstance(template.task, failedTestsFilter);
+                copyOptions((JUnitOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
 
-            return (JUnitTestFramework) constructor.newInstance(task, failedTestsFilter);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                 InvocationTargetException e) {
-            throw new RuntimeException(e);
+                return retryTestFramework;
+            }
+
+            private static JUnitTestFramework newInstance(Test task, DefaultTestFilter failedTestsFilter) {
+                try {
+                    Class<?> jUnitTestFrameworkClass = JUnitTestFramework.class;
+                    Constructor<?> constructor = jUnitTestFrameworkClass.getConstructor(Test.class, DefaultTestFilter.class);
+
+                    return (JUnitTestFramework) constructor.newInstance(task, failedTestsFilter);
+                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                         InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            private static void copyOptions(JUnitOptions source, JUnitOptions target) {
+                target.setIncludeCategories(source.getIncludeCategories());
+                target.setExcludeCategories(source.getExcludeCategories());
+            }
         }
-    }
 
-    private static void copyTestOptions(JUnitOptions source, JUnitOptions target) {
-        target.setIncludeCategories(source.getIncludeCategories());
-        target.setExcludeCategories(source.getExcludeCategories());
+        static TestFrameworkProvider testFrameworkProvider(TestFrameworkTemplate template, TestFramework testFramework) {
+            if (gradleVersionIsAtLeast("8.0")) {
+                return new ProviderForCurrentGradleVersion(testFramework);
+            } else {
+                return new ProviderForGradleOlderThanV8(template);
+            }
+        }
+
+        TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter);
     }
 
 }
