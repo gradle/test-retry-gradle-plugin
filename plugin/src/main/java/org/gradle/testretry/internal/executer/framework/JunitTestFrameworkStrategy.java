@@ -24,7 +24,6 @@ import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 import static org.gradle.testretry.internal.executer.framework.JunitTestFrameworkStrategy.TestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
@@ -75,8 +74,7 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy im
                     Constructor<?> constructor = jUnitTestFrameworkClass.getConstructor(Test.class, DefaultTestFilter.class);
 
                     return (JUnitTestFramework) constructor.newInstance(task, failedTestsFilter);
-                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                         InvocationTargetException e) {
+                } catch (ReflectiveOperationException e) {
                     throw new RuntimeException(e);
                 }
             }

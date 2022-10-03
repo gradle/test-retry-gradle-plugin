@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -160,8 +159,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
                     return (TestNGTestFramework) constructor.newInstance(template.task, template.task.getClasspath(), failedTestsFilter, template.objectFactory);
 
-                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                         InvocationTargetException e) {
+                } catch (ReflectiveOperationException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -191,8 +189,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                     @SuppressWarnings("JavaReflectionMemberAccess") final Constructor<?> constructor = testNGTestFramework.getConstructor(Test.class, DefaultTestFilter.class, Instantiator.class, ClassLoaderCache.class);
 
                     return (TestNGTestFramework) constructor.newInstance(template.task, failedTestsFilter, template.instantiator, classLoaderCache);
-                } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                         InvocationTargetException e) {
+                } catch (ReflectiveOperationException e) {
                     throw new RuntimeException(e);
                 }
             }
