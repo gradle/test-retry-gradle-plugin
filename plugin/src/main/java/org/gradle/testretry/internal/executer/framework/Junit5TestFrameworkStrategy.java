@@ -21,10 +21,11 @@ import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFram
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
+import org.gradle.testretry.internal.executer.framework.TestFrameworkProvider.ProviderForCurrentGradleVersion;
 
 import java.lang.reflect.Constructor;
 
-import static org.gradle.testretry.internal.executer.framework.Junit5TestFrameworkStrategy.TestFrameworkProvider.testFrameworkProvider;
+import static org.gradle.testretry.internal.executer.framework.Junit5TestFrameworkStrategy.Junit5TestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
@@ -35,22 +36,9 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 
-    interface TestFrameworkProvider {
-        class ProviderForCurrentGradleVersion implements TestFrameworkProvider {
+    static class Junit5TestFrameworkProvider {
 
-            private final TestFramework testFramework;
-
-            ProviderForCurrentGradleVersion(TestFramework testFramework) {
-                this.testFramework = testFramework;
-            }
-
-            @Override
-            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
-                return testFramework.copyWithFilters(failedTestsFilter);
-            }
-        }
-
-        class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
+        static class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
 
             private final TestFrameworkTemplate template;
 
@@ -93,6 +81,6 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
             }
         }
 
-        TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter);
     }
+
 }

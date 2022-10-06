@@ -29,6 +29,7 @@ import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
+import org.gradle.testretry.internal.executer.framework.TestFrameworkProvider.ProviderForCurrentGradleVersion;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+import static org.gradle.testretry.internal.executer.framework.TestNgTestFrameworkStrategy.TestNGTestFrameworkProvider.testFrameworkProvider;
 
 final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
@@ -70,7 +72,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
         DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, template);
 
-        return TestFrameworkProvider.testFrameworkProvider(template, testFramework)
+        return testFrameworkProvider(template, testFramework)
             .testFrameworkFor(failedTestsFilter);
     }
 
@@ -120,23 +122,8 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
     }
 
-    interface TestFrameworkProvider {
-
-        class ProviderForCurrentGradleVersion implements TestFrameworkProvider {
-
-            private final TestFramework testFramework;
-
-            ProviderForCurrentGradleVersion(TestFramework testFramework) {
-                this.testFramework = testFramework;
-            }
-
-            @Override
-            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
-                return testFramework.copyWithFilters(failedTestsFilter);
-            }
-        }
-
-        class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
+    static class TestNGTestFrameworkProvider {
+        static class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
 
             private final TestFrameworkTemplate template;
 
@@ -165,7 +152,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
             }
         }
 
-        class ProviderForGradleOlderThanV66 implements TestFrameworkProvider {
+        static class ProviderForGradleOlderThanV66 implements TestFrameworkProvider {
 
             private final TestFrameworkTemplate template;
 
@@ -223,7 +210,6 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
             }
         }
 
-        TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter);
     }
 
 }

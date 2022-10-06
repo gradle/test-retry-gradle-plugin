@@ -25,7 +25,7 @@ import org.gradle.testretry.internal.executer.TestNames;
 
 import java.lang.reflect.Constructor;
 
-import static org.gradle.testretry.internal.executer.framework.JunitTestFrameworkStrategy.TestFrameworkProvider.testFrameworkProvider;
+import static org.gradle.testretry.internal.executer.framework.JunitTestFrameworkStrategy.JunitTestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
@@ -36,23 +36,9 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy im
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 
-    interface TestFrameworkProvider {
+    static class JunitTestFrameworkProvider {
 
-        class ProviderForCurrentGradleVersion implements TestFrameworkProvider {
-
-            private final TestFramework testFramework;
-
-            ProviderForCurrentGradleVersion(TestFramework testFramework) {
-                this.testFramework = testFramework;
-            }
-
-            @Override
-            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
-                return testFramework.copyWithFilters(failedTestsFilter);
-            }
-        }
-
-        class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
+        static class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
 
             private final TestFrameworkTemplate template;
 
@@ -87,13 +73,12 @@ final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy im
 
         static TestFrameworkProvider testFrameworkProvider(TestFrameworkTemplate template, TestFramework testFramework) {
             if (gradleVersionIsAtLeast("8.0")) {
-                return new ProviderForCurrentGradleVersion(testFramework);
+                return new TestFrameworkProvider.ProviderForCurrentGradleVersion(testFramework);
             } else {
                 return new ProviderForGradleOlderThanV8(template);
             }
         }
 
-        TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter);
     }
 
 }
