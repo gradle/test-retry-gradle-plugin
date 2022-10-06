@@ -46,7 +46,8 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
             @Override
             public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
-                return testFramework.copyWithFilters(failedTestsFilter);            }
+                return testFramework.copyWithFilters(failedTestsFilter);
+            }
         }
 
         class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
