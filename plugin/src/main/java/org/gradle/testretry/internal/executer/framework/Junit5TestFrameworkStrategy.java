@@ -16,27 +16,71 @@
 package org.gradle.testretry.internal.executer.framework;
 
 import org.gradle.api.internal.tasks.testing.TestFramework;
+import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
 import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
-import org.gradle.testretry.internal.executer.TestFilterBuilder;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
+import org.gradle.testretry.internal.executer.framework.TestFrameworkProvider.ProviderForCurrentGradleVersion;
+
+import java.lang.reflect.Constructor;
+
+import static org.gradle.testretry.internal.executer.framework.Junit5TestFrameworkStrategy.Junit5TestFrameworkProvider.testFrameworkProvider;
+import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, TestNames failedTests) {
-        TestFilterBuilder filters = template.filterBuilder();
-        addFilters(filters, template.testsReader, failedTests, false);
-        JUnitPlatformTestFramework newFramework = new JUnitPlatformTestFramework(filters.build());
-        copyTestOptions((JUnitPlatformOptions) template.task.getTestFramework().getOptions(), newFramework.getOptions());
-        return newFramework;
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, false, template);
+        return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 
-    private void copyTestOptions(JUnitPlatformOptions source, JUnitPlatformOptions target) {
-        target.setIncludeEngines(source.getIncludeEngines());
-        target.setExcludeEngines(source.getExcludeEngines());
-        target.setIncludeTags(source.getIncludeTags());
-        target.setExcludeTags(source.getExcludeTags());
+    static class Junit5TestFrameworkProvider {
+
+        static class ProviderForGradleOlderThanV8 implements TestFrameworkProvider {
+
+            private final TestFrameworkTemplate template;
+
+            ProviderForGradleOlderThanV8(TestFrameworkTemplate template) {
+                this.template = template;
+            }
+
+            @Override
+            public TestFramework testFrameworkFor(DefaultTestFilter failedTestsFilter) {
+                JUnitPlatformTestFramework retryTestFramework = newInstance(failedTestsFilter);
+                copyOptions((JUnitPlatformOptions) template.task.getTestFramework().getOptions(), retryTestFramework.getOptions());
+
+                return retryTestFramework;
+            }
+
+            private static JUnitPlatformTestFramework newInstance(DefaultTestFilter failedTestsFilter) {
+                try {
+                    Class<?> jUnitPlatformTestFrameworkClass = JUnitPlatformTestFramework.class;
+                    Constructor<?> constructor = jUnitPlatformTestFrameworkClass.getConstructor(DefaultTestFilter.class);
+
+                    return (JUnitPlatformTestFramework) constructor.newInstance(failedTestsFilter);
+                } catch (ReflectiveOperationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            private static void copyOptions(JUnitPlatformOptions source, JUnitPlatformOptions target) {
+                target.setIncludeEngines(source.getIncludeEngines());
+                target.setExcludeEngines(source.getExcludeEngines());
+                target.setIncludeTags(source.getIncludeTags());
+                target.setExcludeTags(source.getExcludeTags());
+            }
+        }
+
+        static TestFrameworkProvider testFrameworkProvider(TestFrameworkTemplate template, TestFramework testFramework) {
+            if (gradleVersionIsAtLeast("8.0")) {
+                return new ProviderForCurrentGradleVersion(testFramework);
+            } else {
+                return new ProviderForGradleOlderThanV8(template);
+            }
+        }
+
     }
+
 }
