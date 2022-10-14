@@ -28,7 +28,7 @@ import java.util.concurrent.Callable;
 
 import static org.gradle.testretry.internal.config.TestTaskConfigurer.supportsPropertyConventions;
 
-public final class TestRetryTaskExtensionAdapter {
+public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensionAccessor {
 
     // for testing only
     public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
@@ -87,34 +87,42 @@ public final class TestRetryTaskExtensionAdapter {
         }
     }
 
+    @Override
     public boolean getFailOnPassedAfterRetry() {
         return read(extension.getFailOnPassedAfterRetry(), DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
     }
 
+    @Override
     public int getMaxRetries() {
         return read(extension.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
 
+    @Override
     public int getMaxFailures() {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
     }
 
+    @Override
     public Set<String> getIncludeClasses() {
         return read(extension.getFilter().getIncludeClasses(), Collections.emptySet());
     }
 
+    @Override
     public Set<String> getIncludeAnnotationClasses() {
         return read(extension.getFilter().getIncludeAnnotationClasses(), Collections.emptySet());
     }
 
+    @Override
     public Set<String> getExcludeClasses() {
         return read(extension.getFilter().getExcludeClasses(), Collections.emptySet());
     }
 
+    @Override
     public Set<String> getExcludeAnnotationClasses() {
         return read(extension.getFilter().getExcludeAnnotationClasses(), Collections.emptySet());
     }
 
+    @Override
     public boolean getSimulateNotRetryableTest() {
         return simulateNotRetryableTest;
     }

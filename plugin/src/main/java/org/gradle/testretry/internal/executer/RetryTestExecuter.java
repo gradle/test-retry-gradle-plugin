@@ -22,7 +22,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
-import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter;
+import org.gradle.testretry.internal.config.TestRetryTaskExtensionAccessor;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
 import org.gradle.testretry.internal.filter.RetryFilter;
@@ -38,7 +38,7 @@ import static org.gradle.testretry.internal.executer.framework.TestFrameworkStra
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RetryTestExecuter.class);
-    private final TestRetryTaskExtensionAdapter extension;
+    private final TestRetryTaskExtensionAccessor extension;
     private final TestExecuter<JvmTestExecutionSpec> delegate;
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
@@ -47,7 +47,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     public RetryTestExecuter(
         Test task,
-        TestRetryTaskExtensionAdapter extension,
+        TestRetryTaskExtensionAccessor extension,
         TestExecuter<JvmTestExecutionSpec> delegate,
         Instantiator instantiator,
         ObjectFactory objectFactory,
