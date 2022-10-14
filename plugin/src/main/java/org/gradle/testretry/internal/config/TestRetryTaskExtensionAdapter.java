@@ -20,7 +20,7 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.testretry.TestRetryTaskExtension;
-import org.gradle.util.VersionNumber;
+import org.gradle.util.GradleVersion;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -45,7 +45,7 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
     public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
-        VersionNumber gradleVersion
+        GradleVersion gradleVersion
     ) {
         this.providerFactory = providerFactory;
         this.extension = extension;

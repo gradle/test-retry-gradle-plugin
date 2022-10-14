@@ -15,13 +15,13 @@
  */
 package org.gradle.testretry.testframework
 
-import org.gradle.util.VersionNumber
+import org.gradle.util.GradleVersion
 
 class Spock2FuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
     boolean canTargetInheritedMethods(String gradleVersion) {
-        VersionNumber.parse(gradleVersion).major >= 7
+        GradleVersion.version(gradleVersion) >= GradleVersion.version("7.0")
     }
 
     @Override
