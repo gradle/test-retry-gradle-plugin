@@ -24,7 +24,6 @@ class GradleVersionData {
 
     static List<String> getReleasedVersions() {
         def GRADLE_5 = GradleVersion.version("5.0")
-        GRADLE_5.version
 
         new JsonSlurper().parse(new URL("https://services.gradle.org/versions/all"))
             .findAll { !it.nightly && !it.snapshot } // filter out snapshots and nightlies
