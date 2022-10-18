@@ -7,7 +7,7 @@ import java.util.regex.Pattern
 
 class GradleVersionData {
 
-    static final Pattern MAJOR_AND_MINOR_VERSION_PATTERN = Pattern.compile("(\\d+)\\.(\\d+).*")
+    static final Pattern MAJOR_AND_MINOR_VERSION_PATTERN = ~/(?<major>\d+)\.(?<minor>\d+).*/
 
     static List<String> getNightlyVersions() {
         def releaseNightly = getLatestReleaseNightly()
@@ -42,23 +42,26 @@ class GradleVersionData {
     }
 
     static int major(GradleVersion gradle) {
-        def version = gradle.version
-        def matcher = MAJOR_AND_MINOR_VERSION_PATTERN.matcher(version)
-        if (matcher.matches()) {
-            return Integer.parseInt(matcher.group(1))
-        } else {
-            throw new IllegalArgumentException("Failed to determine major version for version ${version}")
-        }
+        extractedGroup(gradle, "major")
     }
 
     static int minor(GradleVersion gradle) {
+        extractedGroup(gradle, "minor")
+    }
+
+    static int extractedGroup(GradleVersion gradle, String groupName) {
         def version = gradle.version
         def matcher = MAJOR_AND_MINOR_VERSION_PATTERN.matcher(version)
         if (matcher.matches()) {
-            return Integer.parseInt(matcher.group(2))
+            try {
+                return Integer.parseInt(matcher.group(groupName))
+            } catch(RuntimeException exc) {
+                throw new IllegalArgumentException("Failed to determine ${groupName} group for version ${version}", exc)
+            }
         } else {
-            throw new IllegalArgumentException("Failed to determine major version for version ${version}")
+            throw new IllegalArgumentException("Failed to determine ${groupName} group for version ${version}")
         }
     }
 
 }
+
