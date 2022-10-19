@@ -20,15 +20,15 @@ import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.testretry.TestRetryTaskExtension;
-import org.gradle.util.VersionNumber;
+import org.gradle.util.GradleVersion;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import static java.util.Collections.emptySet;
 import static org.gradle.testretry.internal.config.TestTaskConfigurer.supportsPropertyConventions;
 
-public final class TestRetryTaskExtensionAdapter {
+public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensionAccessor {
 
     // for testing only
     public static final String SIMULATE_NOT_RETRYABLE_PROPERTY = "__org_gradle_testretry_simulate_not_retryable";
@@ -45,7 +45,7 @@ public final class TestRetryTaskExtensionAdapter {
     public TestRetryTaskExtensionAdapter(
         ProviderFactory providerFactory,
         TestRetryTaskExtension extension,
-        VersionNumber gradleVersion
+        GradleVersion gradleVersion
     ) {
         this.providerFactory = providerFactory;
         this.extension = extension;
@@ -60,10 +60,10 @@ public final class TestRetryTaskExtensionAdapter {
             extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
             extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
             extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
-            extension.getFilter().getIncludeClasses().convention(Collections.emptySet());
-            extension.getFilter().getIncludeAnnotationClasses().convention(Collections.emptySet());
-            extension.getFilter().getExcludeClasses().convention(Collections.emptySet());
-            extension.getFilter().getExcludeAnnotationClasses().convention(Collections.emptySet());
+            extension.getFilter().getIncludeClasses().convention(emptySet());
+            extension.getFilter().getIncludeAnnotationClasses().convention(emptySet());
+            extension.getFilter().getExcludeClasses().convention(emptySet());
+            extension.getFilter().getExcludeAnnotationClasses().convention(emptySet());
         } else {
             // https://github.com/gradle/gradle/issues/7485
             extension.getFilter().getIncludeClasses().empty();
@@ -87,34 +87,42 @@ public final class TestRetryTaskExtensionAdapter {
         }
     }
 
+    @Override
     public boolean getFailOnPassedAfterRetry() {
         return read(extension.getFailOnPassedAfterRetry(), DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
     }
 
+    @Override
     public int getMaxRetries() {
         return read(extension.getMaxRetries(), DEFAULT_MAX_RETRIES);
     }
 
+    @Override
     public int getMaxFailures() {
         return read(extension.getMaxFailures(), DEFAULT_MAX_FAILURES);
     }
 
+    @Override
     public Set<String> getIncludeClasses() {
-        return read(extension.getFilter().getIncludeClasses(), Collections.emptySet());
+        return read(extension.getFilter().getIncludeClasses(), emptySet());
     }
 
+    @Override
     public Set<String> getIncludeAnnotationClasses() {
-        return read(extension.getFilter().getIncludeAnnotationClasses(), Collections.emptySet());
+        return read(extension.getFilter().getIncludeAnnotationClasses(), emptySet());
     }
 
+    @Override
     public Set<String> getExcludeClasses() {
-        return read(extension.getFilter().getExcludeClasses(), Collections.emptySet());
+        return read(extension.getFilter().getExcludeClasses(), emptySet());
     }
 
+    @Override
     public Set<String> getExcludeAnnotationClasses() {
-        return read(extension.getFilter().getExcludeAnnotationClasses(), Collections.emptySet());
+        return read(extension.getFilter().getExcludeAnnotationClasses(), emptySet());
     }
 
+    @Override
     public boolean getSimulateNotRetryableTest() {
         return simulateNotRetryableTest;
     }

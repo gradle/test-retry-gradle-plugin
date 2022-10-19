@@ -28,7 +28,7 @@ import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.gradle.testretry.internal.executer.RetryTestExecuter;
-import org.gradle.util.VersionNumber;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
@@ -36,11 +36,14 @@ import java.lang.reflect.Method;
 
 public final class TestTaskConfigurer {
 
+    private final static GradleVersion GRADLE_5_1 = GradleVersion.version("5.1");
+    private final static GradleVersion GRADLE_6_1 = GradleVersion.version("6.1");
+
     private TestTaskConfigurer() {
     }
 
     public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
-        VersionNumber gradleVersion = VersionNumber.parse(test.getProject().getGradle().getGradleVersion());
+        GradleVersion gradleVersion = GradleVersion.current();
 
         TestRetryTaskExtension extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
 
@@ -62,7 +65,7 @@ public final class TestTaskConfigurer {
         Test test,
         ObjectFactory objectFactory,
         ProviderFactory providerFactory,
-        VersionNumber gradleVersion
+        GradleVersion gradleVersion
     ) {
         Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
         if (supportsPropertyConventions(gradleVersion)) {
@@ -75,12 +78,12 @@ public final class TestTaskConfigurer {
         return result;
     }
 
-    public static boolean supportsPropertyConventions(VersionNumber gradleVersion) {
-        return gradleVersion.compareTo(VersionNumber.parse("5.1")) >= 0;
+    public static boolean supportsPropertyConventions(GradleVersion gradleVersion) {
+        return gradleVersion.compareTo(GRADLE_5_1) >= 0;
     }
 
-    private static boolean supportsFinalizeValueOnRead(VersionNumber gradleVersion) {
-        return gradleVersion.compareTo(VersionNumber.parse("6.1")) >= 0;
+    private static boolean supportsFinalizeValueOnRead(GradleVersion gradleVersion) {
+        return gradleVersion.compareTo(GRADLE_6_1) >= 0;
     }
 
     private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
