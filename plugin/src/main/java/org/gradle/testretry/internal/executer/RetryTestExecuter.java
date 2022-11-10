@@ -33,7 +33,7 @@ import java.io.File;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
+import static org.gradle.testretry.internal.executer.JvmTestExecutionSpecFactory.testExecutionSpecFor;
 
 public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpec> {
 
@@ -121,7 +121,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 break;
             } else {
                 TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, spec.getTestFramework(), result.failedTests);
-                testExecutionSpec = createRetryJvmExecutionSpec(spec, retryTestFramework);
+                testExecutionSpec = testExecutionSpecFor(retryTestFramework, spec);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
@@ -138,41 +138,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     private boolean hasNonRetriedTests() {
         return lastResult != null && !lastResult.nonRetriedTests.isEmpty();
-    }
-
-    private JvmTestExecutionSpec createRetryJvmExecutionSpec(JvmTestExecutionSpec spec, TestFramework retryTestFramework) {
-        if (gradleVersionIsAtLeast("6.4")) {
-            // This constructor is in Gradle 6.4+
-            return new JvmTestExecutionSpec(
-                retryTestFramework,
-                spec.getClasspath(),
-                spec.getModulePath(),
-                spec.getCandidateClassFiles(),
-                spec.isScanForTestClasses(),
-                spec.getTestClassesDirs(),
-                spec.getPath(),
-                spec.getIdentityPath(),
-                spec.getForkEvery(),
-                spec.getJavaForkOptions(),
-                spec.getMaxParallelForks(),
-                spec.getPreviousFailedTestClasses()
-            );
-        } else {
-            // This constructor is in Gradle 4.7+
-            return new JvmTestExecutionSpec(
-                retryTestFramework,
-                spec.getClasspath(),
-                spec.getCandidateClassFiles(),
-                spec.isScanForTestClasses(),
-                spec.getTestClassesDirs(),
-                spec.getPath(),
-                spec.getIdentityPath(),
-                spec.getForkEvery(),
-                spec.getJavaForkOptions(),
-                spec.getMaxParallelForks(),
-                spec.getPreviousFailedTestClasses()
-            );
-        }
     }
 
     @Override
