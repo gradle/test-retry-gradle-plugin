@@ -64,8 +64,10 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         def result = gradleRunnerWithConfigurationCache(gradleVersion).build()
 
         then:
-        result.output.count('PASSED') == 1
-        result.output.count('FAILED') == 1
+        with(result.output) {
+            it.count('PASSED') == 1
+            it.count('FAILED') == 1
+        }
 
         when:
         result = gradleRunnerWithConfigurationCache(gradleVersion).build()

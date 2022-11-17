@@ -46,7 +46,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 2
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SuccessfulTests {
@@ -66,16 +66,22 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         if (lifecycle == "BeforeClass") {
-            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
-            assert result.output.count('successTest PASSED') == (exhaust ? 0 : 1)
-            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+            with(result.output) {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+                it.count('successTest PASSED') == (exhaust ? 0 : 1)
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+            }
         } else if (lifecycle == "AfterClass") {
-            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
-            assert result.output.count('successTest PASSED') == 3
-            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+            with(result.output) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+                it.count('successTest PASSED') == 3
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+            }
         } else {
-            assert result.output.count('successTest FAILED') == (exhaust ? 3 : 2)
-            assert result.output.count('successTest PASSED') == (exhaust ? 0 : 1)
+            with(result.output) {
+                it.count('successTest FAILED') == (exhaust ? 3 : 2)
+                it.count('successTest PASSED') == (exhaust ? 0 : 1)
+            }
         }
 
         where:
@@ -92,7 +98,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import static org.junit.Assert.assertTrue;
@@ -115,7 +121,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import java.util.Arrays;
@@ -144,8 +150,11 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('test[0: test(0)=true]') == (isRerunsAllParameterizedIterations() ? 2 : 1)
-        result.output.count('test[1: test(1)=false]') == 2
+
+        with(result.output) {
+            it.count('test[0: test(0)=true]') == (isRerunsAllParameterizedIterations() ? 2 : 1)
+            it.count('test[1: test(1)=false]') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -157,7 +166,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             abstract class AbstractTest {
@@ -168,7 +177,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class FlakyTests extends AbstractTest {
@@ -182,9 +191,12 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent FAILED') == 1
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
+
+        with(result.output) {
+            it.count('parent FAILED') == 1
+            it.count('parent PASSED') == 1
+            it.count('inherited PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -196,7 +208,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.runner.Runner;
@@ -230,8 +242,11 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count("FlakyTests > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
-        result.output.count('FlakyTests > someTest PASSED') == 1
+
+        with(result.output) {
+            it.count("FlakyTests > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
+            it.count('FlakyTests > someTest PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -243,7 +258,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class FlakyTests {
@@ -261,9 +276,11 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('FlakyTests > someTest FAILED') == 1
-        result.output.count('java.lang.ExceptionInInitializerError') == 1
-        result.output.count('FlakyTests > someTest PASSED') == 1
+        with(result.output) {
+            it.count('FlakyTests > someTest FAILED') == 1
+            it.count('java.lang.ExceptionInInitializerError') == 1
+            it.count('FlakyTests > someTest PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -275,7 +292,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import static org.junit.Assert.assertTrue;
@@ -316,8 +333,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('test[0: test(0)=true] PASSED') == (isRerunsAllParameterizedIterations() ? 2 : 1)
-        result.output.count('test[1: test(1)=false] FAILED') == 2
+        with(result.output) {
+            it.count('test[0: test(0)=true] PASSED') == (isRerunsAllParameterizedIterations() ? 2 : 1)
+            it.count('test[1: test(1)=false] FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -330,7 +349,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
             import java.nio.file.*;
 
@@ -347,8 +366,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('flakyAssumeTest FAILED') == 1
-        result.output.count('flakyAssumeTest SKIPPED') == 1
+        with(result.output) {
+            it.count('flakyAssumeTest FAILED') == 1
+            it.count('flakyAssumeTest SKIPPED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -360,7 +381,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
             import java.nio.file.*;
 
@@ -399,8 +420,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('ruleTest FAILED') == 1
-        result.output.count("ruleTest PASSED") == 1
+        with(result.output) {
+            it.count('ruleTest FAILED') == 1
+            it.count("ruleTest PASSED") == 1
+        }
 
         where:
         [gradleVersion, failBefore] << GroovyCollections.combinations((Iterable) [
@@ -415,7 +438,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
             import java.nio.file.*;
 
@@ -455,11 +478,15 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         if (failBefore) {
-            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
-            assert result.output.count("ruleTest PASSED") == 1
+            with(result.output) {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("ruleTest PASSED") == 1
+            }
         } else {
-            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
-            assert result.output.count("ruleTest PASSED") == 2
+            with(result.output) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("ruleTest PASSED") == 2
+            }
         }
 
         where:

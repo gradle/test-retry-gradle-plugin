@@ -142,6 +142,12 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     void writeJavaTestSource(@Language("JAVA") String source) {
+        assert testLanguage() == 'java'
+        writeTestSource(source)
+    }
+
+    void writeGroovyTestSource(@Language("Groovy") String source) {
+        assert testLanguage() == 'groovy'
         writeTestSource(source)
     }
 
