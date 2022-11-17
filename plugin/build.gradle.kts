@@ -38,6 +38,7 @@ dependencies {
     testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
     testImplementation("org.ow2.asm:asm:${asmVersion}")
+    testImplementation("org.jetbrains:annotations:23.0.0")
 
     codenarc("org.codenarc:CodeNarc:2.1.0")
 }

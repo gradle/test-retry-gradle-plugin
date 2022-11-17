@@ -37,7 +37,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 2
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class SuccessfulTests {
@@ -106,7 +106,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class SomeTests {
@@ -136,7 +136,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.jupiter.params.ParameterizedTest;
@@ -153,7 +153,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class ParameterTest extends AbstractTest {
@@ -178,7 +178,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             abstract class AbstractTest {
@@ -189,7 +189,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class FlakyTests extends AbstractTest {
@@ -217,7 +217,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.jupiter.params.ParameterizedTest;
