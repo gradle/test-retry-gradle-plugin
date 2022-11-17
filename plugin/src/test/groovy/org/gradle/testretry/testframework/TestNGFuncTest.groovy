@@ -418,6 +418,101 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "can rerun on whole class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeClasses.add('*FlakyTests')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            class FlakyTests {
+                @org.testng.annotations.Test
+                void a() {
+                }
+
+                @org.testng.annotations.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b FAILED') == 1
+            it.count('b PASSED') == 1
+            it.count('a PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeAnnotationClasses.add('*ClassRetry')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+            import java.lang.annotation.Target;
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            public @interface ClassRetry {
+
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            @ClassRetry
+            class FlakyTests {
+                @org.testng.annotations.Test
+                void a() {
+                }
+
+                @org.testng.annotations.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b FAILED') == 1
+            it.count('b PASSED') == 1
+            it.count('a PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     protected String buildConfiguration() {
         return """

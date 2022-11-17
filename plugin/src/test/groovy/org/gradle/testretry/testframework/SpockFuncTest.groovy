@@ -168,7 +168,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
                     ${flakyAssert()}
                 }
 
-                def "grandchildTest"() {
+                def "grandChildTest"() {
                     expect:
                     true
                 }
@@ -181,11 +181,137 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
             it.count('parentTest PASSED') == 2
 
-            // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
-            it.count('grandchildTest SKIPPED') == 1
-            it.count('grandchildTest PASSED') == 1
+            // grandChildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
+            it.count('grandChildTest SKIPPED') == 1
+            it.count('grandChildTest PASSED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeClasses.add('*FlakyTests')
+                }
+            }
+        """
+
+
+        writeGroovyTestSource """
+            package acme
+            import java.lang.annotation.ElementType
+            import java.lang.annotation.Retention
+            import java.lang.annotation.RetentionPolicy
+            import java.lang.annotation.Target
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface ClassRetry {
+
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            class FlakyTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+            it.count('parentTest PASSED') == 2
+            it.count('grandChildTest PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeAnnotationClasses.add('*ClassRetry')
+                }
+            }
+        """
+
+
+        writeGroovyTestSource """
+            package acme
+            import java.lang.annotation.ElementType
+            import java.lang.annotation.Retention
+            import java.lang.annotation.RetentionPolicy
+            import java.lang.annotation.Target
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface ClassRetry {
+
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            @ClassRetry
+            class FlakyTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+            it.count('parentTest PASSED') == 2
+            it.count('grandChildTest PASSED') == 2
         }
 
         where:
