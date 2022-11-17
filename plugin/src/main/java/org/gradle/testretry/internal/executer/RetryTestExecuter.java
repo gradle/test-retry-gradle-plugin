@@ -25,6 +25,7 @@ import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAccessor;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
+import org.gradle.testretry.internal.filter.ClassRetryMatcher;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,17 +85,25 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             return;
         }
 
+        AnnotationInspectorImpl annotationInspector = new AnnotationInspectorImpl(frameworkTemplate.testsReader);
         RetryFilter filter = new RetryFilter(
-            new AnnotationInspectorImpl(frameworkTemplate.testsReader),
+            annotationInspector,
             extension.getIncludeClasses(),
             extension.getIncludeAnnotationClasses(),
             extension.getExcludeClasses(),
             extension.getExcludeAnnotationClasses()
         );
 
+        ClassRetryMatcher classRetryMatcher = new ClassRetryMatcher(
+            annotationInspector,
+            extension.getClassRetryIncludeClasses(),
+            extension.getClassRetryIncludeAnnotationClasses()
+        );
+
         RetryTestResultProcessor retryTestResultProcessor = new RetryTestResultProcessor(
             testFrameworkStrategy,
             filter,
+            classRetryMatcher,
             frameworkTemplate.testsReader,
             testResultProcessor,
             maxFailures

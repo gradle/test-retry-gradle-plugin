@@ -61,6 +61,11 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 String className = entry.getKey();
                 Set<String> tests = entry.getValue();
 
+                if (tests.isEmpty()) {
+                    filters.clazz(className);
+                    return;
+                }
+
                 if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
                     filters.clazz(className);
                     return;

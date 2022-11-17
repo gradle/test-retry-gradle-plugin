@@ -38,6 +38,7 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 import static org.gradle.testretry.internal.executer.framework.TestNgTestFrameworkStrategy.TestNGTestFrameworkProvider.testFrameworkProvider;
@@ -86,8 +87,13 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
         failedTests.stream().forEach(entry -> {
             String className = entry.getKey();
-            entry.getValue().forEach(test -> {
-                Optional<TestNgClassVisitor.ClassInfo> classInfoOpt = getClassInfo(testsReader, className);
+            Set<String> tests = entry.getValue();
+            if (tests.isEmpty()) {
+                filters.clazz(className);
+                return;
+            }
+            Optional<TestNgClassVisitor.ClassInfo> classInfoOpt = getClassInfo(testsReader, className);
+            tests.forEach(test -> {
                 if (classInfoOpt.isPresent()) {
                     TestNgClassVisitor.ClassInfo classInfo = classInfoOpt.get();
                     if (isLifecycleMethod(testsReader, test, classInfo)) {
