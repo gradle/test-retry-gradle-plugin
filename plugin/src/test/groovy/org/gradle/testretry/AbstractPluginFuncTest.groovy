@@ -115,6 +115,10 @@ abstract class AbstractPluginFuncTest extends Specification {
         baseBuildScript() - "id 'org.gradle.test-retry'"
     }
 
+    String baseBuildScriptWithNotAppliedTestRetryPlugin() {
+        baseBuildScript().replace("id 'org.gradle.test-retry'", "id 'org.gradle.test-retry' apply false")
+    }
+
     String testLanguage() {
         'java'
     }
