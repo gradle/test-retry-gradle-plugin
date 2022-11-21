@@ -82,7 +82,7 @@ public final class TestTaskConfigurer {
                 throw new IllegalStateException(""
                     + "Another plugin is conflicting with the Test Retry Gradle plugin "
                     + "and has already added a retry extension to the test task " + testTask.getName() + ". "
-                    + "Please either remove the conflicting plugin or the Test Retry Gradle plugin from this test task."
+                    + "Please either remove the conflicting plugin or the Test Retry Gradle plugin from this test project."
                 );
             }
         }
