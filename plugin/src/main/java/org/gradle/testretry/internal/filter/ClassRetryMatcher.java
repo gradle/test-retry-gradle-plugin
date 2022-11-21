@@ -17,10 +17,16 @@ package org.gradle.testretry.internal.filter;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ClassRetryMatcher {
+
+    private static final List<String> IMPLICIT_INCLUDE_ANNOTATION_CLASSES = Collections.singletonList(
+        "spock.lang.Stepwise" // Spock's @Stepwise annotated classes must be retried as a whole
+    );
 
     private final AnnotationInspector annotationInspector;
 
@@ -32,9 +38,11 @@ public class ClassRetryMatcher {
         Collection<String> includeClasses,
         Collection<String> includeAnnotationClasses
         ) {
+        Set<String> mergedIncludeAnnotationClasses = new HashSet<>(IMPLICIT_INCLUDE_ANNOTATION_CLASSES);
+        mergedIncludeAnnotationClasses.addAll(includeAnnotationClasses);
         this.annotationInspector = annotationInspector;
         this.includeClasses = toPatterns(includeClasses);
-        this.includeAnnotationClasses = toPatterns(includeAnnotationClasses);
+        this.includeAnnotationClasses = toPatterns(mergedIncludeAnnotationClasses);
     }
 
     public boolean retryWholeClass(String className) {
