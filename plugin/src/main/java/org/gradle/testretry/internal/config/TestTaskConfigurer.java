@@ -38,11 +38,14 @@ public final class TestTaskConfigurer {
 
     private final static GradleVersion GRADLE_5_1 = GradleVersion.version("5.1");
     private final static GradleVersion GRADLE_6_1 = GradleVersion.version("6.1");
+    private final static String GRADLE_ENTERPRISE_BASE_PACKAGE = "com.gradle.enterprise";
 
     private TestTaskConfigurer() {
     }
 
     public static void configureTestTask(Test test, ObjectFactory objectFactory, ProviderFactory providerFactory) {
+        ensureThatNoRetryExtensionIsPresent(test);
+
         GradleVersion gradleVersion = GradleVersion.current();
 
         TestRetryTaskExtension extension = objectFactory.newInstance(DefaultTestRetryTaskExtension.class);
@@ -59,6 +62,30 @@ public final class TestTaskConfigurer {
 
         test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
         test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
+    }
+
+    private static void ensureThatNoRetryExtensionIsPresent(Test testTask) {
+        Object existingRetryExtension = testTask.getExtensions().findByName(TestRetryTaskExtension.NAME);
+
+        if (existingRetryExtension != null) {
+            String retryExtensionClassName = existingRetryExtension.getClass().getName();
+
+            if (retryExtensionClassName.startsWith(GRADLE_ENTERPRISE_BASE_PACKAGE)) {
+                throw new IllegalStateException(""
+                    + "The Gradle Enterprise Gradle plugin is conflicting with the Test Retry Gradle plugin "
+                    + "and has already added a retry extension to the test task " + testTask.getName() + ". "
+                    + "Please either remove the Test Retry Gradle plugin from this project "
+                    + "or disable the registration of the retry extension in the Gradle Enterprise Gradle plugin "
+                    + "by specifying the system property 'gradle.enterprise.testretry.disabled'."
+                );
+            } else {
+                throw new IllegalStateException(""
+                    + "Another plugin is conflicting with the Test Retry Gradle plugin "
+                    + "and has already added a retry extension to the test task " + testTask.getName() + ". "
+                    + "Please either remove the conflicting plugin or the Test Retry Gradle plugin from this test project."
+                );
+            }
+        }
     }
 
     private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(
