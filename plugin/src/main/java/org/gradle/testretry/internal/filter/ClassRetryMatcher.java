@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.internal.filter;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,11 +23,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
 public class ClassRetryMatcher {
 
-    private static final List<String> IMPLICIT_INCLUDE_ANNOTATION_CLASSES = Collections.singletonList(
-        "spock.lang.Stepwise" // Spock's @Stepwise annotated classes must be retried as a whole
-    );
+    private static final List<String> IMPLICIT_INCLUDE_ANNOTATION_CLASSES = unmodifiableList(asList(
+        "spock.lang.Stepwise", // Spock's @Stepwise annotated classes must be retried as a whole
+        "com.gradle.enterprise.testing.annotations.ClassRetry" //common testing annotations
+    ));
 
     private final AnnotationInspector annotationInspector;
 
