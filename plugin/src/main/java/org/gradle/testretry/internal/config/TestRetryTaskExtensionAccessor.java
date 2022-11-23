@@ -33,6 +33,10 @@ public interface TestRetryTaskExtensionAccessor {
 
     Set<String> getExcludeAnnotationClasses();
 
+    Set<String> getClassRetryIncludeClasses();
+
+    Set<String> getClassRetryIncludeAnnotationClasses();
+
     boolean getSimulateNotRetryableTest();
 
 }

@@ -56,20 +56,26 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
     }
 
     private static void initialize(TestRetryTaskExtension extension, boolean gradle51OrLater) {
+        TestRetryTaskExtension.Filter filter = extension.getFilter();
+        TestRetryTaskExtension.ClassRetryCriteria classRetry = extension.getClassRetry();
         if (gradle51OrLater) {
             extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
             extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
             extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
-            extension.getFilter().getIncludeClasses().convention(emptySet());
-            extension.getFilter().getIncludeAnnotationClasses().convention(emptySet());
-            extension.getFilter().getExcludeClasses().convention(emptySet());
-            extension.getFilter().getExcludeAnnotationClasses().convention(emptySet());
+            filter.getIncludeClasses().convention(emptySet());
+            filter.getIncludeAnnotationClasses().convention(emptySet());
+            filter.getExcludeClasses().convention(emptySet());
+            filter.getExcludeAnnotationClasses().convention(emptySet());
+            classRetry.getIncludeClasses().convention(emptySet());
+            classRetry.getIncludeAnnotationClasses().convention(emptySet());
         } else {
             // https://github.com/gradle/gradle/issues/7485
-            extension.getFilter().getIncludeClasses().empty();
-            extension.getFilter().getIncludeAnnotationClasses().empty();
-            extension.getFilter().getExcludeClasses().empty();
-            extension.getFilter().getExcludeAnnotationClasses().empty();
+            filter.getIncludeClasses().empty();
+            filter.getIncludeAnnotationClasses().empty();
+            filter.getExcludeClasses().empty();
+            filter.getExcludeAnnotationClasses().empty();
+            classRetry.getIncludeClasses().empty();
+            classRetry.getIncludeAnnotationClasses().empty();
         }
     }
 
@@ -120,6 +126,16 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
     @Override
     public Set<String> getExcludeAnnotationClasses() {
         return read(extension.getFilter().getExcludeAnnotationClasses(), emptySet());
+    }
+
+    @Override
+    public Set<String> getClassRetryIncludeClasses() {
+        return read(extension.getClassRetry().getIncludeClasses(), emptySet());
+    }
+
+    @Override
+    public Set<String> getClassRetryIncludeAnnotationClasses() {
+        return read(extension.getClassRetry().getIncludeAnnotationClasses(), emptySet());
     }
 
     @Override

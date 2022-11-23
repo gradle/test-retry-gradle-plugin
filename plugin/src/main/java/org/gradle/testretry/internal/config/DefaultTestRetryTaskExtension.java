@@ -30,12 +30,15 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     private final Property<Integer> maxFailures;
     private final Filter filter;
 
+    private final ClassRetryCriteria classRetryCriteria;
+
     @Inject
     public DefaultTestRetryTaskExtension(ObjectFactory objects) {
         this.failOnPassedAfterRetry = objects.property(Boolean.class);
         this.maxRetries = objects.property(Integer.class);
         this.maxFailures = objects.property(Integer.class);
         this.filter = new FilterImpl(objects);
+        this.classRetryCriteria = new ClassRetryCriteriaImpl(objects);
     }
 
     public Property<Boolean> getFailOnPassedAfterRetry() {
@@ -58,6 +61,16 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     @Override
     public Filter getFilter() {
         return filter;
+    }
+
+    @Override
+    public ClassRetryCriteria getClassRetry() {
+        return classRetryCriteria;
+    }
+
+    @Override
+    public void classRetry(Action<? super ClassRetryCriteria> action) {
+        action.execute(classRetryCriteria);
     }
 
     private static final class FilterImpl implements Filter {
@@ -92,6 +105,27 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
         @Override
         public SetProperty<String> getExcludeAnnotationClasses() {
             return excludeAnnotationClasses;
+        }
+    }
+
+    private static final class ClassRetryCriteriaImpl implements ClassRetryCriteria {
+
+        private final SetProperty<String> includeClasses;
+        private final SetProperty<String> includeAnnotationClasses;
+
+        public ClassRetryCriteriaImpl(ObjectFactory objects) {
+            this.includeClasses = objects.setProperty(String.class);
+            this.includeAnnotationClasses = objects.setProperty(String.class);
+        }
+
+        @Override
+        public SetProperty<String> getIncludeClasses() {
+            return includeClasses;
+        }
+
+        @Override
+        public SetProperty<String> getIncludeAnnotationClasses() {
+            return includeAnnotationClasses;
         }
     }
 

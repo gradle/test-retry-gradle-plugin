@@ -65,8 +65,10 @@ class MockitoFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('acme.TestWithUnnecessaryStubbings > unnecessary Mockito stubbings FAILED') == 2
-        !result.output.contains("unable to retry the following test methods, which is unexpected.")
+        with(result.output) {
+            it.count('acme.TestWithUnnecessaryStubbings > unnecessary Mockito stubbings FAILED') == 2
+            !it.contains("unable to retry the following test methods, which is unexpected.")
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

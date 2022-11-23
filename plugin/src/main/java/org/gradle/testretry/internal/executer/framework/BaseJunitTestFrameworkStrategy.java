@@ -61,6 +61,11 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 String className = entry.getKey();
                 Set<String> tests = entry.getValue();
 
+                if (tests.isEmpty()) {
+                    filters.clazz(className);
+                    return;
+                }
+
                 if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
                     filters.clazz(className);
                     return;
@@ -75,11 +80,6 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     private boolean processSpockTest(TestFilterBuilder filters, TestsReader testsReader, boolean canRunParameterizedSpockMethods, String className, Set<String> tests) {
-        if (isSpockStepwiseTest(testsReader, className)) {
-            filters.clazz(className);
-            return true;
-        }
-
         try {
             Optional<Map<String, List<String>>> resultOpt = testsReader.readTestClassDirClass(className, () -> new SpockParameterClassVisitor(tests, testsReader));
             if (resultOpt.isPresent()) {
@@ -122,15 +122,4 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         filters.test(className, strippedParameterName);
         filters.test(className, name);
     }
-
-    private static boolean isSpockStepwiseTest(TestsReader testsReader, String className) {
-        try {
-            return testsReader.readTestClassDirClass(className, SpockStepwiseClassVisitor::new)
-                .orElse(false);
-        } catch (Throwable t) {
-            LOGGER.warn("Unable to determine if class " + className + " is a Spock @Stepwise test", t);
-            return false;
-        }
-    }
-
 }

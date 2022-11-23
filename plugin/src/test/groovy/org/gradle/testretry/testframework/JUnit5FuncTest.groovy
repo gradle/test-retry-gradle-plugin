@@ -37,7 +37,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 2
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class SuccessfulTests {
@@ -58,37 +58,49 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         if (exhaust) {
             if (lifecycle == "BeforeAll") {
-                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
-                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 0
-                assert result.output.count('successTest() FAILED') == 0
-                assert result.output.count('successTest() PASSED') == 0
+                with(result.output) {
+                    it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                    it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 0
+                    it.count('successTest() FAILED') == 0
+                    it.count('successTest() PASSED') == 0
+                }
             } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
-                assert result.output.count('initializationError FAILED') == 0
-                assert result.output.count('initializationError PASSED') == 0
-                assert result.output.count('successTest() FAILED') == 3
-                assert result.output.count('successTest() PASSED') == 0
+                with(result.output) {
+                    it.count('initializationError FAILED') == 0
+                    it.count('initializationError PASSED') == 0
+                    it.count('successTest() FAILED') == 3
+                    it.count('successTest() PASSED') == 0
+                }
             } else if (lifecycle == "AfterAll") {
-                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 3
-                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 0
-                assert result.output.count('successTest() FAILED') == 0
-                assert result.output.count('successTest() PASSED') == 3
+                with(result.output) {
+                    it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+                    it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 0
+                    it.count('successTest() FAILED') == 0
+                    it.count('successTest() PASSED') == 3
+                }
             }
         } else {
             if (lifecycle == "BeforeAll") {
-                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
-                assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
-                assert result.output.count('successTest() FAILED') == 0
-                assert result.output.count('successTest() PASSED') == 1
+                with(result.output) {
+                    it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                    it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                    it.count('successTest() FAILED') == 0
+                    it.count('successTest() PASSED') == 1
+                }
             } else if (lifecycle == "BeforeEach" || lifecycle == "AfterEach") {
-                assert result.output.count('initializationError FAILED') == 0
-                assert result.output.count('initializationError PASSED') == 0
-                assert result.output.count('successTest() FAILED') == 2
-                assert result.output.count('successTest() PASSED') == 1
+                with(result.output) {
+                    it.count('initializationError FAILED') == 0
+                    it.count('initializationError PASSED') == 0
+                    it.count('successTest() FAILED') == 2
+                    it.count('successTest() PASSED') == 1
+                }
             } else if (lifecycle == "AfterAll") {
-                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 2
-                assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
-                assert result.output.count('successTest() FAILED') == 0
-                assert result.output.count('successTest() PASSED') == 3
+                with(result.output) {
+                    it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                    it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                    it.count('successTest() FAILED') == 0
+                    it.count('successTest() PASSED') == 3
+                }
             }
         }
 
@@ -106,7 +118,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class SomeTests {
@@ -123,8 +135,10 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('SomeTests > someTest() PASSED') == 1
-        result.output.count('SomeTests > someTest() FAILED') == 1
+        with(result.output) {
+            it.count('SomeTests > someTest() PASSED') == 1
+            it.count('SomeTests > someTest() FAILED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -136,7 +150,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.jupiter.params.ParameterizedTest;
@@ -153,7 +167,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class ParameterTest extends AbstractTest {
@@ -165,8 +179,10 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test(int)[1] PASSED') == 2
-        result.output.count('test(int)[2] FAILED') == 2
+        with(result.output) {
+            it.count('test(int)[1] PASSED') == 2
+            it.count('test(int)[2] FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -178,7 +194,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             abstract class AbstractTest {
@@ -189,7 +205,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             class FlakyTests extends AbstractTest {
@@ -203,9 +219,11 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent() FAILED') == 1
-        result.output.count('parent() PASSED') == 1
-        result.output.count('inherited() PASSED') == 1
+        with(result.output) {
+            it.count('parent() FAILED') == 1
+            it.count('parent() PASSED') == 1
+            it.count('inherited() PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -217,7 +235,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.jupiter.params.ParameterizedTest;
@@ -241,6 +259,101 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         // we can't rerun just the failed parameter
         result.output.count('test(int)[1] PASSED') == 2
         result.output.count('test(int)[2] FAILED') == 2
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeClasses.add('*FlakyTests')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            class FlakyTests {
+                @org.junit.jupiter.api.Test
+                void a() {
+                }
+
+                @org.junit.jupiter.api.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b() FAILED') == 1
+            it.count('b() PASSED') == 1
+            it.count('a() PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeAnnotationClasses.add('*ClassRetry')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+            import java.lang.annotation.Target;
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            public @interface ClassRetry {
+
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            @ClassRetry
+            class FlakyTests {
+                @org.junit.jupiter.api.Test
+                void a() {
+                }
+
+                @org.junit.jupiter.api.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b() FAILED') == 1
+            it.count('b() PASSED') == 1
+            it.count('a() PASSED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

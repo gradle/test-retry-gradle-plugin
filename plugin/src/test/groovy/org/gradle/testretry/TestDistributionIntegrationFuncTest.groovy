@@ -157,7 +157,9 @@ class TestDistributionIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
 
     def assertRetries(BuildResult result, int retries) {
         // 1 initial + retries + 1 overall task FAILED + 1 build FAILED
-        assert result.output.count('FAILED') == 1 + retries + 1 + 1
+        with(result.output) {
+    it.count('FAILED') == 1 + retries + 1 + 1
+}
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries)
     }
 }

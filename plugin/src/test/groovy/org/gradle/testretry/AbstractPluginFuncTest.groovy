@@ -20,6 +20,7 @@ import groovy.xml.XmlSlurper
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -138,6 +139,16 @@ abstract class AbstractPluginFuncTest extends Specification {
         String sourceFilePackage = "src/test/${testLanguage()}/${packageName.replace('.', '/')}"
         new File(testProjectDir.root, sourceFilePackage).mkdirs()
         testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
+    }
+
+    void writeJavaTestSource(@Language("JAVA") String source) {
+        assert testLanguage() == 'java'
+        writeTestSource(source)
+    }
+
+    void writeGroovyTestSource(@Language("Groovy") String source) {
+        assert testLanguage() == 'groovy'
+        writeTestSource(source)
     }
 
     GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-S']) {

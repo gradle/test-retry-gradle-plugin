@@ -22,12 +22,18 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptySet;
+
 public final class TestNames {
 
     private final Map<String, Set<String>> map = new HashMap<>();
 
     public void add(String className, String testName) {
         map.computeIfAbsent(className, ignored -> new HashSet<>()).add(testName);
+    }
+
+    public void addClass(String className) {
+        map.put(className, emptySet());
     }
 
     public void remove(String className, Predicate<? super String> predicate) {

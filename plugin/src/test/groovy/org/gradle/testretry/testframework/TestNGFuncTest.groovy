@@ -57,9 +57,11 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion as String).build()
 
         then:
-        result.output.count('lifecycle FAILED') == 1
-        result.output.count('lifecycle PASSED') == 1
-        !result.output.contains("org.gradle.test-retry was unable to retry")
+        with(result.output) {
+            it.count('lifecycle FAILED') == 1
+            it.count('lifecycle PASSED') == 1
+            !it.contains("org.gradle.test-retry was unable to retry")
+        }
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
@@ -93,8 +95,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion as String).buildAndFail()
 
         then:
-        result.output.contains('There were failing tests. See the report')
-        !result.output.contains('org.gradle.test-retry was unable to retry the following test methods')
+        with(result.output) {
+            it.contains('There were failing tests. See the report')
+            !it.contains('org.gradle.test-retry was unable to retry the following test methods')
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -138,8 +142,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test[0](0) PASSED') == 2
-        result.output.count('test[1](1) FAILED') == 2
+        with(result.output) {
+            it.count('test[0](0) PASSED') == 2
+            it.count('test[1](1) FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -176,9 +182,11 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent FAILED') == 1
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
+        with(result.output) {
+            it.count('parent FAILED') == 1
+            it.count('parent PASSED') == 1
+            it.count('inherited PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -213,12 +221,14 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('childTest FAILED') == 1
-        result.output.count('parentTest PASSED') == 2
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('parentTest PASSED') == 2
 
-        // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
-        result.output.count('grandchildTest SKIPPED') == 1
-        result.output.count('grandchildTest PASSED') == 1
+            // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
+            it.count('grandchildTest SKIPPED') == 1
+            it.count('grandchildTest PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -255,8 +265,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.count('test[0](0) PASSED') == 2
-        result.output.count('test[1](1) FAILED') == 2
+        with(result.output) {
+            it.count('test[0](0) PASSED') == 2
+            it.count('test[1](1) FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -306,8 +318,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         // we can't rerun just the failed parameter
-        result.output.readLines().findAll { line -> line.matches('.*test\\[0].* PASSED') }.size() == 2
-        result.output.readLines().findAll { line -> line.matches('.*test\\[1].* FAILED') }.size() == 2
+        with(result.output.readLines()) {
+            it.findAll { line -> line.matches('.*test\\[0].* PASSED') }.size() == 2
+            it.findAll { line -> line.matches('.*test\\[1].* FAILED') }.size() == 2
+        }
 
         where:
         [gradleVersion, parameterRepresentation] << GroovyCollections.combinations((Iterable) [
@@ -357,8 +371,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('someTest FAILED') == 1
-        result.output.count('someTest PASSED') == 1
+        with(result.output) {
+            it.count('someTest FAILED') == 1
+            it.count('someTest PASSED') == 1
+        }
 
         and:
         result.output.count('[LoggingTestListener] Test started: someTest') == 2
@@ -393,8 +409,105 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('flakyAssumeTest FAILED') == 1
-        result.output.count('flakyAssumeTest SKIPPED') == 1
+        with(result.output) {
+            it.count('flakyAssumeTest FAILED') == 1
+            it.count('flakyAssumeTest SKIPPED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeClasses.add('*FlakyTests')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            class FlakyTests {
+                @org.testng.annotations.Test
+                void a() {
+                }
+
+                @org.testng.annotations.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b FAILED') == 1
+            it.count('b PASSED') == 1
+            it.count('a PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeAnnotationClasses.add('*ClassRetry')
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+            import java.lang.annotation.ElementType;
+            import java.lang.annotation.Retention;
+            import java.lang.annotation.RetentionPolicy;
+            import java.lang.annotation.Target;
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            public @interface ClassRetry {
+
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            @ClassRetry
+            class FlakyTests {
+                @org.testng.annotations.Test
+                void a() {
+                }
+
+                @org.testng.annotations.Test
+                void b() {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('b FAILED') == 1
+            it.count('b PASSED') == 1
+            it.count('a PASSED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

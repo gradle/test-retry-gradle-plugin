@@ -54,13 +54,17 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        noRetry.each {
-            assert result.output.count("acme.${it} > flakyTest FAILED") == 1
-            assert result.output.count("acme.${it} > flakyTest PASSED") == 0
+        noRetry.each { testName ->
+            with(result.output) {
+                it.count("acme.${testName} > flakyTest FAILED") == 1
+                it.count("acme.${testName} > flakyTest PASSED") == 0
+            }
         }
-        shouldRetry.each {
-            assert result.output.count("acme.${it} > flakyTest FAILED") == 2
-            assert result.output.count("acme.${it} > flakyTest PASSED") == 1
+        shouldRetry.each { testName ->
+            with(result.output) {
+                it.count("acme.${testName} > flakyTest FAILED") == 2
+                it.count("acme.${testName} > flakyTest PASSED") == 1
+            }
         }
 
         where:
@@ -81,7 +85,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             dependencies {
                 testImplementation(project(":lib"))
             }
-            
+
             test.retry {
                 maxRetries = 2
                 filter {
@@ -109,7 +113,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
             package acme;
             @InheritedExcludedAnnotation
             public class BaseTest {
-            
+
             }
         """
 
@@ -121,8 +125,10 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count("acme.ExcludedTest > flakyTest FAILED") == 1
-        result.output.count("acme.ExcludedTest > flakyTest PASSED") == 0
+        with(result.output) {
+            it.count("acme.ExcludedTest > flakyTest FAILED") == 1
+            it.count("acme.ExcludedTest > flakyTest PASSED") == 0
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

@@ -52,7 +52,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class FlakySetupSpecTests extends spock.lang.Specification {
@@ -74,16 +74,22 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         // will be >1 in the cleanupSpec case, because the test has already reported success
         // before cleanup happens
         if (lifecycle == "setupSpec") {
-            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
-            assert result.output.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
-            assert result.output.count('successTest PASSED') == 1
+            with(result.output) {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                it.count('successTest PASSED') == 1
+            }
         } else if (lifecycle == "cleanupSpec") {
-            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
-            assert result.output.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
-            assert result.output.count('successTest PASSED') == 2
+            with(result.output) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                it.count('successTest PASSED') == 2
+            }
         } else {
-            assert result.output.count('successTest FAILED') == 1
-            assert result.output.count('successTest PASSED') == 1
+            with(result.output) {
+                it.count('successTest FAILED') == 1
+                it.count('successTest PASSED') == 1
+            }
         }
 
         where:
@@ -99,7 +105,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 2
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class SomeSpec extends spock.lang.Specification {
@@ -119,13 +125,19 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = exhaust ? runner.buildAndFail() : runner.build()
 
         then:
-        result.output.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
-        result.output.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
-        result.output.count('SomeSpec > someTest PASSED') == (exhaust ? 0 : 1)
+        with(result.output) {
+            it.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} FAILED") == (exhaust ? 3 : 2)
+            it.count("SomeSpec > ${staticInitErrorTestMethodName(gradleVersion)} PASSED") == (exhaust ? 0 : 1)
+            it.count('SomeSpec > someTest PASSED') == (exhaust ? 0 : 1)
+        }
         if (exhaust) {
-            assert result.output.count('3 tests completed, 3 failed') == 1
+            with(result.output) {
+                it.count('3 tests completed, 3 failed') == 1
+            }
         } else {
-            assert result.output.count('4 tests completed, 2 failed') == 1
+            with(result.output) {
+                it.count('4 tests completed, 2 failed') == 1
+            }
         }
 
         where:
@@ -141,7 +153,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             @spock.lang.Stepwise
@@ -156,7 +168,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
                     ${flakyAssert()}
                 }
 
-                def "grandchildTest"() {
+                def "grandChildTest"() {
                     expect:
                     true
                 }
@@ -167,12 +179,140 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('childTest FAILED') == 1
-        result.output.count('parentTest PASSED') == 2
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+            it.count('parentTest PASSED') == 2
 
-        // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
-        result.output.count('grandchildTest SKIPPED') == 1
-        result.output.count('grandchildTest PASSED') == 1
+            // grandChildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
+            it.count('grandChildTest SKIPPED') == 1
+            it.count('grandChildTest PASSED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeClasses.add('*FlakyTests')
+                }
+            }
+        """
+
+
+        writeGroovyTestSource """
+            package acme
+            import java.lang.annotation.ElementType
+            import java.lang.annotation.Retention
+            import java.lang.annotation.RetentionPolicy
+            import java.lang.annotation.Target
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface ClassRetry {
+
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            class FlakyTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+            it.count('parentTest PASSED') == 2
+            it.count('grandChildTest PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                classRetry {
+                    includeAnnotationClasses.add('*ClassRetry')
+                }
+            }
+        """
+
+
+        writeGroovyTestSource """
+            package acme
+            import java.lang.annotation.ElementType
+            import java.lang.annotation.Retention
+            import java.lang.annotation.RetentionPolicy
+            import java.lang.annotation.Target
+
+            @Target(ElementType.TYPE)
+            @Retention(RetentionPolicy.RUNTIME)
+            @interface ClassRetry {
+
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            @ClassRetry
+            class FlakyTests extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert()}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+            it.count('parentTest PASSED') == 2
+            it.count('grandChildTest PASSED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -184,7 +324,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class RetryTests extends spock.lang.Specification {
@@ -200,8 +340,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('retried FAILED') == 2
-        !result.output.contains('unable to retry')
+        with(result.output) {
+            it.count('retried FAILED') == 2
+            !it.contains('unable to retry')
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -213,7 +355,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class UnrollTests extends spock.lang.Specification {
@@ -237,8 +379,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('test with c FAILED') == 1
-        result.output.count('test with c PASSED') == 1
+        with(result.output) {
+            it.count('test with c FAILED') == 1
+            it.count('test with c PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -250,7 +394,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class UnrollTests extends spock.lang.Specification {
@@ -324,7 +468,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class UnrollTests extends spock.lang.Specification {
@@ -350,11 +494,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            it.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-        result.output.count('unrolled with param [FOO] PASSED') == 2
-        result.output.count('unrolled with param [BAR] FAILED') == 2
-        result.output.count('unrolled with param [BAZ] PASSED') == 2
+            it.count('unrolled with param [FOO] PASSED') == 2
+            it.count('unrolled with param [BAR] FAILED') == 2
+            it.count('unrolled with param [BAZ] PASSED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -366,7 +512,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class UnrollTests extends spock.lang.Specification {
@@ -392,11 +538,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            it.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
-        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param_1])} {([param_2])} FAILED') == 2
-        result.output.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1\$1])} {([param2])} FAILED') == 2
+            it.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([foo])} {([foo])} FAILED') == 2
+            it.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param_1])} {([param_2])} FAILED') == 2
+            it.count('unrolled with param $.*=.?<>(){}[][^\\w]!+- {([param1\$1])} {([param2])} FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -408,11 +556,11 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource contextualTestAnnotation()
+        writeGroovyTestSource contextualTestAnnotation()
 
-        writeTestSource contextualTestExtension()
+        writeGroovyTestSource contextualTestExtension()
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             @spock.lang.Unroll
@@ -440,11 +588,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('passingTest [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            it.count('passingTest [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-        result.output.count('unrolled [foo] with additional test context [suffix] FAILED') == 2
-        result.output.count('unrolled [bar] with additional test context [suffix] PASSED') == 2
-        result.output.count('unrolled [baz] with additional test context [suffix] FAILED') == 2
+            it.count('unrolled [foo] with additional test context [suffix] FAILED') == 2
+            it.count('unrolled [bar] with additional test context [suffix] PASSED') == 2
+            it.count('unrolled [baz] with additional test context [suffix] FAILED') == 2
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -457,11 +607,11 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource contextualTestAnnotation()
+        writeGroovyTestSource contextualTestAnnotation()
 
-        writeTestSource contextualTestExtension()
+        writeGroovyTestSource contextualTestExtension()
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             @ContextualTest
@@ -473,7 +623,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme.sub
             import acme.AbstractTest
             class InheritedTest extends AbstractTest {
@@ -488,9 +638,11 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent [suffix] FAILED') == 1
-        result.output.count('parent [suffix] PASSED') == 1
-        result.output.count('inherited [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            it.count('parent [suffix] FAILED') == 1
+            it.count('parent [suffix] PASSED') == 1
+            it.count('inherited [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -503,7 +655,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             abstract class AbstractTest extends spock.lang.Specification {
@@ -514,7 +666,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme.sub
             import acme.AbstractTest
             class InheritedTest extends AbstractTest {
@@ -529,9 +681,11 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('parent FAILED') == 1
-        result.output.count('parent PASSED') == 1
-        result.output.count('inherited PASSED') == 1
+        with(result.output) {
+            it.count('parent FAILED') == 1
+            it.count('parent PASSED') == 1
+            it.count('inherited PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -544,7 +698,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             @spock.lang.Unroll
@@ -560,7 +714,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class InheritedTest extends AbstractTest {
@@ -581,12 +735,14 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+        with(result.output) {
+            it.count('passingTest PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
 
-        result.output.count('unrolled [foo] parent FAILED') == 1
-        result.output.count('unrolled [foo] parent PASSED') == 1
-        result.output.count('inherited PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
-        result.output.count('inherited FAILED') == 0
+            it.count('unrolled [foo] parent FAILED') == 1
+            it.count('unrolled [foo] parent PASSED') == 1
+            it.count('inherited PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+            it.count('inherited FAILED') == 0
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -599,7 +755,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             abstract class A extends spock.lang.Specification {
@@ -611,7 +767,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             abstract class B extends A {
@@ -623,7 +779,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class C extends B {
@@ -639,10 +795,12 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('a FAILED') == 1
-        result.output.count('a PASSED') == 1
-        result.output.count('b FAILED') == 2
-        result.output.count('c PASSED') == 1
+        with(result.output) {
+            it.count('a FAILED') == 1
+            it.count('a PASSED') == 1
+            it.count('b FAILED') == 2
+            it.count('c PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -679,7 +837,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
 
             class B extends AbstractTest {
@@ -690,8 +848,10 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('unrolled [foo] parent FAILED') == 1
-        result.output.count('unrolled [foo] parent PASSED') == 1
+        with(result.output) {
+            it.count('unrolled [foo] parent FAILED') == 1
+            it.count('unrolled [foo] parent PASSED') == 1
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -705,7 +865,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.failOnPassedAfterRetry = false
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
             import java.nio.file.Paths
             import java.nio.file.Files
@@ -724,11 +884,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('a FAILED') == 1
-        result.output.count('a SKIPPED') == 3
-        result.output.count('a PASSED') == 0
-        result.output.contains('4 tests completed, 1 failed, 3 skipped')
-        !result.output.contains('Please file a bug report at')
+        with(result.output) {
+            it.count('a FAILED') == 1
+            it.count('a SKIPPED') == 3
+            it.count('a PASSED') == 0
+            it.contains('4 tests completed, 1 failed, 3 skipped')
+            !it.contains('Please file a bug report at')
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -742,7 +904,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.failOnPassedAfterRetry = false
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
             import java.nio.file.Paths
             import java.nio.file.Files
@@ -762,11 +924,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.count('a FAILED') == 1
-        result.output.count('a SKIPPED') == 3
-        result.output.count('a PASSED') == 0
-        result.output.contains('4 tests completed, 1 failed, 3 skipped')
-        !result.output.contains('Please file a bug report at')
+        with(result.output) {
+            it.count('a FAILED') == 1
+            it.count('a SKIPPED') == 3
+            it.count('a PASSED') == 0
+            it.contains('4 tests completed, 1 failed, 3 skipped')
+            !it.contains('Please file a bug report at')
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -779,7 +943,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             test.retry.failOnPassedAfterRetry = false
         """
 
-        writeTestSource """
+        writeGroovyTestSource """
             package acme
             import java.nio.file.Paths
             import java.nio.file.Files
@@ -803,11 +967,13 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('childTest SKIPPED') == 2
-        result.output.count('parentTest FAILED') == 1
-        result.output.count('parentTest PASSED') == 1
-        result.output.contains('4 tests completed, 1 failed, 2 skipped')
-        !result.output.contains('Please file a bug report at')
+        with(result.output) {
+            it.count('childTest SKIPPED') == 2
+            it.count('parentTest FAILED') == 1
+            it.count('parentTest PASSED') == 1
+            it.contains('4 tests completed, 1 failed, 2 skipped')
+            !it.contains('Please file a bug report at')
+        }
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -829,6 +995,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     }
 
     protected String contextualTestExtension() {
+        // language=Groovy
         """
             package acme
 
@@ -854,6 +1021,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
     }
 
     private static String contextualTestAnnotation() {
+        // language=Groovy
         """
             package acme
 
@@ -871,7 +1039,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
     @Override
     protected void successfulTest() {
-        writeTestSource """
+        writeGroovyTestSource """
             package acme;
 
             public class SuccessfulTests extends spock.lang.Specification {
@@ -885,7 +1053,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
 
     @Override
     protected void flakyTest() {
-        writeTestSource """
+        writeGroovyTestSource """
             package acme;
 
             public class FlakyTests extends spock.lang.Specification {

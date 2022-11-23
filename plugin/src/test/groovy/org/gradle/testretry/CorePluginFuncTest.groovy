@@ -122,8 +122,10 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         def result = gradleRunner(gradleVersion).build()
 
         then:
-        result.output.count('PASSED') == 1
-        result.output.count('FAILED') == 1
+        with(result.output) {
+            it.count('PASSED') == 1
+            it.count('FAILED') == 1
+        }
 
         assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
 

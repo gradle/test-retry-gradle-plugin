@@ -22,6 +22,7 @@ import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestFailure;
 import org.gradle.api.tasks.testing.TestOutputEvent;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
+import org.gradle.testretry.internal.filter.ClassRetryMatcher;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 
@@ -35,6 +36,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final TestFrameworkStrategy testFrameworkStrategy;
     private final RetryFilter filter;
+    private final ClassRetryMatcher classRetryMatcher;
     private final TestsReader testsReader;
     private final TestResultProcessor delegate;
 
@@ -53,12 +55,14 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     RetryTestResultProcessor(
         TestFrameworkStrategy testFrameworkStrategy,
         RetryFilter filter,
+        ClassRetryMatcher classRetryMatcher,
         TestsReader testsReader,
         TestResultProcessor delegate,
         int maxFailures
     ) {
         this.testFrameworkStrategy = testFrameworkStrategy;
         this.filter = filter;
+        this.classRetryMatcher = classRetryMatcher;
         this.testsReader = testsReader;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
@@ -90,7 +94,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
-                    currentRoundFailedTests.add(className, name);
+                    addRetry(className, name);
                 }
 
                 if (isClassDescriptor(descriptor)) {
@@ -108,6 +112,14 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         }
 
         delegate.completed(testId, testCompleteEvent);
+    }
+
+    private void addRetry(String className, String name) {
+        if (classRetryMatcher.retryWholeClass(className)) {
+            currentRoundFailedTests.addClass(className);
+        } else {
+            currentRoundFailedTests.add(className, name);
+        }
     }
 
     private void emitFakePassedEvent(TestDescriptorInternal parent, TestCompleteEvent parentEvent, String name) {
@@ -160,7 +172,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             String className = descriptor.getClassName();
             if (className != null) {
                 if (filter.canRetry(className)) {
-                    currentRoundFailedTests.add(className, descriptor.getName());
+                    addRetry(className, descriptor.getName());
                 } else {
                     hasRetryFilteredFailures = true;
                 }
