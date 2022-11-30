@@ -216,6 +216,53 @@ public interface TestRetryTaskExtension {
 
     }
 
+
+    /**
+     * The set of criteria specifying which test classes must be retried as a whole unit
+     * if retries are enabled and the test class passes the configured filter.
+     */
+    ClassRetryCriteria getClassRetry();
+
+    /**
+     * The set of criteria specifying which test classes must be retried as a whole unit
+     * if retries are enabled and the test class passes the configured filter.
+     */
+    void classRetry(Action<? super ClassRetryCriteria> action);
+
+    /**
+     * The set of criteria specifying which test classes must be retried as a whole unit
+     * if retries are enabled and the test class passes the configured filter.
+     */
+    interface ClassRetryCriteria {
+
+        /**
+         * The patterns used to include tests based on their class name.
+         *
+         * The pattern string matches against qualified class names.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class name only has to match one pattern to be included.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeClasses();
+
+        /**
+         * The patterns used to include tests based on their class level annotations.
+         *
+         * The pattern string matches against the qualified class names of a test class's annotations.
+         * It may contain '*' characters, which match zero or more of any character.
+         *
+         * A class need only have one annotation matching any of the patterns to be included.
+         *
+         * Annotations present on super classes that are {@code @Inherited} are considered when inspecting subclasses.
+         *
+         * If no patterns are specified, all classes (that also meet other configured filters) will be included.
+         */
+        SetProperty<String> getIncludeAnnotationClasses();
+
+    }
+
 }
 ----
 
