@@ -316,6 +316,28 @@ test {
 }
 ----
 
+== Retry on class-level
+
+By default, individual tests are retried. The `classRetry` component of the test retry extension can be used to control which test classes must be retried as a whole unit. Test classes still have to pass the configured filter.
+
+.build.gradle:
+[source,groovy]
+----
+test {
+    retry {
+        maxRetries = 3
+        classRetry {
+            // configure by qualified class name (* matches zero or more of any character)
+            includeClasses.add("*StepWiseIntegrationTest")
+
+            // configure by class level annotations
+            // Note: @Inherited annotations are respected
+            includeAnnotationClasses("Stepwise")
+        }
+    }
+}
+----
+
 == Reporting
 
 === Gradle
