@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.gradle.testretry.internal.executer.JvmTestExecutionSpecFactory.testExecutionSpecFor;
 
@@ -44,7 +43,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
     private final Test testTask;
     private final TestFrameworkTemplate frameworkTemplate;
 
-    private RoundResult lastResult;
+    private final LastResultHolder lastResultHolder;
 
     public RetryTestExecuter(
         Test task,
@@ -53,11 +52,13 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         Instantiator instantiator,
         ObjectFactory objectFactory,
         Set<File> testClassesDir,
-        Set<File> resolvedClasspath
+        Set<File> resolvedClasspath,
+        LastResultHolder lastResultHolder
     ) {
         this.extension = extension;
         this.delegate = delegate;
         this.testTask = task;
+        this.lastResultHolder = lastResultHolder;
         this.frameworkTemplate = new TestFrameworkTemplate(
             testTask,
             instantiator,
@@ -115,7 +116,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         while (true) {
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RoundResult result = retryTestResultProcessor.getResult();
-            lastResult = result;
+            lastResultHolder.set(result);
 
             if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
                 // fall through to our doLast action to fail accordingly
@@ -134,19 +135,6 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
         }
-    }
-
-    public void failWithNonRetriedTestsIfAny() {
-        if (extension.getSimulateNotRetryableTest() || hasNonRetriedTests()) {
-            throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
-                lastResult.nonRetriedTests.stream()
-                    .flatMap(entry -> entry.getValue().stream().map(methodName -> "   " + entry.getKey() + "#" + methodName))
-                    .collect(Collectors.joining("\n", "\n", "\n")));
-        }
-    }
-
-    private boolean hasNonRetriedTests() {
-        return lastResult != null && !lastResult.nonRetriedTests.isEmpty();
     }
 
     @Override

@@ -27,12 +27,15 @@ import org.gradle.api.tasks.testing.AbstractTestTask;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
 import org.gradle.testretry.TestRetryTaskExtension;
+import org.gradle.testretry.internal.executer.LastResultHolder;
 import org.gradle.testretry.internal.executer.RetryTestExecuter;
+import org.gradle.testretry.internal.executer.RoundResult;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.stream.Collectors;
 
 public final class TestTaskConfigurer {
 
@@ -60,8 +63,10 @@ public final class TestTaskConfigurer {
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
 
-        test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
-        test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
+        LastResultHolder lastResultHolder = new LastResultHolder();
+
+        test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory, lastResultHolder)));
+        test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction(adapter, lastResultHolder)));
     }
 
     private static void ensureThatNoRetryExtensionIsPresent(Test testTask) {
@@ -127,10 +132,10 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
+    private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory, LastResultHolder lastResultHolder) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
         Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
-        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
+        return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles(), lastResultHolder);
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
@@ -161,32 +166,49 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static class FinalizeTaskAction implements Action<Test> {
+    public static class FinalizeTaskAction implements Action<Test> {
+
+        private final TestRetryTaskExtensionAccessor extension;
+        private final LastResultHolder lastResultHolder;
+
+        public FinalizeTaskAction(TestRetryTaskExtensionAccessor extension, LastResultHolder lastResultHolder) {
+            this.extension = extension;
+            this.lastResultHolder = lastResultHolder;
+        }
 
         @Override
         public void execute(@NotNull Test task) {
-            TestExecuter<JvmTestExecutionSpec> testExecuter = getTestExecuter(task);
-            if (testExecuter instanceof RetryTestExecuter) {
-                ((RetryTestExecuter) testExecuter).failWithNonRetriedTestsIfAny();
-            } else {
-                throw new IllegalStateException("Unexpected test executer: " + testExecuter);
+            RoundResult lastResult = lastResultHolder.get();
+            boolean hasNonRetriedTests = lastResult != null && !lastResult.nonRetriedTests.isEmpty();
+            if (extension.getSimulateNotRetryableTest() || hasNonRetriedTests) {
+                throw new IllegalStateException("org.gradle.test-retry was unable to retry the following test methods, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+                    (
+                        lastResult == null
+                            ? ""
+                            : lastResult.nonRetriedTests.stream()
+                            .flatMap(entry -> entry.getValue().stream().map(methodName -> "   " + entry.getKey() + "#" + methodName))
+                            .collect(Collectors.joining("\n", "\n", "\n"))
+                    )
+                );
             }
         }
     }
 
-    private static class InitTaskAction implements Action<Test> {
+    public static class InitTaskAction implements Action<Test> {
 
         private final TestRetryTaskExtensionAdapter adapter;
         private final ObjectFactory objectFactory;
+        private final LastResultHolder lastResultHolder;
 
-        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory) {
+        public InitTaskAction(TestRetryTaskExtensionAdapter adapter, ObjectFactory objectFactory, LastResultHolder lastResultHolder) {
             this.adapter = adapter;
             this.objectFactory = objectFactory;
+            this.lastResultHolder = lastResultHolder;
         }
 
         @Override
         public void execute(@NotNull Test task) {
-            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory);
+            RetryTestExecuter retryTestExecuter = createRetryTestExecuter(task, adapter, objectFactory, lastResultHolder);
             setTestExecuter(task, retryTestExecuter);
         }
     }
