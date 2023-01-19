@@ -58,7 +58,7 @@ dependencies {
     testImplementation("org.ow2.asm:asm:${asmVersion}")
     testImplementation("org.jetbrains:annotations:23.0.0")
 
-    codenarc("org.codenarc:CodeNarc:2.1.0")
+    codenarc("org.codenarc:CodeNarc:3.2.0")
 }
 
 val shadowJar = tasks.named<ShadowJar>("shadowJar")
