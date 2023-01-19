@@ -1,6 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
@@ -19,9 +20,26 @@ plugins {
 group = "org.gradle"
 description = "Mitigate flaky tests by retrying tests when they fail"
 
+val javaToolchainVersion: String? by project
+val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(8)
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion.set(javaLanguageVersion)
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    if (javaLanguageVersion >= JavaLanguageVersion.of(9)) {
+        options.release.set(8)
+    } else {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 val plugin: Configuration by configurations.creating
