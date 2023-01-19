@@ -1,6 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     java
@@ -19,9 +20,26 @@ plugins {
 group = "org.gradle"
 description = "Mitigate flaky tests by retrying tests when they fail"
 
+val javaToolchainVersion: String? by project
+val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(8)
+
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    toolchain {
+        languageVersion.set(javaLanguageVersion)
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    if (javaLanguageVersion >= JavaLanguageVersion.of(9)) {
+        options.release.set(8)
+    } else {
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    kotlinOptions.jvmTarget = "1.8"
 }
 
 val plugin: Configuration by configurations.creating
@@ -29,18 +47,18 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    val asmVersion = "9.2"
+    val asmVersion = "9.4"
     plugin("org.ow2.asm:asm:${asmVersion}")
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation("org.spockframework:spock-core:2.0-groovy-3.0")
-    testImplementation("org.spockframework:spock-junit4:2.0-groovy-3.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
+    testImplementation("org.spockframework:spock-junit4:2.3-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
     testImplementation("org.ow2.asm:asm:${asmVersion}")
     testImplementation("org.jetbrains:annotations:23.0.0")
 
-    codenarc("org.codenarc:CodeNarc:2.1.0")
+    codenarc("org.codenarc:CodeNarc:3.2.0")
 }
 
 val shadowJar = tasks.named<ShadowJar>("shadowJar")
