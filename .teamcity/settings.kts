@@ -31,7 +31,7 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2022.10"
+version = "2021.1"
 
 project {
     params {
@@ -107,6 +107,23 @@ project {
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }
+        }
+    }
+    val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
+        steps {
+            gradle {
+                tasks = "nightlyWrapper assemble"
+                buildFile = ""
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+            }
+        }
+        triggers.schedule {
+            schedulingPolicy = daily {
+                hour = 2
+            }
+            branchFilter = "+:<default>"
+            triggerBuild = always()
+            withPendingChangesOnly = false
         }
     }
 
