@@ -115,6 +115,7 @@ project {
         -:.teamcity/**
         -:.github/**
     """.trimIndent()
+    val triggerPropertyName = "build.trigger.type"
 
     val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
         steps {
@@ -128,12 +129,16 @@ project {
             triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 14
-                minute = 50
+                minute = 54
             }
 //            branchFilter = "+:<default>"
             branchFilter = "+:refs/head/jgauthier/20027"
-            triggerBuild = always()
+            buildParams {
+                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
+                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
+            }
             withPendingChangesOnly = false
+            triggerBuild = always()
         }
     }
 
