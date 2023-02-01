@@ -109,6 +109,13 @@ project {
             }
         }
     }
+    val projectTriggerRules = """
+        -:docs/**
+        -:samples/**
+        -:.teamcity/**
+        -:.github/**
+    """.trimIndent()
+
     val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
         steps {
             gradle {
@@ -118,9 +125,10 @@ project {
             }
         }
         triggers.schedule {
+            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 14
-                minute = 30
+                minute = 48
             }
 //            branchFilter = "+:<default>"
             branchFilter = "+:refs/head/jgauthier/20027"
