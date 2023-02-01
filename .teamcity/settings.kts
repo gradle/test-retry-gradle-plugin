@@ -87,7 +87,7 @@ project {
             schedulingPolicy = daily {
                 hour = 2
             }
-            branchFilter = "+:main"
+            branchFilter = "+:refs/heads/main"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -119,10 +119,9 @@ project {
         }
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 16
-                minute = 50
+                hour = 2
             }
-            branchFilter = "+:refs/heads/jgauthier/20027"
+            branchFilter = "+:refs/heads/main"
             withPendingChangesOnly = false
             triggerBuild = always()
         }
@@ -158,7 +157,7 @@ project {
                 schedulingPolicy = daily {
                     hour = 2
                 }
-                branchFilter = "+:main"
+                branchFilter = "+:refs/heads/main"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
