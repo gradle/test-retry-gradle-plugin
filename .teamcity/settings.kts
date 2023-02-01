@@ -126,19 +126,19 @@ project {
             }
         }
         triggers.schedule {
-            triggerRules = projectTriggerRules
+//            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
-                hour = 15
-                minute = 57
+                hour = 16
+                minute = 02
             }
 //            branchFilter = "+:<default>"
-            branchFilter = "+:refs/head/jgauthier/20027"
-            buildParams {
-                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
-                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
-            }
-            withPendingChangesOnly = false
-            triggerBuild = always()
+//            branchFilter = "+:refs/head/jgauthier/20027"
+//            buildParams {
+//                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
+//                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
+//            }
+//            withPendingChangesOnly = false
+//            triggerBuild = always()
         }
     }
 
