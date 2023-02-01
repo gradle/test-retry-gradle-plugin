@@ -2,6 +2,8 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import com.google.gson.Gson
+import java.net.URL
 
 plugins {
     java
@@ -193,4 +195,15 @@ tasks.register<Test>("testGradleReleases") {
 
 tasks.register<Test>("testGradleNightlies") {
     jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getNightlyVersions))
+}
+
+private data class VersionDownloadInfo(val version: String, val downloadUrl: String)
+
+tasks.register<Wrapper>("nightlyWrapper") {
+    group = "wrapper"
+    doFirst {
+        val jsonText = URL("https://services.gradle.org/versions/nightly").readText()
+        val versionInfo = Gson().fromJson(jsonText, VersionDownloadInfo::class.java)
+        distributionUrl = versionInfo.downloadUrl
+    }
 }

@@ -1,3 +1,9 @@
+buildscript {
+    dependencies {
+        classpath("com.google.code.gson:gson:2.10.1")
+    }
+}
+
 plugins {
     id("com.gradle.enterprise").version("3.10")
     id("io.github.gradle.gradle-enterprise-conventions-plugin").version("0.7.6")
