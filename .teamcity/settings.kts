@@ -122,23 +122,23 @@ project {
             gradle {
                 tasks = "clean nightlyWrapper assemble"
                 buildFile = ""
-                gradleParams = "--daemon" //-s $useGradleInternalScansServer $buildCacheSetup"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
         }
         triggers.schedule {
 //            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 16
-                minute = 19
+                minute = 28
             }
 //            branchFilter = "+:<default>"
-            branchFilter = "+:jgauthier/20027"
+//            branchFilter = "+:jgauthier/20027"
 //            buildParams {
 //                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
 //                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
 //            }
             withPendingChangesOnly = false
-//            triggerBuild = always()
+            triggerBuild = always()
         }
     }
 
