@@ -87,7 +87,7 @@ project {
             schedulingPolicy = daily {
                 hour = 2
             }
-            branchFilter = "+:refs/head/main"
+            branchFilter = "+:refs/heads/main"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -107,6 +107,23 @@ project {
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }
+        }
+    }
+    val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
+        steps {
+            gradle {
+                tasks = "clean nightlyWrapper assemble"
+                buildFile = ""
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+            }
+        }
+        triggers.schedule {
+            schedulingPolicy = daily {
+                hour = 2
+            }
+            branchFilter = "+:refs/heads/main"
+            withPendingChangesOnly = false
+            triggerBuild = always()
         }
     }
 
@@ -140,7 +157,7 @@ project {
                 schedulingPolicy = daily {
                     hour = 2
                 }
-                branchFilter = "+:refs/head/main"
+                branchFilter = "+:refs/heads/main"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
