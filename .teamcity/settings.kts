@@ -129,7 +129,7 @@ project {
 //            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 16
-                minute = 3
+                minute = 4
             }
 //            branchFilter = "+:<default>"
 //            branchFilter = "+:refs/head/jgauthier/20027"
