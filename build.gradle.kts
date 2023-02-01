@@ -32,3 +32,12 @@ tasks.named("final") {
 tasks.named("candidate") {
     dependsOn(publishPlugins)
 }
+
+tasks.register<Wrapper>("nightlyWrapper") {
+    group = "wrapper"
+    doFirst {
+        val jsonText = java.net.URL("https://services.gradle.org/versions/$label").readText()
+        val versionInfo = Gson().fromJson(jsonText, VersionDownloadInfo::class.java)
+        distributionUrl = versionInfo.downloadUrl
+    }
+}
