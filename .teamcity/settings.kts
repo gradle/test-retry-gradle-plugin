@@ -87,7 +87,7 @@ project {
             schedulingPolicy = daily {
                 hour = 2
             }
-            branchFilter = "+:refs/head/main"
+            branchFilter = "+:main"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -109,14 +109,6 @@ project {
             }
         }
     }
-    val projectTriggerRules = """
-        -:docs/**
-        -:samples/**
-        -:.teamcity/**
-        -:.github/**
-    """.trimIndent()
-    val triggerPropertyName = "build.trigger.type"
-
     val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
         steps {
             gradle {
@@ -126,17 +118,11 @@ project {
             }
         }
         triggers.schedule {
-//            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 16
-                minute = 41
+                minute = 50
             }
-            branchFilter = "+:<default>"
-//            branchFilter = "+:jgauthier/20027"
-//            buildParams {
-//                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
-//                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
-//            }
+            branchFilter = "+:refs/heads/jgauthier/20027"
             withPendingChangesOnly = false
             triggerBuild = always()
         }
@@ -172,7 +158,7 @@ project {
                 schedulingPolicy = daily {
                     hour = 2
                 }
-                branchFilter = "+:refs/head/main"
+                branchFilter = "+:main"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
