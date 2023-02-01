@@ -120,9 +120,10 @@ project {
         triggers.schedule {
             schedulingPolicy = daily {
                 hour = 14
-                minute = 27
+                minute = 30
             }
-            branchFilter = "+:<default>"
+//            branchFilter = "+:<default>"
+            branchFilter = "+:refs/head/jgauthier/20027"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
