@@ -122,14 +122,14 @@ project {
             gradle {
                 tasks = "clean nightlyWrapper assemble"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+                gradleParams = "--daemon" //-s $useGradleInternalScansServer $buildCacheSetup"
             }
         }
         triggers.schedule {
             triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 15
-                minute = 10
+                minute = 24
             }
 //            branchFilter = "+:<default>"
             branchFilter = "+:refs/head/jgauthier/20027"
