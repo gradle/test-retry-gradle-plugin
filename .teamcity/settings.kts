@@ -120,7 +120,7 @@ project {
     val gradleNightlyDogfoodingBuildType = buildType("Gradle Nightly dogfooding (nightly)") {
         steps {
             gradle {
-                tasks = "nightlyWrapper assemble"
+                tasks = "clean nightlyWrapper assemble"
                 buildFile = ""
                 gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
@@ -128,8 +128,8 @@ project {
         triggers.schedule {
             triggerRules = projectTriggerRules
             schedulingPolicy = daily {
-                hour = 14
-                minute = 54
+                hour = 15
+                minute = 10
             }
 //            branchFilter = "+:<default>"
             branchFilter = "+:refs/head/jgauthier/20027"
