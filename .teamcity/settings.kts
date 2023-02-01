@@ -129,10 +129,10 @@ project {
 //            triggerRules = projectTriggerRules
             schedulingPolicy = daily {
                 hour = 16
-                minute = 11
+                minute = 19
             }
 //            branchFilter = "+:<default>"
-//            branchFilter = "+:refs/head/jgauthier/20027"
+            branchFilter = "+:jgauthier/20027"
 //            buildParams {
 //                this.add(Parameter(triggerPropertyName, "SCHEDULED-TRIGGER"))
 //                this.add(Parameter(triggerPropertyName, "NIGHTLY-TRIGGER"))
