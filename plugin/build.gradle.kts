@@ -204,6 +204,7 @@ tasks.register<Wrapper>("nightlyWrapper") {
     doFirst {
         val jsonText = URL("https://services.gradle.org/versions/nightly").readText()
         val versionInfo = Gson().fromJson(jsonText, VersionDownloadInfo::class.java)
-        distributionUrl = versionInfo.downloadUrl
+//        distributionUrl = versionInfo.downloadUrl
+        distributionUrl = "https://services.gradle.org/distributions/gradle-8.0-rc-2-bin.zip"
     }
 }
