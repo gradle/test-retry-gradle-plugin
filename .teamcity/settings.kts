@@ -119,7 +119,8 @@ project {
         }
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 2
+                hour = 14
+                minute = 27
             }
             branchFilter = "+:<default>"
             triggerBuild = always()
