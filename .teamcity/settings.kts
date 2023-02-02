@@ -88,7 +88,7 @@ project {
                 hour = 8
                 minute = 45
             }
-            branchFilter = "+:main"
+            branchFilter = "+:<default>"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -123,7 +123,7 @@ project {
                 hour = 8
                 minute = 45
             }
-            branchFilter = "+:main"
+            branchFilter = "+:<default>"
             withPendingChangesOnly = false
             triggerBuild = always()
         }
@@ -160,7 +160,7 @@ project {
                     hour = 8
                     minute = 45
                 }
-                branchFilter = "+:main"
+                branchFilter = "+:<default>"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
