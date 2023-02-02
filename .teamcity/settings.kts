@@ -85,9 +85,10 @@ project {
     val verifyAllBuildType = buildType("Verify all") {
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 2
+                hour = 8
+                minute = 45
             }
-            branchFilter = "+:refs/heads/main"
+            branchFilter = "+:main"
             triggerBuild = always()
             withPendingChangesOnly = false
         }
@@ -119,9 +120,10 @@ project {
         }
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 2
+                hour = 8
+                minute = 45
             }
-            branchFilter = "+:refs/heads/main"
+            branchFilter = "+:main"
             withPendingChangesOnly = false
             triggerBuild = always()
         }
@@ -155,9 +157,10 @@ project {
             // publish a nightly snapshot
             triggers.schedule {
                 schedulingPolicy = daily {
-                    hour = 2
+                    hour = 8
+                    minute = 45
                 }
-                branchFilter = "+:refs/heads/main"
+                branchFilter = "+:main"
                 triggerBuild = always()
                 withPendingChangesOnly = false
             }
