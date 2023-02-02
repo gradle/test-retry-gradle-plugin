@@ -85,8 +85,7 @@ project {
     val verifyAllBuildType = buildType("Verify all") {
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 8
-                minute = 45
+                hour = 2
             }
             branchFilter = "+:<default>"
             triggerBuild = always()
@@ -120,8 +119,7 @@ project {
         }
         triggers.schedule {
             schedulingPolicy = daily {
-                hour = 8
-                minute = 45
+                hour = 2
             }
             branchFilter = "+:<default>"
             withPendingChangesOnly = false
@@ -157,8 +155,7 @@ project {
             // publish a nightly snapshot
             triggers.schedule {
                 schedulingPolicy = daily {
-                    hour = 8
-                    minute = 45
+                    hour = 2
                 }
                 branchFilter = "+:<default>"
                 triggerBuild = always()
