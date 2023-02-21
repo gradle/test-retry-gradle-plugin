@@ -138,7 +138,7 @@ project {
 
             steps {
                 gradle {
-                    tasks = "clean devSnapshot publishPluginPublicationToGradleBuildInternalSnapshotsRepository -x test"
+                    tasks = "clean snapshot publishPluginPublicationToGradleBuildInternalSnapshotsRepository -x test"
                     gradleParams =
                         "-s $useGradleInternalScansServer $buildCacheSetup $useGradleInternalScansServer"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
