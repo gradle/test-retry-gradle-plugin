@@ -979,6 +979,44 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeGroovyTestSource """
+            package acme
+
+            class FlakySetupAndMethodTest extends spock.lang.Specification {
+
+                def setupSpec() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                def flakyTest() {
+                    expect:
+                    ${flakyAssert("method")}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('flakyTest FAILED') == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            it.count('flakyTest PASSED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     String testLanguage() {
         'groovy'
