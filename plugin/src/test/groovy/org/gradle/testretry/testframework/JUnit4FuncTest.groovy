@@ -611,6 +611,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
                 public void flakyTest() {
                     ${flakyAssert("method")}
                 }
+
+                @org.junit.Test
+                public void successfulTest() {
+                }
             }
         """
 
@@ -623,6 +627,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
             it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
             it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
             it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
         }
 
         where:

@@ -999,6 +999,11 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
                     expect:
                     ${flakyAssert("method")}
                 }
+
+                def successfulTest() {
+                    expect:
+                    true
+                }
             }
         """
 
@@ -1011,6 +1016,7 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
             it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
             it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
             it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
         }
 
         where:
