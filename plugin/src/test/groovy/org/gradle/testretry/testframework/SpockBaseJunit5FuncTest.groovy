@@ -40,7 +40,7 @@ abstract class SpockBaseJunit5FuncTest extends SpockFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                implementation 'org.spockframework:spock-core:2.0-groovy-3.0'
+                implementation 'org.spockframework:spock-core:2.3-groovy-3.0'
             }
             test {
                 useJUnitPlatform()
