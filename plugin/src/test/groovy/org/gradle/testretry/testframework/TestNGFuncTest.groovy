@@ -28,7 +28,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     def setup() {
         buildFile << """
             dependencies {
-                testImplementation 'org.testng:testng:7.4.0'
+                testImplementation 'org.testng:testng:7.5'
             }
         """
     }
@@ -517,7 +517,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.testng:testng:7.4.0'
+                testImplementation 'org.testng:testng:7.5'
             }
             test {
                 useTestNG()

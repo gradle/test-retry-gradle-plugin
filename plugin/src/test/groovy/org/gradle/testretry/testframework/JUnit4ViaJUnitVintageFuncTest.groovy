@@ -41,8 +41,8 @@ class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
         return '''
             dependencies {
                 testImplementation "junit:junit:4.13.2"
-                testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.2"
-                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.8.2"
+                testImplementation "org.junit.jupiter:junit-jupiter-api:5.9.2"
+                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.2"
             }
 
             test {
