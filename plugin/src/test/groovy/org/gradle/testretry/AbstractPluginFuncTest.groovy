@@ -51,7 +51,7 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     String markerFileExistsCheck(String id = "id") {
-        "Files.exists(Paths.get(\"build/marker.file.${StringEscapeUtils.escapeJava(id)}\"))"
+        """Files.exists(Paths.get("build/marker.file.${StringEscapeUtils.escapeJava(id)}"))"""
     }
 
     String flakyAssertClass() {
@@ -147,11 +147,11 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     static String flakyAssert(String id = "id", int failures = 1) {
-        return "acme.FlakyAssert.flakyAssert(\"${StringEscapeUtils.escapeJava(id)}\", $failures);"
+        return """acme.FlakyAssert.flakyAssert("${StringEscapeUtils.escapeJava(id)}", $failures);"""
     }
 
     static String flakyAssertPassFailPass(String id = "id") {
-        return "acme.FlakyAssert.flakyAssertPassFailPass(\"${StringEscapeUtils.escapeJava(id)}\");"
+        return """acme.FlakyAssert.flakyAssertPassFailPass("${StringEscapeUtils.escapeJava(id)}");"""
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")
