@@ -15,12 +15,12 @@
  */
 package org.gradle.testretry.internal.executer;
 
-final class RoundResult {
+public final class RoundResult {
 
-    final TestNames failedTests;
-    final TestNames nonRetriedTests;
-    final boolean lastRound;
-    final boolean hasRetryFilteredFailures;
+    public final TestNames failedTests;
+    public final TestNames nonRetriedTests;
+    public final boolean lastRound;
+    public final boolean hasRetryFilteredFailures;
 
     RoundResult(
         TestNames failedTests,
