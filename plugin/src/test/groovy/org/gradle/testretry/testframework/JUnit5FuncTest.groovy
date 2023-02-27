@@ -359,6 +359,106 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeJavaTestSource """
+            package acme;
+
+            public class FlakySetupAndMethodTest {
+                @org.junit.jupiter.api.BeforeAll
+                public static void setup() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                @org.junit.jupiter.api.Test
+                public void flakyTest() {
+                    ${flakyAssert("method")}
+                }
+
+                @org.junit.jupiter.api.Test
+                public void successfulTest() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('flakyTest() FAILED') == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            it.count('flakyTest() PASSED') == 1
+            it.count('successfulTest() PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "handles setup failure after cleanup failure (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeJavaTestSource """
+            package acme;
+
+            public class FlakySetupAndMethodTest {
+                @org.junit.jupiter.api.BeforeAll
+                public static void setup() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                @org.junit.jupiter.api.AfterAll
+                public static void cleanup() {
+                    ${flakyAssert("cleanup")}
+                }
+
+                @org.junit.jupiter.api.Test
+                public void flakyTest() {
+                    ${flakyAssert("method")}
+                }
+
+                @org.junit.jupiter.api.Test
+                public void successfulTest() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        def differentiatesBetweenSetupAndCleanupMethods = beforeClassErrorTestMethodName(gradleVersion) != afterClassErrorTestMethodName(gradleVersion)
+        with(result.output) {
+            it.count('flakyTest() FAILED') == 1
+            it.count('flakyTest() PASSED') == 1
+            it.count('successfulTest() PASSED') == 2
+
+            if (differentiatesBetweenSetupAndCleanupMethods) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            } else {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            }
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     String reportedTestName(String testName) {
         testName + "()"
     }
@@ -367,9 +467,9 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.8.2'
-                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
+                testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
             }
             test {
                 useJUnitPlatform()

@@ -979,6 +979,107 @@ class SpockFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeGroovyTestSource """
+            package acme
+
+            class FlakySetupAndMethodTest extends spock.lang.Specification {
+
+                def setupSpec() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                def flakyTest() {
+                    expect:
+                    ${flakyAssert("method")}
+                }
+
+                def successfulTest() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('flakyTest FAILED') == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "handles setup failure after cleanup failure (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeGroovyTestSource """
+            package acme
+
+            class FlakySetupAndMethodTest extends spock.lang.Specification {
+
+                def setupSpec() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                def cleanupSpec() {
+                    ${flakyAssert("cleanup")}
+                }
+
+                def flakyTest() {
+                    expect:
+                    ${flakyAssert("method")}
+                }
+
+                def successfulTest() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        def differentiatesBetweenSetupAndCleanupMethods = beforeClassErrorTestMethodName(gradleVersion) != afterClassErrorTestMethodName(gradleVersion)
+        with(result.output) {
+            it.count('flakyTest FAILED') == 1
+            it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
+
+            if (differentiatesBetweenSetupAndCleanupMethods) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            } else {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            }
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     String testLanguage() {
         'groovy'

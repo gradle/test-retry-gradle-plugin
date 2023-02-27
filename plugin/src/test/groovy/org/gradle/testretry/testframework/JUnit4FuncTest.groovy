@@ -590,4 +590,104 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
+
+    def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeJavaTestSource """
+            package acme;
+
+            public class FlakySetupAndMethodTest {
+                @org.junit.BeforeClass
+                public static void setup() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                @org.junit.Test
+                public void flakyTest() {
+                    ${flakyAssert("method")}
+                }
+
+                @org.junit.Test
+                public void successfulTest() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('flakyTest FAILED') == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "handles setup failure after cleanup failure (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+        """
+
+        and:
+        writeJavaTestSource """
+            package acme;
+
+            public class FlakySetupAndCleanupTest {
+                @org.junit.BeforeClass
+                public static void setup() {
+                    ${flakyAssertPassFailPass("setup")}
+                }
+
+                @org.junit.AfterClass
+                public static void cleanup() {
+                    ${flakyAssert("cleanup")}
+                }
+
+                @org.junit.Test
+                public void flakyTest() {
+                    ${flakyAssert("method")}
+                }
+
+                @org.junit.Test
+                public void successfulTest() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        def differentiatesBetweenSetupAndCleanupMethods = beforeClassErrorTestMethodName(gradleVersion) != afterClassErrorTestMethodName(gradleVersion)
+        with(result.output) {
+            it.count('flakyTest FAILED') == 1
+            it.count('flakyTest PASSED') == 1
+            it.count('successfulTest PASSED') == 2
+
+            if (differentiatesBetweenSetupAndCleanupMethods) {
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${afterClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 1
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            } else {
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 2
+                it.count("${beforeClassErrorTestMethodName(gradleVersion)} PASSED") == 1
+            }
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
 }

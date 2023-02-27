@@ -97,9 +97,21 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                     addRetry(className, name);
                 }
 
+                // class-level lifecycle failures do not guarantee that all methods that failed in the previous round will be re-executed (e.g. due to class setup failure)
+                // in this case, we retry the entire class, so we ignore method-level failures for the next round
+                // we keep all lifecycle failures from previous round to make sure we report them as passed later on
+                if (isLifecycleFailure(className, name)) {
+                    previousRoundFailedTests.remove(className, n -> {
+                        if (isLifecycleFailure(className, n)) {
+                            addRetry(className, n);
+                        }
+                        return true;
+                    });
+                }
+
                 if (isClassDescriptor(descriptor)) {
                     previousRoundFailedTests.remove(className, n -> {
-                        if (testFrameworkStrategy.isLifecycleFailureTest(testsReader, className, n)) {
+                        if (isLifecycleFailure(className, n)) {
                             emitFakePassedEvent(descriptor, testCompleteEvent, n);
                             return true;
                         } else {
@@ -112,6 +124,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         }
 
         delegate.completed(testId, testCompleteEvent);
+    }
+
+    private boolean isLifecycleFailure(String className, String name) {
+        return testFrameworkStrategy.isLifecycleFailureTest(testsReader, className, name);
     }
 
     private void addRetry(String className, String name) {

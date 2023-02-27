@@ -28,7 +28,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     def setup() {
         buildFile << """
             dependencies {
-                testImplementation 'org.testng:testng:7.4.0'
+                testImplementation 'org.testng:testng:7.5'
             }
         """
     }
@@ -60,7 +60,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         with(result.output) {
             it.count('lifecycle FAILED') == 1
             it.count('lifecycle PASSED') == 1
-            !it.contains("org.gradle.test-retry was unable to retry")
+            !it.contains("The following test methods could not be retried")
         }
 
         where:
@@ -97,7 +97,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             it.contains('There were failing tests. See the report')
-            !it.contains('org.gradle.test-retry was unable to retry the following test methods')
+            !it.contains('The following test methods could not be retried')
         }
 
         where:
@@ -517,7 +517,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.testng:testng:7.4.0'
+                testImplementation 'org.testng:testng:7.5'
             }
             test {
                 useTestNG()

@@ -51,7 +51,7 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     String markerFileExistsCheck(String id = "id") {
-        "Files.exists(Paths.get(\"build/marker.file.${StringEscapeUtils.escapeJava(id)}\"))"
+        """Files.exists(Paths.get("build/marker.file.${StringEscapeUtils.escapeJava(id)}"))"""
     }
 
     String flakyAssertClass() {
@@ -74,6 +74,24 @@ abstract class AbstractPluginFuncTest extends Specification {
                             Files.write(marker, "0".getBytes());
                         }
                         throw new RuntimeException("fail me!");
+                    } catch (java.io.IOException e) {
+                        throw new java.io.UncheckedIOException(e);
+                    }
+                }
+
+                public static void flakyAssertPassFailPass(String id) {
+                    Path marker = Paths.get("build/marker.file." + id);
+                    try {
+                        if (Files.exists(marker)) {
+                            int counter = Integer.parseInt(new String(Files.readAllBytes(marker)));
+                            ++counter;
+                            Files.write(marker, Integer.toString(counter).getBytes());
+                            if (counter == 1) {
+                                throw new RuntimeException("fail me!");
+                            }
+                        } else {
+                            Files.write(marker, "0".getBytes());
+                        }
                     } catch (java.io.IOException e) {
                         throw new java.io.UncheckedIOException(e);
                     }
@@ -129,7 +147,11 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     static String flakyAssert(String id = "id", int failures = 1) {
-        return "acme.FlakyAssert.flakyAssert(\"${StringEscapeUtils.escapeJava(id)}\", $failures);"
+        return """acme.FlakyAssert.flakyAssert("${StringEscapeUtils.escapeJava(id)}", $failures);"""
+    }
+
+    static String flakyAssertPassFailPass(String id = "id") {
+        return """acme.FlakyAssert.flakyAssertPassFailPass("${StringEscapeUtils.escapeJava(id)}");"""
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")

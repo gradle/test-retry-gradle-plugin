@@ -279,13 +279,13 @@ Other versions are likely to work as well, but are not tested.
 |4.13.2
 
 |JUnit5
-|5.8.2
+|5.9.2
 
 |Spock
-|2.0-groovy-3.0
+|2.3-groovy-3.0
 
 |TestNG
-|7.4.0
+|7.5
 |===
 
 === Parameterized tests
