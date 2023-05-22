@@ -49,7 +49,7 @@ val plugin: Configuration by configurations.creating
 configurations.getByName("compileOnly").extendsFrom(plugin)
 
 dependencies {
-    val asmVersion = "9.4"
+    val asmVersion = "9.5"
     plugin("org.ow2.asm:asm:${asmVersion}")
 
     testImplementation(gradleTestKit())
