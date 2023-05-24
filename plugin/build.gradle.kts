@@ -14,7 +14,7 @@ plugins {
     codenarc
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "0.15.0"
+    id("com.gradle.plugin-publish") version "1.2.0"
     id("com.github.hierynomus.license") version "0.16.1"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -82,30 +82,21 @@ tasks.jar {
 }
 
 gradlePlugin {
+    website.set("https://github.com/gradle/test-retry-gradle-plugin")
+    vcsUrl.set("https://github.com/gradle/test-retry-gradle-plugin.git")
     plugins {
         register("testRetry") {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
             implementationClass = "org.gradle.testretry.TestRetryPlugin"
+            tags.addAll("test", "flaky")
         }
     }
 }
 
 tasks.pluginUnderTestMetadata {
     pluginClasspath.from(plugin)
-}
-
-pluginBundle {
-    website = "https://github.com/gradle/test-retry-gradle-plugin"
-    vcsUrl = "https://github.com/gradle/test-retry-gradle-plugin.git"
-    description = project.description
-    tags = listOf("test", "flaky")
-
-    mavenCoordinates {
-        groupId = "org.gradle"
-        artifactId = "test-retry-gradle-plugin"
-    }
 }
 
 license {
@@ -124,11 +115,9 @@ license {
 
 publishing {
     publications {
-        register<MavenPublication>("plugin") {
+        create<MavenPublication>("pluginMaven") {
+            groupId = "org.gradle"
             artifactId = "test-retry-gradle-plugin"
-            artifact(shadowJar.get()) {
-                classifier = null
-            }
             pom {
                 licenses {
                     license {
