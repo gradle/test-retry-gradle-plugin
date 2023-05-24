@@ -1,5 +1,5 @@
 plugins {
-    id("nebula.release") version "15.3.1"
+    id("nebula.release") version "17.2.2"
 }
 
 buildScan {
