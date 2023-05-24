@@ -54,7 +54,7 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
+    testImplementation("org.spockframework:spock-core:2.3-groovy-4.0")
     testImplementation("org.spockframework:spock-junit4:2.3-groovy-3.0")
     testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
     testImplementation("org.ow2.asm:asm:${asmVersion}")
