@@ -1,8 +1,7 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.google.gson.Gson
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import com.google.gson.Gson
 import java.net.URL
 
 plugins {
@@ -44,9 +43,14 @@ tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-val plugin: Configuration by configurations.creating
+val plugin: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
 
-configurations.getByName("compileOnly").extendsFrom(plugin)
+configurations.compileOnly {
+    extendsFrom(plugin)
+}
 
 dependencies {
     val asmVersion = "9.5"
@@ -63,8 +67,7 @@ dependencies {
     codenarc("org.codenarc:CodeNarc:3.2.0")
 }
 
-val shadowJar = tasks.named<ShadowJar>("shadowJar")
-shadowJar.configure {
+tasks.shadowJar {
     configurations = listOf(plugin)
     dependencies {
         include(dependency("org.ow2.asm:asm"))
@@ -78,7 +81,7 @@ shadowJar.configure {
 
 tasks.jar {
     enabled = false
-    dependsOn(shadowJar)
+    dependsOn(tasks.shadowJar)
 }
 
 gradlePlugin {
@@ -140,26 +143,8 @@ publishing {
     }
 }
 
-configurations {
-    configureEach {
-        outgoing {
-            val removed = artifacts.removeIf { it.classifier.isNullOrEmpty() }
-            if (removed) {
-                artifact(tasks.shadowJar) {
-                    classifier = ""
-                }
-            }
-        }
-    }
-    // used by plugin-publish plugin
-    archives {
-        extendsFrom(signatures.get())
-    }
-}
-
 signing {
     useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
-    sign(configurations.archives.get())
 }
 
 tasks.withType<Sign>().configureEach {
