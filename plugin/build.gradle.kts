@@ -1,8 +1,7 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.google.gson.Gson
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import com.google.gson.Gson
 import java.net.URL
 
 plugins {
@@ -14,7 +13,7 @@ plugins {
     codenarc
     `kotlin-dsl`
     signing
-    id("com.gradle.plugin-publish") version "0.15.0"
+    id("com.gradle.plugin-publish") version "1.2.0"
     id("com.github.hierynomus.license") version "0.16.1"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -44,9 +43,14 @@ tasks.withType<KotlinCompile>().configureEach {
     kotlinOptions.jvmTarget = "1.8"
 }
 
-val plugin: Configuration by configurations.creating
+val plugin: Configuration by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
 
-configurations.getByName("compileOnly").extendsFrom(plugin)
+configurations.compileOnly {
+    extendsFrom(plugin)
+}
 
 dependencies {
     val asmVersion = "9.5"
@@ -63,8 +67,7 @@ dependencies {
     codenarc("org.codenarc:CodeNarc:3.2.0")
 }
 
-val shadowJar = tasks.named<ShadowJar>("shadowJar")
-shadowJar.configure {
+tasks.shadowJar {
     configurations = listOf(plugin)
     dependencies {
         include(dependency("org.ow2.asm:asm"))
@@ -78,34 +81,25 @@ shadowJar.configure {
 
 tasks.jar {
     enabled = false
-    dependsOn(shadowJar)
+    dependsOn(tasks.shadowJar)
 }
 
 gradlePlugin {
+    website.set("https://github.com/gradle/test-retry-gradle-plugin")
+    vcsUrl.set("https://github.com/gradle/test-retry-gradle-plugin.git")
     plugins {
         register("testRetry") {
             id = "org.gradle.test-retry"
             displayName = "Gradle test retry plugin"
             description = project.description
             implementationClass = "org.gradle.testretry.TestRetryPlugin"
+            tags.addAll("test", "flaky")
         }
     }
 }
 
 tasks.pluginUnderTestMetadata {
     pluginClasspath.from(plugin)
-}
-
-pluginBundle {
-    website = "https://github.com/gradle/test-retry-gradle-plugin"
-    vcsUrl = "https://github.com/gradle/test-retry-gradle-plugin.git"
-    description = project.description
-    tags = listOf("test", "flaky")
-
-    mavenCoordinates {
-        groupId = "org.gradle"
-        artifactId = "test-retry-gradle-plugin"
-    }
 }
 
 license {
@@ -124,11 +118,9 @@ license {
 
 publishing {
     publications {
-        register<MavenPublication>("plugin") {
+        create<MavenPublication>("pluginMaven") {
+            groupId = "org.gradle"
             artifactId = "test-retry-gradle-plugin"
-            artifact(shadowJar.get()) {
-                classifier = null
-            }
             pom {
                 licenses {
                     license {
@@ -151,26 +143,8 @@ publishing {
     }
 }
 
-configurations {
-    configureEach {
-        outgoing {
-            val removed = artifacts.removeIf { it.classifier.isNullOrEmpty() }
-            if (removed) {
-                artifact(tasks.shadowJar) {
-                    classifier = ""
-                }
-            }
-        }
-    }
-    // used by plugin-publish plugin
-    archives {
-        extendsFrom(signatures.get())
-    }
-}
-
 signing {
     useInMemoryPgpKeys(System.getenv("PGP_SIGNING_KEY"), System.getenv("PGP_SIGNING_KEY_PASSPHRASE"))
-    sign(configurations.archives.get())
 }
 
 tasks.withType<Sign>().configureEach {
