@@ -1,5 +1,6 @@
 plugins {
     id("nebula.release") version "17.2.2"
+    id("org.gradle.wrapper-upgrade") version "0.11.1"
 }
 
 buildScan {
@@ -30,4 +31,12 @@ tasks.named("final") {
 
 tasks.named("candidate") {
     dependsOn(publishPlugins)
+}
+
+wrapperUpgrade {
+    gradle {
+        register("self") {
+            repo.set("gradle/test-retry-gradle-plugin")
+        }
+    }
 }
