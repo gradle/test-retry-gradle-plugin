@@ -5,9 +5,6 @@ on:
     - cron: '0 0 * * *' # Every day at 00:00 UTC
   workflow_dispatch:
 
-env:
-  WRAPPER_UPGRADE_GIT_TOKEN: ${{ secrets.GH_TOKEN }}
-
 jobs:
   Gradle:
     runs-on: ubuntu-latest
@@ -16,13 +13,25 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 1
+      - name: Set up Git config
+        env:
+          TOKEN: ${{ secrets.GH_BOT_GITHUB_TOKEN }}
+        run: |
+          git config --global url."https://${TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      - name: Import GPG key
+        uses: crazy-max/ghaction-import-gpg@72b6676b71ab476b77e676928516f6982eef7a41
+        with:
+          gpg_private_key: ${{ secrets.GH_BOT_PGP_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GH_BOT_PGP_PASSPHRASE }}
+          git_user_signingkey: true
+          git_commit_gpgsign: true
+          git_config_global: true
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 17
-      - name: Set up Git
-        run: |
-          git config --global url."https://unused-username:${WRAPPER_UPGRADE_GIT_TOKEN}@github.com/".insteadOf "https://github.com/"
       - uses: gradle/gradle-build-action@v2
         with:
           arguments: upgradeGradleWrapperAll
+        env:
+          WRAPPER_UPGRADE_GIT_TOKEN: ${{ secrets.GH_BOT_GITHUB_TOKEN }}
