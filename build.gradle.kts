@@ -1,6 +1,6 @@
 plugins {
     id("nebula.release") version "17.2.2"
-    id("org.gradle.wrapper-upgrade") version "0.11.1"
+    id("org.gradle.wrapper-upgrade") version "0.11.2"
 }
 
 buildScan {
