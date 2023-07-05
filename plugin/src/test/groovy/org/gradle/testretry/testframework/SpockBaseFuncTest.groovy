@@ -20,31 +20,21 @@ import spock.lang.Issue
 
 import static org.junit.Assume.assumeTrue
 
-class SpockFuncTest extends AbstractFrameworkFuncTest {
+abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getLanguagePlugin() {
         return 'groovy'
     }
 
-    boolean isRerunsParameterizedMethods() {
-        true
-    }
+    abstract boolean isRerunsParameterizedMethods()
 
-    boolean canTargetInheritedMethods(String gradleVersion) {
-        true
-    }
+    abstract boolean canTargetInheritedMethods(String gradleVersion)
 
-    protected String staticInitErrorTestMethodName(String gradleVersion) {
-        "initializationError"
-    }
+    abstract protected String staticInitErrorTestMethodName(String gradleVersion)
 
-    protected String beforeClassErrorTestMethodName(String gradleVersion) {
-        "classMethod"
-    }
+    abstract protected String beforeClassErrorTestMethodName(String gradleVersion)
 
-    protected String afterClassErrorTestMethodName(String gradleVersion) {
-        "classMethod"
-    }
+    abstract protected String afterClassErrorTestMethodName(String gradleVersion)
 
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
