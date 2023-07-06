@@ -30,7 +30,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
         successfulTest()
 
         when:
-        def result = gradle83OrAbove ? gradleRunner(gradleVersion,  "--test-dry-run").build() : gradleRunner(gradleVersion).build()
+        def result = gradle83OrAbove ? gradleRunner(gradleVersion,  'test', '-S', "--test-dry-run").build() : gradleRunner(gradleVersion).build()
 
         then:
         gradle83OrAbove ? methodSkipped(result) : methodPassed(result)
@@ -46,7 +46,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
         successfulTest()
 
         when:
-        def result = gradle83OrAbove ? gradleRunner(gradleVersion,  "--no-test-dry-run").build() : gradleRunner(gradleVersion).build()
+        def result = gradle83OrAbove ? gradleRunner(gradleVersion,  'test', '-S', "--no-test-dry-run").build() : gradleRunner(gradleVersion).build()
 
         then:
         methodPassed(result)
