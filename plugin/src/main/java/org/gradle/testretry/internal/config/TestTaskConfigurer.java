@@ -38,6 +38,7 @@ public final class TestTaskConfigurer {
 
     private final static GradleVersion GRADLE_5_1 = GradleVersion.version("5.1");
     private final static GradleVersion GRADLE_6_1 = GradleVersion.version("6.1");
+    private final static GradleVersion GRADLE_8_3 = GradleVersion.version("8.3");
     private final static String GRADLE_ENTERPRISE_BASE_PACKAGE = "com.gradle.enterprise";
 
     private TestTaskConfigurer() {
@@ -54,14 +55,14 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
-        Provider<Boolean> isDeactivatedByTestDistributionPlugin =
+        Provider<Boolean> shouldReplaceTestExecutor =
             shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
-        test.getInputs().property("isDeactivatedByTestDistributionPlugin", isDeactivatedByTestDistributionPlugin);
+        test.getInputs().property("isDeactivatedByTestDistributionPlugin", shouldReplaceTestExecutor);
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
 
-        test.doFirst(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new InitTaskAction(adapter, objectFactory)));
-        test.doLast(new ConditionalTaskAction(isDeactivatedByTestDistributionPlugin, new FinalizeTaskAction()));
+        test.doFirst(new ConditionalTaskAction(shouldReplaceTestExecutor, new InitTaskAction(adapter, objectFactory)));
+        test.doLast(new ConditionalTaskAction(shouldReplaceTestExecutor, new FinalizeTaskAction()));
     }
 
     private static void ensureThatNoRetryExtensionIsPresent(Test testTask) {
@@ -94,7 +95,7 @@ public final class TestTaskConfigurer {
         ProviderFactory providerFactory,
         GradleVersion gradleVersion
     ) {
-        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
+        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test) || callGetDryRun(gradleVersion, test));
         if (supportsPropertyConventions(gradleVersion)) {
             Property<Boolean> property = objectFactory.property(Boolean.class).convention(result);
             if (supportsFinalizeValueOnRead(gradleVersion)) {
@@ -111,6 +112,17 @@ public final class TestTaskConfigurer {
 
     private static boolean supportsFinalizeValueOnRead(GradleVersion gradleVersion) {
         return gradleVersion.compareTo(GRADLE_6_1) >= 0;
+    }
+
+    private static boolean supportsDryRun(GradleVersion gradleVersion) {
+        return gradleVersion.compareTo(GRADLE_8_3) >= 0;
+    }
+
+    private static boolean callGetDryRun(GradleVersion gradleVersion, Test task) {
+        if (supportsDryRun(gradleVersion)) {
+            return invoke(declaredMethod(Test.class, "getDryRun"), task);
+        }
+        return false;
     }
 
     private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
@@ -143,17 +155,17 @@ public final class TestTaskConfigurer {
 
     private static class ConditionalTaskAction implements Action<Task> {
 
-        private final Provider<Boolean> isDeactivatedByTestDistributionPlugin;
+        private final Provider<Boolean> shouldReplaceTestExecutor;
         private final Action<Test> delegate;
 
-        public ConditionalTaskAction(Provider<Boolean> isDeactivatedByTestDistributionPlugin, Action<Test> delegate) {
-            this.isDeactivatedByTestDistributionPlugin = isDeactivatedByTestDistributionPlugin;
+        public ConditionalTaskAction(Provider<Boolean> shouldReplaceTestExecutor, Action<Test> delegate) {
+            this.shouldReplaceTestExecutor = shouldReplaceTestExecutor;
             this.delegate = delegate;
         }
 
         @Override
         public void execute(@NotNull Task task) {
-            if (isDeactivatedByTestDistributionPlugin.get()) {
+            if (shouldReplaceTestExecutor.get()) {
                 task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
             } else {
                 delegate.execute((Test) task);
