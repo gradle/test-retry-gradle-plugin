@@ -15,42 +15,29 @@
  */
 package org.gradle.testretry.testframework
 
-abstract class SpockBaseJunit5FuncTest extends SpockBaseFuncTest {
-
+class Spock1FuncTest extends SpockBaseFuncTest {
     @Override
-    boolean isRerunsParameterizedMethods() {
-        false
+    String getLanguagePlugin() {
+        return 'groovy'
     }
 
-    @Override
+    boolean isRerunsParameterizedMethods() {
+        true
+    }
+
     boolean canTargetInheritedMethods(String gradleVersion) {
         true
     }
 
-    @Override
     protected String staticInitErrorTestMethodName(String gradleVersion) {
-        gradleVersion == "5.0" ? "classMethod" : "initializationError"
-    }
-
-    @Override
-    protected String beforeClassErrorTestMethodName(String gradleVersion) {
         "initializationError"
     }
 
-    @Override
-    protected String afterClassErrorTestMethodName(String gradleVersion) {
-        "executionError"
+    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+        "classMethod"
     }
 
-    @Override
-    protected String buildConfiguration() {
-        return """
-            dependencies {
-                implementation 'org.spockframework:spock-core:2.3-groovy-3.0'
-            }
-            test {
-                useJUnitPlatform()
-            }
-        """
+    protected String afterClassErrorTestMethodName(String gradleVersion) {
+        "classMethod"
     }
 }
