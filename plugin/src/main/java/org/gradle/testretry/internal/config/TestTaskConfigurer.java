@@ -120,7 +120,7 @@ public final class TestTaskConfigurer {
 
     private static boolean callGetDryRun(GradleVersion gradleVersion, Test task) {
         if (supportsDryRun(gradleVersion)) {
-            return invoke(declaredMethod(Test.class, "getDryRun"), task);
+            return task.getDryRun().getOrElse(false);
         }
         return false;
     }

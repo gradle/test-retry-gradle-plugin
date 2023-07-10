@@ -7,7 +7,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
     private static final GradleVersion GRADLE_8_2_999 = GradleVersion.version("8.2.999")
 
-    def "emits skipped test method events if dryRun = true, retry is enabled, and TD/PTS are disabled"() {
+    def "emits skipped test method events if dryRun = true and retry plugin is enabled"() {
         given:
         def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
         setupTest(gradle83OrAbove, true)
@@ -23,7 +23,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "emits skipped test method events when --test-dry-run is used, retry is enabled, and TD/PTS are disabled"() {
+    def "emits skipped test method events when --test-dry-run is used and retry plugin is enabled"() {
         given:
         def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
         setupTest(gradle83OrAbove, false)
@@ -39,7 +39,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "does not emit skipped test method events when --no-test-dry-run is used, retry is enabled, and TD/PTS are disabled"() {
+    def "does not emit skipped test method events when --no-test-dry-run is used and retry plugin is enabled"() {
         given:
         def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
         setupTest(gradle83OrAbove, false)
@@ -55,7 +55,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "does not emit skipped test method events by default, if retry is enabled and TD/PTS are disabled"() {
+    def "does not emit skipped test method events by default and retry plugin is enabled"() {
         given:
         def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
         setupTest(gradle83OrAbove, false)
