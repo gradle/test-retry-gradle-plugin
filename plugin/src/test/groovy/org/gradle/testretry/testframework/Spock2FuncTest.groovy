@@ -68,7 +68,7 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
                                 defaultName + " [suffix]"
                             }
                         } else {
-                            feature.name = feature.name + " [suffix]"
+                            feature.displayName += " [suffix]"
                         }
                     }
                 }
