@@ -20,6 +20,11 @@ import org.gradle.util.GradleVersion
 class Spock2FuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
+    boolean isRerunsParameterizedMethods() {
+        true
+    }
+
+    @Override
     boolean canTargetInheritedMethods(String gradleVersion) {
         GradleVersion.version(gradleVersion) >= GradleVersion.version("7.0")
     }

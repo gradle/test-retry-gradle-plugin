@@ -18,6 +18,11 @@ package org.gradle.testretry.testframework
 class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
+    boolean isRerunsParameterizedMethods() {
+        false
+    }
+
+    @Override
     protected String beforeClassErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "initializationError"
     }
