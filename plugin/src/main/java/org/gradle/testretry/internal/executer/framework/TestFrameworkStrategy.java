@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.internal.executer.framework;
 
+import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestFramework;
 import org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework;
 import org.gradle.api.internal.tasks.testing.junitplatform.JUnitPlatformTestFramework;
@@ -25,23 +26,42 @@ import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.gradle.util.GradleVersion;
 
 import javax.annotation.Nullable;
+import java.io.File;
+import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 /**
  * Instances are scoped to a test task execution and are reused between rounds.
  */
 public interface TestFrameworkStrategy {
 
+    Pattern SPOCK2_CORE_JAR_NAME_PATTERN = Pattern.compile(".*/spock-core-2[^/]*\\.jar");
+
     @Nullable
-    static TestFrameworkStrategy of(TestFramework testFramework) {
+    static TestFrameworkStrategy of(JvmTestExecutionSpec spec) {
+        TestFramework testFramework = spec.getTestFramework();
         if (testFramework instanceof JUnitTestFramework) {
             return new JunitTestFrameworkStrategy();
         } else if (testFramework instanceof JUnitPlatformTestFramework) {
-            return new Junit5TestFrameworkStrategy();
+            return new Junit5TestFrameworkStrategy(isSpock2Used(spec));
         } else if (testFramework instanceof TestNGTestFramework) {
             return new TestNgTestFrameworkStrategy();
         } else {
             return null;
         }
+    }
+
+    static boolean isSpock2Used(JvmTestExecutionSpec spec) {
+        return isSpock2JarOnPath(spec.getClasspath()) || isSpock2JarOnPath(spec.getModulePath());
+    }
+
+    static boolean isSpock2JarOnPath(Iterable<? extends File> path) {
+        return StreamSupport.stream(path.spliterator(), false)
+            .anyMatch(TestFrameworkStrategy::isSpock2CoreJar);
+    }
+
+    static boolean isSpock2CoreJar(File file) {
+        return SPOCK2_CORE_JAR_NAME_PATTERN.matcher(file.getAbsolutePath()).matches();
     }
 
     static boolean gradleVersionIsAtLeast(String version) {
