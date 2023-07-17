@@ -590,6 +590,62 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles unrolled tests with additional test context method suffix in super class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeGroovyTestSource contextualTestAnnotation()
+
+        writeGroovyTestSource contextualTestExtension()
+
+        writeGroovyTestSource """
+            package acme
+
+            @spock.lang.Unroll
+            @ContextualTest
+            abstract class UnrolledAbstractTests extends spock.lang.Specification {
+
+                def "unrolled parent [#param] with additional test context"() {
+                    expect:
+                    result
+
+                    where:
+                    param << ['foo', 'bar', 'baz']
+                    result << [false, true, false]
+                }
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            class InheritedTests extends UnrolledAbstractTests {
+
+                def "inherited"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.count('inherited [suffix] PASSED') == (isRerunsParameterizedMethods() ? 1 : 2)
+
+            it.count('unrolled parent [foo] with additional test context [suffix] FAILED') == 2
+            it.count('unrolled parent [bar] with additional test context [suffix] PASSED') == 2
+            it.count('unrolled parent [baz] with additional test context [suffix] FAILED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "can rerun on failure in super class with extension added suffix (gradle version #gradleVersion)"() {
         given:
         assumeTrue(canTargetInheritedMethods(gradleVersion))

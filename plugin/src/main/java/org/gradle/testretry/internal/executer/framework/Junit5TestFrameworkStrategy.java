@@ -30,9 +30,15 @@ import static org.gradle.testretry.internal.executer.framework.TestFrameworkStra
 
 final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
 
+    private final boolean isSpock2Used;
+
+    public Junit5TestFrameworkStrategy(boolean isSpock2Used) {
+        this.isSpock2Used = isSpock2Used;
+    }
+
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
-        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, false, template);
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, isSpock2Used, template);
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 

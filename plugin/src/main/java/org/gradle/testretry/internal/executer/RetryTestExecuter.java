@@ -78,7 +78,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             return;
         }
 
-        TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec.getTestFramework());
+        TestFrameworkStrategy testFrameworkStrategy = TestFrameworkStrategy.of(spec);
         if (testFrameworkStrategy == null) {
             LOGGER.warn("Test retry requested for task {} with unsupported test framework {} - failing tests will not be retried", spec.getIdentityPath(), spec.getTestFramework().getClass().getName());
             delegate.execute(spec, testResultProcessor);

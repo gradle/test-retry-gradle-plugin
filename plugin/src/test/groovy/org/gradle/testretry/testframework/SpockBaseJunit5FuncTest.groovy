@@ -18,11 +18,6 @@ package org.gradle.testretry.testframework
 abstract class SpockBaseJunit5FuncTest extends SpockBaseFuncTest {
 
     @Override
-    boolean isRerunsParameterizedMethods() {
-        false
-    }
-
-    @Override
     boolean canTargetInheritedMethods(String gradleVersion) {
         true
     }
