@@ -5,11 +5,11 @@ import org.gradle.util.GradleVersion
 
 class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
-    private static final GradleVersion GRADLE_8_2_999 = GradleVersion.version("8.2.999")
+    private static final GradleVersion GRADLE_8_3 = GradleVersion.version("8.3")
 
     def "emits skipped test method events if dryRun = true and retry plugin is enabled"() {
         given:
-        def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
+        def gradle83OrAbove = GradleVersion.version(gradleVersion) >= GRADLE_8_3
         setupTest(gradle83OrAbove, true)
         successfulTest()
 
@@ -25,7 +25,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
     def "emits skipped test method events when --test-dry-run is used and retry plugin is enabled"() {
         given:
-        def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
+        def gradle83OrAbove = GradleVersion.version(gradleVersion) >= GRADLE_8_3
         setupTest(gradle83OrAbove, false)
         successfulTest()
 
@@ -41,7 +41,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
     def "does not emit skipped test method events when --no-test-dry-run is used and retry plugin is enabled"() {
         given:
-        def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
+        def gradle83OrAbove = GradleVersion.version(gradleVersion) >= GRADLE_8_3
         setupTest(gradle83OrAbove, false)
         successfulTest()
 
@@ -57,7 +57,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
     def "does not emit skipped test method events by default and retry plugin is enabled"() {
         given:
-        def gradle83OrAbove = GradleVersion.version(gradleVersion) > GRADLE_8_2_999
+        def gradle83OrAbove = GradleVersion.version(gradleVersion) >= GRADLE_8_3
         setupTest(gradle83OrAbove, false)
         successfulTest()
 

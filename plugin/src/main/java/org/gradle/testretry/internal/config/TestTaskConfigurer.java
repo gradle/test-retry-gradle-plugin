@@ -55,8 +55,7 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
-        Provider<Boolean> shouldReplaceTestExecutor =
-            shouldTestRetryPluginBeDeactivated(test, objectFactory, providerFactory, gradleVersion);
+        Provider<Boolean> shouldReplaceTestExecutor = shouldReplaceTestExecutor(test, objectFactory, providerFactory, gradleVersion);
         test.getInputs().property("isDeactivatedByTestDistributionPlugin", shouldReplaceTestExecutor);
 
         test.getExtensions().add(TestRetryTaskExtension.class, TestRetryTaskExtension.NAME, extension);
@@ -89,13 +88,13 @@ public final class TestTaskConfigurer {
         }
     }
 
-    private static Provider<Boolean> shouldTestRetryPluginBeDeactivated(
+    private static Provider<Boolean> shouldReplaceTestExecutor(
         Test test,
         ObjectFactory objectFactory,
         ProviderFactory providerFactory,
         GradleVersion gradleVersion
     ) {
-        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test) || callGetDryRun(gradleVersion, test));
+        Provider<Boolean> result = providerFactory.provider(() -> callShouldTestRetryPluginBeDeactivated(test));
         if (supportsPropertyConventions(gradleVersion)) {
             Property<Boolean> property = objectFactory.property(Boolean.class).convention(result);
             if (supportsFinalizeValueOnRead(gradleVersion)) {
@@ -112,17 +111,6 @@ public final class TestTaskConfigurer {
 
     private static boolean supportsFinalizeValueOnRead(GradleVersion gradleVersion) {
         return gradleVersion.compareTo(GRADLE_6_1) >= 0;
-    }
-
-    private static boolean supportsDryRun(GradleVersion gradleVersion) {
-        return gradleVersion.compareTo(GRADLE_8_3) >= 0;
-    }
-
-    private static boolean callGetDryRun(GradleVersion gradleVersion, Test task) {
-        if (supportsDryRun(gradleVersion)) {
-            return task.getDryRun().getOrElse(false);
-        }
-        return false;
     }
 
     private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
