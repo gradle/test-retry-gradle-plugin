@@ -64,7 +64,7 @@ dependencies {
     testImplementation("org.ow2.asm:asm:${asmVersion}")
     testImplementation("org.jetbrains:annotations:24.0.1")
 
-    codenarc("org.codenarc:CodeNarc:3.2.0")
+    codenarc("org.codenarc:CodeNarc:3.3.0-groovy-4.0")
 }
 
 tasks.shadowJar {
