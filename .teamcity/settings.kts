@@ -134,6 +134,8 @@ project {
             params {
                 param("env.ORG_GRADLE_PROJECT_artifactoryUsername", "%artifactoryUsername%")
                 param("env.ORG_GRADLE_PROJECT_artifactoryPassword", "%artifactoryPassword%")
+                password("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
+                password("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
             }
 
             steps {
@@ -171,6 +173,8 @@ project {
             params {
                 param("env.GRADLE_PUBLISH_KEY", "%development.plugin.portal.publish.key%")
                 password("env.GRADLE_PUBLISH_SECRET", "%development.plugin.portal.publish.secret%", display = NORMAL)
+                password("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
+                password("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
             }
             steps {
                 gradle {
@@ -199,6 +203,8 @@ project {
                 password("env.GRGIT_USER", "", label = "GitHub Access Token", display = PROMPT)
                 param("env.GRADLE_PUBLISH_KEY", "%plugin.portal.publish.key%")
                 password("env.GRADLE_PUBLISH_SECRET", "%plugin.portal.publish.secret%", display = NORMAL)
+                password("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
+                password("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
             }
             steps {
                 gradle {
