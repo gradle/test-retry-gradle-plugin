@@ -37,6 +37,7 @@ wrapperUpgrade {
     gradle {
         register("self") {
             repo.set("gradle/test-retry-gradle-plugin")
+            options.gitCommitExtraArgs.add("--signoff")
         }
     }
 }
