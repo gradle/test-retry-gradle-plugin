@@ -17,7 +17,7 @@ jobs:
         env:
           TOKEN: ${{ secrets.GH_BOT_GITHUB_TOKEN }}
         run: |
-          git config --global url."https://${TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+          git config --global url."https://bot-githubaction:${TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@82a020f1f7f605c65dd2449b392a52c3fcfef7ef
         with:
@@ -34,4 +34,5 @@ jobs:
         with:
           arguments: clean upgradeGradleWrapperAll --no-build-cache
         env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           WRAPPER_UPGRADE_GIT_TOKEN: ${{ secrets.GH_BOT_GITHUB_TOKEN }}

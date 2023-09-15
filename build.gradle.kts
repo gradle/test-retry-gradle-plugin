@@ -1,6 +1,6 @@
 plugins {
     id("nebula.release") version "17.2.2"
-    id("org.gradle.wrapper-upgrade") version "0.11.2"
+    id("org.gradle.wrapper-upgrade") version "0.11.3"
 }
 
 buildScan {
@@ -37,6 +37,7 @@ wrapperUpgrade {
     gradle {
         register("self") {
             repo.set("gradle/test-retry-gradle-plugin")
+            options.gitCommitExtraArgs.add("--signoff")
         }
     }
 }
