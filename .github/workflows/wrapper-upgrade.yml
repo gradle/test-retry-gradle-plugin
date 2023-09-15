@@ -34,4 +34,5 @@ jobs:
         with:
           arguments: clean upgradeGradleWrapperAll --no-build-cache
         env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           WRAPPER_UPGRADE_GIT_TOKEN: ${{ secrets.GH_BOT_GITHUB_TOKEN }}
