@@ -53,7 +53,7 @@ configurations.compileOnly {
 }
 
 dependencies {
-    val asmVersion = "9.5"
+    val asmVersion = "9.6"
     plugin("org.ow2.asm:asm:${asmVersion}")
 
     testImplementation(gradleTestKit())
