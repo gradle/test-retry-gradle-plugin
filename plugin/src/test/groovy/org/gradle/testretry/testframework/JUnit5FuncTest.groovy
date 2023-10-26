@@ -459,6 +459,204 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "can rerun the whole class in JUnit5's Suite via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            dependencies {
+                testImplementation('org.junit.platform:junit-platform-suite-engine:1.9.2')
+            }
+            test {
+                useJUnitPlatform {
+                    excludeEngines('junit-jupiter')
+                }
+                filter {
+                    includeTestsMatching('*TestSuite')
+                }
+                retry {
+                    maxRetries = 1
+                    classRetry {
+                        includeClasses.add('*Test1')
+                    }
+                }
+            }
+        """
+
+        (1..2).collect {
+            writeJavaTestSource """
+                package acme;
+    
+                import org.junit.jupiter.api.*;
+    
+                public class Test${it} {
+                    @Test
+                    void testOk() {
+                    }
+                    
+                    @Test
+                    void testFlaky() {
+                        ${flakyAssert("${it}")}
+                    } 
+                    
+                }
+            """
+        }
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.junit.jupiter.api.*;
+            import org.junit.platform.suite.api.*;
+            
+            @Suite
+            @SelectClasses({Test1.class,Test2.class})
+            public class TestSuite {
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('Test1 > testOk() PASSED') == 2
+            it.count('Test1 > testFlaky() FAILED') == 1
+            it.count('Test1 > testFlaky() PASSED') == 1
+
+            // Test2 is retried on method level
+            it.count('Test2 > testOk() PASSED') == 1
+            it.count('Test2 > testFlaky() FAILED') == 1
+            it.count('Test2 > testFlaky() PASSED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun the whole @Nested class via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                    classRetry {
+                        includeClasses.add('*NestedTest')
+                    }
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.junit.jupiter.api.*;
+
+            public class TopLevelTest {
+                @Test
+                void testOk() {
+                }
+
+                @Test
+                void testFlaky() {
+                    ${flakyAssert("topLevel")}
+                }
+
+                @Nested
+                class NestedTest {
+                    @Test
+                    void testOk() {
+                    }
+    
+                    @Test
+                    void testFlaky() {
+                        ${flakyAssert("nested1")}
+                    }
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            // only failing methods of TopLevelTest should be retried
+            it.count('TopLevelTest > testOk() PASSED') == 1
+            it.count('TopLevelTest > testFlaky() FAILED') == 1
+            it.count('TopLevelTest > testFlaky() PASSED') == 1
+
+            // all methods of NestedTest1 should be retried
+            it.count('NestedTest > testOk() PASSED') == 2
+            it.count('NestedTest > testFlaky() FAILED') == 1
+            it.count('NestedTest > testFlaky() PASSED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "can rerun whole class including all @Nested classes via className (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                    classRetry {
+                        includeClasses.add('*TopLevelTest')
+                    }
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.junit.jupiter.api.*;
+
+            public class TopLevelTest {
+                @Test
+                void testOk() {
+                }
+
+                @Test
+                void testFlaky() {
+                    ${flakyAssert("topLevel")}
+                }
+
+                @Nested
+                class NestedTest1 {
+                    @Test
+                    void testOk() {
+                    }
+                }
+
+                @Nested
+                class NestedTest2 {
+                    @Test
+                    void testOk() {
+                    }
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            // all methods of TopLevelTest are rerun
+            it.count('TopLevelTest > testOk() PASSED') == 2
+            it.count('TopLevelTest > testFlaky() FAILED') == 1
+            it.count('TopLevelTest > testFlaky() PASSED') == 1
+
+            // all methods of nested classes are retried
+            it.count('NestedTest1 > testOk() PASSED') == 2
+            it.count('NestedTest2 > testOk() PASSED') == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     String reportedTestName(String testName) {
         testName + "()"
     }
