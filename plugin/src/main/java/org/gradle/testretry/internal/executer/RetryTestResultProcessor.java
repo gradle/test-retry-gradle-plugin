@@ -25,10 +25,13 @@ import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.ClassRetryMatcher;
 import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
+import org.gradle.util.GradleVersion;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
@@ -47,6 +50,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
 
+    private final Set<String> testClassesSeenInCurrentRound = new HashSet<>();
     private TestNames currentRoundFailedTests = new TestNames();
     private TestNames previousRoundFailedTests = new TestNames();
 
@@ -76,6 +80,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             delegate.started(descriptor, testStartEvent);
         } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
             activeDescriptorsById.put(descriptor.getId(), descriptor);
+            registerSeenTestClass(descriptor);
             delegate.started(descriptor, testStartEvent);
         }
     }
@@ -128,6 +133,14 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
     private boolean isLifecycleFailure(String className, String name) {
         return testFrameworkStrategy.isLifecycleFailureTest(testsReader, className, name);
+    }
+
+    private void registerSeenTestClass(TestDescriptorInternal descriptor) {
+        String maybeTestClassName = descriptor.getClassName();
+
+        if (maybeTestClassName != null) {
+            testClassesSeenInCurrentRound.add(maybeTestClassName);
+        }
     }
 
     private void addRetry(String className, String name) {
@@ -207,7 +220,53 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     public RoundResult getResult() {
-        return new RoundResult(currentRoundFailedTests, previousRoundFailedTests, lastRun(), hasRetryFilteredFailures);
+        return new RoundResult(currentRoundFailedTests,
+            cleanedUpFailedTestsOfPreviousRound(),
+            lastRun(),
+            hasRetryFilteredFailures
+        );
+    }
+
+    /**
+     * When running tests via the JUnit's suite engine or using {@code @Nested} test classes,
+     * Gradle 5.0 does not report the intermediate test class nodes. This leads to a problem when such
+     * test classes are configured to be retried on class-level, as we cannot properly remove them
+     * from the previous round of failed tests without a proper test event from Gradle.
+     * <p/>
+     * For Gradle 5.0, we manually remove all test classes with no registers test methods,
+     * if we saw the test class during this round. We assume here, that those entries are
+     * just here because of the missing event from Gradle for the intermediate node.
+     * <p/>
+     * For Gradle version 5.1 and above we don't do this, as we expect events for those intermediate
+     * nodes.
+     * <p/>
+     * This solution is not perfect but still allows users to use classRetry with Gradle 5
+     * together with the suite engine and/or nested test classes.
+     *
+     * @return cleaned up failed test names of previous round
+     */
+    private TestNames cleanedUpFailedTestsOfPreviousRound() {
+        boolean isGradle50 = GradleVersion.current().getBaseVersion().equals(GradleVersion.version("5.0"));
+
+        if (isGradle50 && !testClassesSeenInCurrentRound.isEmpty() || previousRoundFailedTests.hasClassesWithoutTestNames()) {
+            TestNames testNames = new TestNames();
+            previousRoundFailedTests.stream().forEach(entry -> {
+                String testClass = entry.getKey();
+                Set<String> testMethods = entry.getValue();
+
+                if (testMethods.isEmpty()) {
+                    if (!testClassesSeenInCurrentRound.contains(testClass)) {
+                        testNames.addClass(testClass);
+                    }
+                } else {
+                    testNames.addAll(testClass, testMethods);
+                }
+            });
+
+            return testNames;
+        }
+
+        return previousRoundFailedTests;
     }
 
     public void reset(boolean lastRetry) {
@@ -216,6 +275,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         }
 
         this.lastRetry = lastRetry;
+        this.testClassesSeenInCurrentRound.clear();
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
