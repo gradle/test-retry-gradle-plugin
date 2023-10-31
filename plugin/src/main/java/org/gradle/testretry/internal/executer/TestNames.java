@@ -32,6 +32,10 @@ public final class TestNames {
         map.computeIfAbsent(className, ignored -> new HashSet<>()).add(testName);
     }
 
+    public void addAll(String className, Set<String> testNames) {
+        map.computeIfAbsent(className, ignored -> new HashSet<>()).addAll(testNames);
+    }
+
     public void addClass(String className) {
         map.put(className, emptySet());
     }
@@ -60,6 +64,11 @@ public final class TestNames {
                 return false;
             }
         }
+    }
+
+    public boolean hasClassesWithoutTestNames() {
+        return map.values().stream()
+            .anyMatch(Set::isEmpty);
     }
 
     public Stream<Map.Entry<String, Set<String>>> stream() {
