@@ -17,18 +17,34 @@ package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
 
+import javax.annotation.Nullable
+
 class JUnit5FuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getLanguagePlugin() {
         return 'java'
     }
 
-    protected String afterClassErrorTestMethodName(String gradleVersion) {
+    private static String afterClassErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "executionError"
     }
 
-    protected String beforeClassErrorTestMethodName(String gradleVersion) {
+    private static String beforeClassErrorTestMethodName(String gradleVersion) {
         gradleVersion == "5.0" ? "classMethod" : "initializationError"
+    }
+
+    private static String classAndMethodForSuite(String className, String testName, String gradleVersion) {
+        gradleVersion == "5.0" ? "${className}.${testName}" : "${className} > ${testName}"
+    }
+
+    private static String classAndMethodForNested(String parentClassName, @Nullable String nestedClassName, String testName, String gradleVersion) {
+        if (nestedClassName == null) {
+            "${parentClassName} > ${testName}"
+        } else {
+            gradleVersion == "5.0"
+                ? "${nestedClassName}.${testName}"
+                : "${nestedClassName} > ${testName}"
+        }
     }
 
     def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
@@ -518,14 +534,15 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
 
         then:
         with(result.output) {
-            it.count('Test1 > testOk() PASSED') == 2
-            it.count('Test1 > testFlaky() FAILED') == 1
-            it.count('Test1 > testFlaky() PASSED') == 1
+            it.count("${classAndMethodForSuite("Test1", "testOk()", gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForSuite("Test1", "testFlaky()", gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForSuite("Test1", "testFlaky()", gradleVersion)} PASSED") == 1
 
             // Test2 is retried on method level
-            it.count('Test2 > testOk() PASSED') == 1
-            it.count('Test2 > testFlaky() FAILED') == 1
-            it.count('Test2 > testFlaky() PASSED') == 1
+            it.count("${classAndMethodForSuite("Test2", "testOk()", gradleVersion)} PASSED") == 1
+            it.count("${classAndMethodForSuite("Test2", "testFlaky()", gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForSuite("Test2", "testFlaky()", gradleVersion)} PASSED") == 1
+
         }
 
         where:
@@ -580,14 +597,14 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             // only failing methods of TopLevelTest should be retried
-            it.count('TopLevelTest > testOk() PASSED') == 1
-            it.count('TopLevelTest > testFlaky() FAILED') == 1
-            it.count('TopLevelTest > testFlaky() PASSED') == 1
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testOk()', gradleVersion)} PASSED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} PASSED") == 1
 
             // all methods of NestedTest1 should be retried
-            it.count('NestedTest > testOk() PASSED') == 2
-            it.count('NestedTest > testFlaky() FAILED') == 1
-            it.count('NestedTest > testFlaky() PASSED') == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest', 'testOk()', gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest', 'testFlaky()', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest', 'testFlaky()', gradleVersion)} PASSED") == 1
         }
 
         where:
@@ -644,13 +661,13 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             // all methods of TopLevelTest are rerun
-            it.count('TopLevelTest > testOk() PASSED') == 2
-            it.count('TopLevelTest > testFlaky() FAILED') == 1
-            it.count('TopLevelTest > testFlaky() PASSED') == 1
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testOk()', gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} PASSED") == 1
 
             // all methods of nested classes are retried
-            it.count('NestedTest1 > testOk() PASSED') == 2
-            it.count('NestedTest2 > testOk() PASSED') == 2
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testOk()', gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest2', 'testOk()', gradleVersion)} PASSED") == 2
         }
 
         where:
