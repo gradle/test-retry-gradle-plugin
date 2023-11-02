@@ -248,7 +248,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private TestNames cleanedUpFailedTestsOfPreviousRound() {
         boolean isGradle50 = GradleVersion.current().getBaseVersion().equals(GradleVersion.version("5.0"));
 
-        if (isGradle50 && !testClassesSeenInCurrentRound.isEmpty() || previousRoundFailedTests.hasClassesWithoutTestNames()) {
+        if (isGradle50 && !testClassesSeenInCurrentRound.isEmpty() && previousRoundFailedTests.hasClassesWithoutTestNames()) {
             TestNames testNames = new TestNames();
             previousRoundFailedTests.stream().forEach(entry -> {
                 String testClass = entry.getKey();
