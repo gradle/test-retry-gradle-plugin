@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
@@ -49,6 +50,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private Method failureMethod;
 
     private final Map<Object, TestDescriptorInternal> activeDescriptorsById = new HashMap<>();
+    private final Map<Object, Object> parentIdByDescriptorId = new HashMap<>();
 
     private final Set<String> testClassesSeenInCurrentRound = new HashSet<>();
     private TestNames currentRoundFailedTests = new TestNames();
@@ -80,6 +82,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             delegate.started(descriptor, testStartEvent);
         } else if (!descriptor.getId().equals(rootTestDescriptorId)) {
             activeDescriptorsById.put(descriptor.getId(), descriptor);
+            parentIdByDescriptorId.put(descriptor.getId(), testStartEvent.getParentId());
             registerSeenTestClass(descriptor);
             delegate.started(descriptor, testStartEvent);
         }
@@ -99,7 +102,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
                 if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
-                    addRetry(className, name);
+                    addRetry(descriptor);
                 }
 
                 // class-level lifecycle failures do not guarantee that all methods that failed in the previous round will be re-executed (e.g. due to class setup failure)
@@ -108,7 +111,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 if (isLifecycleFailure(className, name)) {
                     previousRoundFailedTests.remove(className, n -> {
                         if (isLifecycleFailure(className, n)) {
-                            addRetry(className, n);
+                            currentRoundFailedTests.add(className, n);
                         }
                         return true;
                     });
@@ -143,12 +146,42 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         }
     }
 
-    private void addRetry(String className, String name) {
-        if (classRetryMatcher.retryWholeClass(className)) {
-            currentRoundFailedTests.addClass(className);
+    private void addRetry(TestDescriptorInternal descriptor) {
+        Optional<TestDescriptorInternal> classMatchingClassRetryFilter = firstClassMatchingClassRetryFilter(descriptor);
+        if (classMatchingClassRetryFilter.isPresent()) {
+            currentRoundFailedTests.addClass(classMatchingClassRetryFilter.get().getClassName());
         } else {
-            currentRoundFailedTests.add(className, name);
+            currentRoundFailedTests.add(descriptor.getClassName(), descriptor.getName());
         }
+    }
+
+    private Optional<TestDescriptorInternal> firstClassMatchingClassRetryFilter(TestDescriptorInternal descriptor) {
+        // top-level descriptor describes a test worker which cannot match the class retry filter
+        Object parentId = parentIdByDescriptorId.get(descriptor.getId());
+        if (parentId == null) {
+            return Optional.empty();
+        }
+
+        // if the parent is not tracked for any reason, then it also cannot match the class retry filter
+        TestDescriptorInternal parentDescriptor = activeDescriptorsById.get(parentId);
+        if (parentDescriptor == null) {
+            return Optional.empty();
+        }
+
+        // check if any of the parent classes matches the class retry filter
+        Optional<TestDescriptorInternal> parentClassToRetryEntirely = firstClassMatchingClassRetryFilter(parentDescriptor);
+        if (parentClassToRetryEntirely.isPresent()) {
+            return parentClassToRetryEntirely;
+        }
+
+        // check if the class on the current level matches the class retry filter
+        String className = descriptor.getClassName();
+        if (className != null && classRetryMatcher.retryWholeClass(className)) {
+            return Optional.of(descriptor);
+        }
+
+        // no classes in the descriptor hierarchy should be retried as a whole
+        return Optional.empty();
     }
 
     private void emitFakePassedEvent(TestDescriptorInternal parent, TestCompleteEvent parentEvent, String name) {
@@ -201,7 +234,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             String className = descriptor.getClassName();
             if (className != null) {
                 if (filter.canRetry(className)) {
-                    addRetry(className, descriptor.getName());
+                    addRetry(descriptor);
                 } else {
                     hasRetryFilteredFailures = true;
                 }
@@ -279,6 +312,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.previousRoundFailedTests = currentRoundFailedTests;
         this.currentRoundFailedTests = new TestNames();
         this.activeDescriptorsById.clear();
+        this.parentIdByDescriptorId.clear();
     }
 
 }
