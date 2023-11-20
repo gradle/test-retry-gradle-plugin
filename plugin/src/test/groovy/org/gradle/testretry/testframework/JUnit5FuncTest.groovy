@@ -634,15 +634,15 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
                 void testOk() {
                 }
 
-                @Test
-                void testFlaky() {
-                    ${flakyAssert("topLevel")}
-                }
-
                 @Nested
                 class NestedTest1 {
                     @Test
                     void testOk() {
+                    }
+
+                    @Test
+                    void testFlaky() {
+                        ${flakyAssert("topLevel")}
                     }
                 }
 
@@ -662,11 +662,12 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         with(result.output) {
             // all methods of TopLevelTest are rerun
             it.count("${classAndMethodForNested('TopLevelTest', null, 'testOk()', gradleVersion)} PASSED") == 2
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} FAILED") == 1
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} PASSED") == 1
 
             // all methods of nested classes are retried
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testOk()', gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testFlaky()', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testFlaky()', gradleVersion)} PASSED") == 1
+
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest2', 'testOk()', gradleVersion)} PASSED") == 2
         }
 
