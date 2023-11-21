@@ -80,6 +80,9 @@ public final class TestNames {
     }
 
     public int size() {
-        return stream().mapToInt(s -> s.getValue().size()).sum();
+        return stream().mapToInt(s -> {
+            int tests = s.getValue().size();
+            return tests > 0 ? tests : 1;
+        }).sum();
     }
 }
