@@ -183,6 +183,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/234")
     def "handles @Stepwise tests with maxFailures limit (gradle version #gradleVersion)"() {
         given:
         buildFile << """

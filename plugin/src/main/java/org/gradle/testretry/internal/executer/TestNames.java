@@ -80,9 +80,8 @@ public final class TestNames {
     }
 
     public int size() {
-        return stream().mapToInt(s -> {
-            int tests = s.getValue().size();
-            return tests > 0 ? tests : 1;
-        }).sum();
+        return stream()
+            .mapToInt(s -> Math.max(s.getValue().size(), 1)) // count number of methods, or one if we retry the class
+            .sum();
     }
 }
