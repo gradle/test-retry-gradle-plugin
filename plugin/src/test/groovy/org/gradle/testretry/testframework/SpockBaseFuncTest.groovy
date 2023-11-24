@@ -183,6 +183,73 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/234")
+    def "handles @Stepwise tests with maxFailures limit (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry {
+                maxRetries = 1
+                maxFailures = 1
+            }
+        """
+
+        writeGroovyTestSource """
+            package acme
+
+            @spock.lang.Stepwise
+            class StepwiseTests1 extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert('first')}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+
+            @spock.lang.Stepwise
+            class StepwiseTests2 extends spock.lang.Specification {
+                def "parentTest"() {
+                    expect:
+                    true
+                }
+
+                def "childTest"() {
+                    expect:
+                    ${flakyAssert('second')}
+                }
+
+                def "grandChildTest"() {
+                    expect:
+                    true
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.count('childTest FAILED') == 2
+            it.count('childTest PASSED') == 0
+            it.count('parentTest PASSED') == 2
+
+            it.count('grandChildTest SKIPPED') == 2
+            it.count('grandChildTest PASSED') == 0
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "can rerun on whole class via className (gradle version #gradleVersion)"() {
         given:
         buildFile << """
