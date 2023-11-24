@@ -16,14 +16,17 @@
 package org.gradle.testretry.internal.testsreader;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -33,6 +36,8 @@ import java.util.jar.JarFile;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 public final class TestsReader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestsReader.class);
 
     private final Set<File> testClassesDirs;
     private final Iterable<File> classpath;
@@ -60,11 +65,18 @@ public final class TestsReader {
         }
     }
 
+    @Nullable
     private <R> R visitClassFile(File file, Visitor<R> visitor) {
-        try (InputStream in = new FileInputStream(file)) {
+        try (InputStream in = Files.newInputStream(file.toPath())) {
             return visit(in, visitor);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
+        } catch (IllegalArgumentException iae) {
+            if (iae.getMessage().startsWith("Unsupported class file major version")) {
+                LOGGER.warn("Could not parse class, ignoring for retry", iae);
+                return null;
+            }
+            throw iae;
         }
     }
 
