@@ -1,0 +1,32 @@
+name: 'Verify'
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+
+# https://stackoverflow.com/a/72408109/16358266
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-verify:
+    runs-on: 'ubuntu-latest'
+    steps:
+    - uses: actions/checkout@v3
+    - name: "Setup Build Environment"
+      uses: ./.github/actions/setup-environment
+
+    - name: "Verify"
+      run: "./gradlew build -s"
+
+    - name: "Store reports"
+      if: failure()
+      uses: actions/upload-artifact@v3
+      with:
+        name: check-reports
+        path: |
+          **/build/reports/
+          **/build/test-results/
