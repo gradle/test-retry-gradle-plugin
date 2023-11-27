@@ -53,18 +53,18 @@ configurations.compileOnly {
 }
 
 dependencies {
-    val asmVersion = "9.6"
-    plugin("org.ow2.asm:asm:${asmVersion}")
+    plugin(libs.asm)
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation("org.spockframework:spock-core:2.3-groovy-3.0")
-    testImplementation("org.spockframework:spock-junit4:2.3-groovy-3.0")
-    testImplementation("net.sourceforge.nekohtml:nekohtml:1.9.22")
-    testImplementation("org.ow2.asm:asm:${asmVersion}")
-    testImplementation("org.jetbrains:annotations:24.1.0")
+    testImplementation(platform(libs.spock.bom))
+    testImplementation(libs.spock.core)
+    testImplementation(libs.spock.junit4)
+    testImplementation(libs.nekohtml)
+    testImplementation(libs.asm)
+    testImplementation(libs.jetbrains.annotations)
 
-    codenarc("org.codenarc:CodeNarc:3.3.0-groovy-4.0")
+    codenarc(libs.codenarc)
 }
 
 tasks.shadowJar {

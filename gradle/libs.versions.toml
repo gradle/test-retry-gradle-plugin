@@ -1,0 +1,12 @@
+[versions]
+asmVersion = "9.6"
+spockframework = "2.3-groovy-3.0"
+
+[libraries]
+spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spockframework" }
+spock-core.module = "org.spockframework:spock-core"
+spock-junit4.module = "org.spockframework:spock-junit4"
+nekohtml = "net.sourceforge.nekohtml:nekohtml:1.9.22"
+asm = { module = "org.ow2.asm:asm", version.ref = "asmVersion" }
+jetbrains-annotations = "org.jetbrains:annotations:24.1.0"
+codenarc = "org.codenarc:CodeNarc:3.3.0-groovy-4.0"
