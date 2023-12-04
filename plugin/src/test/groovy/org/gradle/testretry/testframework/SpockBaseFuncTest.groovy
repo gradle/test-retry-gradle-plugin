@@ -312,13 +312,17 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+    def "can rerun on whole class via annotation (gradle version #gradleVersion and retry annotation #retryAnnotation)"() {
         given:
         buildFile << """
+            dependencies {
+                testImplementation 'com.gradle:develocity-testing-annotations:2.0'
+                testImplementation 'com.gradle:gradle-enterprise-testing-annotations:1.1.2'
+            }
             test.retry {
                 maxRetries = 1
                 classRetry {
-                    includeAnnotationClasses.add('*ClassRetry')
+                    includeAnnotationClasses.add('*CustomClassRetry')
                 }
             }
         """
@@ -333,7 +337,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
 
             @Target(ElementType.TYPE)
             @Retention(RetentionPolicy.RUNTIME)
-            @interface ClassRetry {
+            @interface CustomClassRetry {
 
             }
         """
@@ -341,7 +345,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         writeGroovyTestSource """
             package acme
 
-            @ClassRetry
+            @$retryAnnotation
             class FlakyTests extends spock.lang.Specification {
                 def "parentTest"() {
                     expect:
@@ -372,7 +376,10 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         }
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        [gradleVersion, retryAnnotation] << [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ["acme.CustomClassRetry", "com.gradle.enterprise.testing.annotations.ClassRetry", "com.gradle.develocity.testing.annotations.ClassRetry"]
+        ].combinations()
     }
 
     def "only track a @Retry test method once to ensure it was re-ran successfully"() {

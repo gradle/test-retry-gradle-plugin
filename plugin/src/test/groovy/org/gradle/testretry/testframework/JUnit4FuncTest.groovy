@@ -536,13 +536,17 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+    def "can rerun on whole class via annotation (gradle version #gradleVersion and retry annotation #retryAnnotation)"() {
         given:
         buildFile << """
+            dependencies {
+                testImplementation 'com.gradle:develocity-testing-annotations:2.0'
+                testImplementation 'com.gradle:gradle-enterprise-testing-annotations:1.1.2'
+            }
             test.retry {
                 maxRetries = 1
                 classRetry {
-                    includeAnnotationClasses.add('*ClassRetry')
+                    includeAnnotationClasses.add('*CustomClassRetry')
                 }
             }
         """
@@ -556,7 +560,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
             @Target(ElementType.TYPE)
             @Retention(RetentionPolicy.RUNTIME)
-            public @interface ClassRetry {
+            public @interface CustomClassRetry {
 
             }
         """
@@ -564,7 +568,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         writeJavaTestSource """
             package acme;
 
-            @ClassRetry
+            @$retryAnnotation
             public class FlakyTests {
                 @org.junit.Test
                 public void a() {
@@ -588,7 +592,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         }
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        [gradleVersion, retryAnnotation] << [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ["acme.CustomClassRetry", "com.gradle.enterprise.testing.annotations.ClassRetry", "com.gradle.develocity.testing.annotations.ClassRetry"]
+        ].combinations()
     }
 
     def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {

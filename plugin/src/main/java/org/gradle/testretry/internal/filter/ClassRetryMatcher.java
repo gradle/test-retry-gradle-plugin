@@ -29,7 +29,8 @@ public class ClassRetryMatcher {
 
     private static final List<String> IMPLICIT_INCLUDE_ANNOTATION_CLASSES = unmodifiableList(asList(
         "spock.lang.Stepwise", // Spock's @Stepwise annotated classes must be retried as a whole
-        "com.gradle.enterprise.testing.annotations.ClassRetry" //common testing annotations
+        "com.gradle.enterprise.testing.annotations.ClassRetry", // common testing annotations
+        "com.gradle.develocity.testing.annotations.ClassRetry" // common testing annotations
     ));
 
     private final AnnotationInspector annotationInspector;
