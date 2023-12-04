@@ -320,13 +320,17 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "can rerun on whole class via annotation (gradle version #gradleVersion)"() {
+    def "can rerun on whole class via annotation (gradle version #gradleVersion and retry annotation #retryAnnotation)"() {
         given:
         buildFile << """
+            dependencies {
+                testImplementation 'com.gradle:develocity-testing-annotations:2.0'
+                testImplementation 'com.gradle:gradle-enterprise-testing-annotations:1.1.2'
+            }
             test.retry {
                 maxRetries = 1
                 classRetry {
-                    includeAnnotationClasses.add('*ClassRetry')
+                    includeAnnotationClasses.add('*CustomClassRetry')
                 }
             }
         """
@@ -340,7 +344,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
 
             @Target(ElementType.TYPE)
             @Retention(RetentionPolicy.RUNTIME)
-            public @interface ClassRetry {
+            public @interface CustomClassRetry {
 
             }
         """
@@ -348,7 +352,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         writeJavaTestSource """
             package acme;
 
-            @ClassRetry
+            @$retryAnnotation
             class FlakyTests {
                 @org.junit.jupiter.api.Test
                 void a() {
@@ -372,7 +376,10 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         }
 
         where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+        [gradleVersion, retryAnnotation] << [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ["acme.CustomClassRetry", "com.gradle.enterprise.testing.annotations.ClassRetry", "com.gradle.develocity.testing.annotations.ClassRetry"]
+        ].combinations()
     }
 
     def "handles flaky setup that prevents the retries of initially failed methods (gradle version #gradleVersion)"() {
@@ -500,19 +507,19 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         (1..2).collect {
             writeJavaTestSource """
                 package acme;
-    
+
                 import org.junit.jupiter.api.*;
-    
+
                 public class Test${it} {
                     @Test
                     void testOk() {
                     }
-                    
+
                     @Test
                     void testFlaky() {
                         ${flakyAssert("${it}")}
-                    } 
-                    
+                    }
+
                 }
             """
         }
@@ -522,7 +529,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
 
             import org.junit.jupiter.api.*;
             import org.junit.platform.suite.api.*;
-            
+
             @Suite
             @SelectClasses({Test1.class,Test2.class})
             public class TestSuite {
@@ -542,7 +549,6 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             it.count("${classAndMethodForSuite("Test2", "testOk()", gradleVersion)} PASSED") == 1
             it.count("${classAndMethodForSuite("Test2", "testFlaky()", gradleVersion)} FAILED") == 1
             it.count("${classAndMethodForSuite("Test2", "testFlaky()", gradleVersion)} PASSED") == 1
-
         }
 
         where:
@@ -582,7 +588,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
                     @Test
                     void testOk() {
                     }
-    
+
                     @Test
                     void testFlaky() {
                         ${flakyAssert("nested1")}
