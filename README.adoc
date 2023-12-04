@@ -401,7 +401,7 @@ This means that all executions of the same test may not be grouped in the consol
 
 image:gradle-console-test-retry-reporting.png[Gradle console reporting, align="center", title=Flaky test Gradle console output]
 
-=== Gradle Enterprise
+=== Develocity
 
 Gradle build scans (`--scan` option) report discrete test executions as "Execution [N of total]" and will mark a test with both a _failed_ and then a _passed_ outcome as _flaky_.
 
