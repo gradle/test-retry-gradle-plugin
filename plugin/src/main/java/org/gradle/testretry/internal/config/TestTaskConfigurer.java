@@ -72,10 +72,10 @@ public final class TestTaskConfigurer {
 
             if (retryExtensionClassName.startsWith(GRADLE_ENTERPRISE_BASE_PACKAGE)) {
                 throw new IllegalStateException(""
-                    + "The Gradle Enterprise Gradle plugin is conflicting with the Test Retry Gradle plugin "
+                    + "The Develocity Gradle plugin is conflicting with the Test Retry Gradle plugin "
                     + "and has already added a retry extension to the test task " + testTask.getName() + ". "
                     + "Please either remove the Test Retry Gradle plugin from this project "
-                    + "or disable the registration of the retry extension in the Gradle Enterprise Gradle plugin "
+                    + "or disable the registration of the retry extension in the Develocity Gradle plugin "
                     + "by specifying the system property 'gradle.enterprise.testretry.enabled' and setting it to 'false'."
                 );
             } else {
