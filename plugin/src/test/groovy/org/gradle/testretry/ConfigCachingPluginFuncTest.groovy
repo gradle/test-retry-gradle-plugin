@@ -79,17 +79,11 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def "compatible with configuration cache when Test Distribution is also present (gradle version #gradleVersion)"() {
+    def "compatible with configuration cache when Develocity plugin is also present (gradle version #gradleVersion)"() {
         shouldTestConfigCache(gradleVersion)
-        buildFile << """
-            interface TestDistributionExtension {}
-            class DefaultTestDistributionExtension implements TestDistributionExtension {
-                boolean shouldTestRetryPluginBeDeactivated() {
-                    true
-                }
-            }
-            test.extensions.create(TestDistributionExtension, "distribution", DefaultTestDistributionExtension)
-        """
+        buildFile
+            << DslExtensionType.DISTRIBUTION.getSnippet()
+            << DslExtensionType.DEVELOCITY.getSnippet()
 
         failedTest()
 
@@ -98,14 +92,14 @@ class ConfigCachingPluginFuncTest extends AbstractGeneralPluginFuncTest {
 
         then:
         !configurationCacheIsReused(result, gradleVersion)
-        result.output.contains('handled by the test-distribution plugin')
+        result.output.contains('handled by the Develocity plugin')
 
         when:
         result = gradleRunnerWithConfigurationCache(gradleVersion, 'test', '--info').buildAndFail()
 
         then:
         configurationCacheIsReused(result, gradleVersion)
-        result.output.contains('handled by the test-distribution plugin')
+        result.output.contains('handled by the Develocity plugin')
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST

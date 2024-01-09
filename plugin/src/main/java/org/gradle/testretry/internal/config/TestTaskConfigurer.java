@@ -38,7 +38,6 @@ public final class TestTaskConfigurer {
 
     private final static GradleVersion GRADLE_5_1 = GradleVersion.version("5.1");
     private final static GradleVersion GRADLE_6_1 = GradleVersion.version("6.1");
-    private final static GradleVersion GRADLE_8_3 = GradleVersion.version("8.3");
     private final static String GRADLE_ENTERPRISE_BASE_PACKAGE = "com.gradle.enterprise";
 
     private TestTaskConfigurer() {
@@ -64,6 +63,7 @@ public final class TestTaskConfigurer {
         test.doLast(new ConditionalTaskAction(shouldReplaceTestExecutor, new FinalizeTaskAction()));
     }
 
+    @SuppressWarnings("ConcatenationWithEmptyString")
     private static void ensureThatNoRetryExtensionIsPresent(Test testTask) {
         Object existingRetryExtension = testTask.getExtensions().findByName(TestRetryTaskExtension.NAME);
 
@@ -114,13 +114,26 @@ public final class TestTaskConfigurer {
     }
 
     private static boolean callShouldTestRetryPluginBeDeactivated(Test test) {
+        Object develocityExtension = test.getExtensions().findByName("develocity");
+        if (develocityExtension == null) {
+            return callShouldTestRetryPluginBeDeactivatedOnDistributionExtension(test);
+        }
+        try {
+            Object testRetryConfiguration = invoke(develocityExtension, makeAccessible(develocityExtension.getClass().getMethod("getTestRetry")));
+            return invoke(testRetryConfiguration, makeAccessible(testRetryConfiguration.getClass().getMethod("shouldTestRetryPluginBeDeactivated")));
+        } catch (Exception e) {
+            test.getLogger().warn("Failed to determine whether test-retry plugin should be deactivated from testRetry configuration on develocity extension", e);
+            return false;
+        }
+    }
+
+    private static boolean callShouldTestRetryPluginBeDeactivatedOnDistributionExtension(Test test) {
         Object distributionExtension = test.getExtensions().findByName("distribution");
         if (distributionExtension == null) {
             return false;
         }
         try {
-            Method result = makeAccessible(distributionExtension.getClass().getMethod("shouldTestRetryPluginBeDeactivated"));
-            return invoke(result, distributionExtension);
+            return invoke(distributionExtension, makeAccessible(distributionExtension.getClass().getMethod("shouldTestRetryPluginBeDeactivated")));
         } catch (Exception e) {
             test.getLogger().warn("Failed to determine whether test-retry plugin should be deactivated from distribution extension", e);
             return false;
@@ -129,16 +142,16 @@ public final class TestTaskConfigurer {
 
     private static RetryTestExecuter createRetryTestExecuter(Test task, TestRetryTaskExtensionAdapter extension, ObjectFactory objectFactory) {
         TestExecuter<JvmTestExecutionSpec> delegate = getTestExecuter(task);
-        Instantiator instantiator = invoke(declaredMethod(AbstractTestTask.class, "getInstantiator"), task);
+        Instantiator instantiator = invoke(task, declaredMethod(AbstractTestTask.class, "getInstantiator"));
         return new RetryTestExecuter(task, extension, delegate, instantiator, objectFactory, task.getTestClassesDirs().getFiles(), task.getClasspath().getFiles());
     }
 
     private static TestExecuter<JvmTestExecutionSpec> getTestExecuter(Test task) {
-        return invoke(declaredMethod(Test.class, "createTestExecuter"), task);
+        return invoke(task, declaredMethod(Test.class, "createTestExecuter"));
     }
 
     private static void setTestExecuter(Test task, RetryTestExecuter retryTestExecuter) {
-        invoke(declaredMethod(Test.class, "setTestExecuter", TestExecuter.class), task, retryTestExecuter);
+        invoke(task, declaredMethod(Test.class, "setTestExecuter", TestExecuter.class), retryTestExecuter);
     }
 
     private static class ConditionalTaskAction implements Action<Task> {
@@ -154,7 +167,7 @@ public final class TestTaskConfigurer {
         @Override
         public void execute(@NotNull Task task) {
             if (shouldReplaceTestExecutor.get()) {
-                task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the test-distribution plugin.");
+                task.getLogger().info("Test execution via the test-retry plugin is deactivated. Retries are handled by the Develocity plugin.");
             } else {
                 delegate.execute((Test) task);
             }
@@ -204,7 +217,7 @@ public final class TestTaskConfigurer {
         return method;
     }
 
-    private static <T> T invoke(Method method, Object instance, Object... args) {
+    private static <T> T invoke(Object instance, Method method, Object... args) {
         try {
             Object result = method.invoke(instance, args);
             @SuppressWarnings("unchecked") T cast = (T) result;
