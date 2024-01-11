@@ -407,9 +407,9 @@ Gradle build scans (`--scan` option) report discrete test executions as "Executi
 
 image:gradle-build-scan-test-retry-reporting.png[Gradle build scan reporting, align="center", title="Gradle build scan test report", caption="Build scan Tests view"]
 
-Flaky tests can also be visualized across many builds using the https://gradle.com/blog/flaky-tests/[Gradle Enterprise Tests Dashboard].
+Flaky tests can also be visualized across many builds using the https://gradle.com/blog/flaky-tests/[Develocity Tests Dashboard].
 
-image:gradle-enterprise-flaky-test-reporting.png[Gradle Enterprise top tests report, align="center", title=Gradle Enterprise top tests report]
+image:gradle-enterprise-flaky-test-reporting.png[Develocity top tests report, align="center", title=Develocity top tests report]
 
 === IDEs
 

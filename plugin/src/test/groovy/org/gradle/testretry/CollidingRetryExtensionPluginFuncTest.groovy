@@ -17,7 +17,7 @@ package org.gradle.testretry
 
 class CollidingRetryExtensionPluginFuncTest extends AbstractGeneralPluginFuncTest {
 
-    def "detects existing retry extension from Gradle Enterprise Gradle plugin"() {
+    def "detects existing retry extension from Develocity Gradle plugin"() {
         given:
         buildSrcWithEmptyClass("com.gradle.enterprise.testretry", "TestRetryExtension")
 
@@ -30,7 +30,7 @@ class CollidingRetryExtensionPluginFuncTest extends AbstractGeneralPluginFuncTes
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        result.output.contains("The Gradle Enterprise Gradle plugin is conflicting with the Test Retry Gradle plugin")
+        result.output.contains("The Develocity Gradle plugin is conflicting with the Test Retry Gradle plugin")
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
