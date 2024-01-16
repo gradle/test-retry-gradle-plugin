@@ -13,3 +13,8 @@ runs:
     run: echo "JDK8=$JAVA_HOME" >> $GITHUB_ENV
   - name: 'Setup Gradle Build'
     uses: gradle/gradle-build-action@v2
+  - name: Setup Git user
+    shell: bash
+    run: |
+      git config --global user.name "$(git --no-pager log --format=format:'%an' -n 1)"
+      git config --global user.email "$(git --no-pager log --format=format:'%ae' -n 1)"
