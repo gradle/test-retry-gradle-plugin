@@ -175,6 +175,7 @@ private data class VersionDownloadInfo(val version: String, val downloadUrl: Str
 
 tasks.register<Wrapper>("nightlyWrapper") {
     group = "wrapper"
+    validateDistributionUrl = true
     doFirst {
         val jsonText = URL("https://services.gradle.org/versions/nightly").readText()
         val versionInfo = Gson().fromJson(jsonText, VersionDownloadInfo::class.java)
