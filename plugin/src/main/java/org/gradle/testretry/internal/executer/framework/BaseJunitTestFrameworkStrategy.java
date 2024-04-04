@@ -118,7 +118,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private void addPotentiallyParameterizedSuffixed(TestFilterBuilder filters, String className, String name) {
         // It's a common pattern to add all the parameters on the end of a literal method name with []
-        String strippedParameterName = name.replaceAll("(?:\\([^)]*?\\)|\\[[^]]*?])*$", "");
+        String strippedParameterName = name.replaceAll("(?:\\([^)]*?\\))?(?:\\[[^]]*?](?:\\([^)]*?\\))?)?$", "");
         filters.test(className, strippedParameterName);
         filters.test(className, name);
     }

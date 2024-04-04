@@ -26,11 +26,29 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         "org.jetbrains.kotlin.jvm' version '1.9.23"
     }
 
-    def "should work with parentheses in test name"() {
+    def "should work with parentheses in test name"(String gradleVersion, String testSource) {
         given:
+        setupTest()
+
+        and:
+        writeKotlinTestSource testSource
+
+        expect:
+        def result = gradleRunner(gradleVersion, "test").build()
+        result.task(":test").outcome == TaskOutcome.SUCCESS
+
+        where:
+        [gradleVersion, testSource] << [
+            GRADLE_VERSIONS_UNDER_TEST,
+            [testWithParentheses(), parameterizedTestWithParentheses()]
+        ].combinations()
+    }
+
+    private void setupTest() {
         buildFile << """
             dependencies {
                 testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
             }
 
             test {
@@ -41,32 +59,48 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
                 }
             }
         """
+    }
 
-        and:
-        writeKotlinTestSource """
+    private static String testWithParentheses() {
+        """
             package acme
-            
+
             import org.junit.jupiter.api.Test
 
-            class DemoTest {
-            
-                @Test
-                fun `test that does not contain parentheses`() {
-                    assert(true)
-                }
-            
+            class Test1 {
+
                 @Test
                 fun `test that contains (parentheses)`() {
                     ${flakyAssert()}
                 }
             }
         """
+    }
 
-        expect:
-        def result = gradleRunner(gradleVersion, "test").build()
-        result.task(":test").outcome == TaskOutcome.SUCCESS
+    private static String parameterizedTestWithParentheses() {
+        """
+            package acme
+            
+            import org.junit.jupiter.params.ParameterizedTest;
+            import org.junit.jupiter.params.provider.Arguments;
+            import org.junit.jupiter.params.provider.MethodSource;
 
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+            class Test2 {
+
+                @ParameterizedTest
+                @MethodSource("data")
+                fun `test that contains (parentheses)`(a: Int, b: Int) {
+                    assert(a == b)
+                    ${flakyAssert()}
+                }
+                
+                companion object {
+                    @JvmStatic
+                    fun data() = listOf(
+                        Arguments.of(1, 1)
+                    )
+                }
+            }
+        """
     }
 }
