@@ -16,13 +16,10 @@
 package org.gradle.testretry
 
 import org.gradle.testkit.runner.BuildResult
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
 
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
-
-    private static final GradleVersion GRADLE_8_3 = GradleVersion.version("8.3")
-    private static final String MIN_JUPITER_VERSION_DRY_RUN = "5.10.0-RC1"
-    private static final String MIN_PLATFORM_VERSION_DRY_RUN = "1.10.0-RC1"
 
     @Override
     String getLanguagePlugin() {
@@ -31,13 +28,9 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
     def "should work with parentheses in test name"() {
         given:
-//        buildFile.delete()
-//        buildFile = testProjectDir.newFile('build.gradle.kts')
         buildFile << """
             dependencies {
-//                testImplementation "org.jetbrains.kotlin:kotlin-test"
                 testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-//                testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
             }
 
             test {
@@ -71,45 +64,9 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
         expect:
         def result = gradleRunner(gradleVersion, "test").build()
-        !result.output.isEmpty()
+        result.task(":test").outcome == TaskOutcome.SUCCESS
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    private void setupTest(boolean gradle83OrAbove, boolean withTestDryRun) {
-        setupTest(gradle83OrAbove, withTestDryRun, Optional.empty())
-    }
-
-    private void setupTest(boolean gradle83OrAbove, boolean withTestDryRun, Optional<Boolean> withSysPropDryRun) {
-        buildFile << """
-            test {
-                useJUnitPlatform()
-                ${gradle83OrAbove && withTestDryRun ? "dryRun = true" : ""}
-                ${withSysPropDryRun.map { it -> gradle83OrAbove && it ? "systemProperty('junit.platform.execution.dryRun.enabled', $it)" : "" }.orElse("")}
-                retry {
-                    maxRetries = 1
-                }
-            }
-        """
-    }
-
-    private void successfulJUnit5Test() {
-        writeKotlinTestSource """
-            package acme;
-
-            public class SuccessfulTests {
-                @org.junit.jupiter.api.Test
-                public void successTest() {}
-            }
-        """
-    }
-
-    private static boolean methodPassed(BuildResult result) {
-        return result.output.count('PASSED') == 1
-    }
-
-    private static boolean methodSkipped(BuildResult result) {
-        return result.output.count('SKIPPED') == 1
     }
 }
