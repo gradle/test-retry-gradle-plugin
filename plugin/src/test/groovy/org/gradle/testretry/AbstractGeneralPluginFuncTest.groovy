@@ -24,7 +24,7 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
     }
 
     protected void successfulTest() {
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SuccessfulTests {
@@ -35,7 +35,7 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
     }
 
     protected void failedTest() {
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import static org.junit.Assert.assertTrue;
@@ -50,7 +50,7 @@ abstract class AbstractGeneralPluginFuncTest extends AbstractPluginFuncTest {
     }
 
     protected void flakyTest() {
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class FlakyTests {
