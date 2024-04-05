@@ -15,9 +15,7 @@
  */
 package org.gradle.testretry
 
-import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.TaskOutcome
-import org.gradle.util.GradleVersion
 
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
