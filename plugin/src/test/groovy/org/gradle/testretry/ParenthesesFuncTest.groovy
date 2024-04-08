@@ -16,6 +16,7 @@
 package org.gradle.testretry
 
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.util.GradleVersion
 
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
@@ -24,9 +25,10 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         "org.jetbrains.kotlin.jvm' version '1.9.23"
     }
 
-    def "should work with parentheses in test name"(String gradleVersion, String testSource) {
+    def "should work with parentheses in test name"(String gradleVersion, Tuple2<Closure<File>, String> scenarios) {
         given:
-        setupTest()
+        def (setupTest, String testSource) = scenarios
+        setupTest(buildFile)
 
         and:
         writeKotlinTestSource testSource
@@ -36,17 +38,24 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         result.task(":test").outcome == TaskOutcome.SUCCESS
 
         where:
-        [gradleVersion, testSource] << [
-            GRADLE_VERSIONS_UNDER_TEST,
-            [testWithParentheses(), parameterizedTestWithParentheses()]
+        [gradleVersion, scenarios] << [
+            // Kotlin plugin compatible from 6.8 onwards
+            GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it) >= GradleVersion.version("6.8") },
+            [
+                new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5TestWithParentheses()),
+                new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5ParameterizedTestWithParentheses()),
+                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParams())
+            ]
         ].combinations()
     }
 
-    private void setupTest() {
+
+    private static void setupJunit4Test(File buildFile) {
         buildFile << """
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
+                testImplementation "junit:junit:4.13.2"
+                testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
+                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.2"
             }
 
             test {
@@ -59,7 +68,45 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         """
     }
 
-    private static String testWithParentheses() {
+    private static void setupJunit5Test(File buildFile) {
+        buildFile << """
+            dependencies {
+                testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
+            }
+
+            test {
+                useJUnitPlatform()
+                retry {
+                    maxRetries = 2
+                }
+            }
+        """
+    }
+
+    private static String junit4TestWithJUnitParams() {
+        """
+            package acme
+
+            import junitparams.*
+            import org.junit.Test
+            import org.junit.runner.RunWith
+
+            @RunWith(JUnitParamsRunner::class)
+            class Test1 {
+
+                @Test
+                @Parameters("1, true")
+                fun test(foo: Int, bar: Boolean) {
+                    assert(foo != 0)
+                    assert(bar)
+                    ${flakyAssert()}
+                }
+            }
+        """
+    }
+
+    private static String junit5TestWithParentheses() {
         """
             package acme
 
@@ -75,7 +122,7 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         """
     }
 
-    private static String parameterizedTestWithParentheses() {
+    private static String junit5ParameterizedTestWithParentheses() {
         """
             package acme
             
