@@ -44,7 +44,8 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
             [
                 new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5TestWithParentheses()),
                 new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5ParameterizedTestWithParentheses()),
-                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParams())
+                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParams()),
+                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParamsWithTestCaseName())
             ]
         ].combinations()
     }
@@ -97,6 +98,30 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
                 @Test
                 @Parameters("1, true")
+                fun test(foo: Int, bar: Boolean) {
+                    assert(foo != 0)
+                    assert(bar)
+                    ${flakyAssert()}
+                }
+            }
+        """
+    }
+
+    private static String junit4TestWithJUnitParamsWithTestCaseName() {
+        """
+            package acme
+
+            import junitparams.*
+            import junitparams.naming.*
+            import org.junit.Test
+            import org.junit.runner.RunWith
+
+            @RunWith(JUnitParamsRunner::class)
+            class Test1 {
+
+                @Test
+                @Parameters("1, true")
+                @TestCaseName("{method}[{index}: {method}({0})={1}]")
                 fun test(foo: Int, bar: Boolean) {
                     assert(foo != 0)
                     assert(bar)
