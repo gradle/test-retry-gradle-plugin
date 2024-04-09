@@ -47,7 +47,7 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         noRetry << test("BaseIncludedAndExcludedTest", "BaseIncludedTest", "InheritedExcludedAnnotation")
         noRetry << test("IncludedAndExcludedInheritedTest", "BaseIncludedAndExcludedTest")
         shouldRetry << test("IncludedNonInheritedTest", null, "NonInheritedIncludedAnnotation")
-        noRetry << test("ExcludedTest", null, "NonInheritedIncludedAnnotation")
+        noRetry << test("StandaloneExcludedTest", null, "NonInheritedIncludedAnnotation")
         noRetry << test("IncludeWithBadAnnotation", null, "InheritedExcludedAnnotation")
 
         when:
@@ -56,14 +56,14 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
         then:
         noRetry.each { testName ->
             with(result.output) {
-                it.count("acme.${testName} > flakyTest FAILED") == 1
-                it.count("acme.${testName} > flakyTest PASSED") == 0
+                it.count("${testName} > flakyTest FAILED") == 1
+                it.count("${testName} > flakyTest PASSED") == 0
             }
         }
         shouldRetry.each { testName ->
             with(result.output) {
-                it.count("acme.${testName} > flakyTest FAILED") == 2
-                it.count("acme.${testName} > flakyTest PASSED") == 1
+                it.count("${testName} > flakyTest FAILED") == 2
+                it.count("${testName} > flakyTest PASSED") == 1
             }
         }
 
@@ -126,8 +126,8 @@ class FilterFuncTest extends AbstractGeneralPluginFuncTest {
 
         then:
         with(result.output) {
-            it.count("acme.ExcludedTest > flakyTest FAILED") == 1
-            it.count("acme.ExcludedTest > flakyTest PASSED") == 0
+            it.count("ExcludedTest > flakyTest FAILED") == 1
+            it.count("ExcludedTest > flakyTest PASSED") == 0
         }
 
         where:

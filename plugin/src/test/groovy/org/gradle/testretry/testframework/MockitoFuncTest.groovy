@@ -66,7 +66,7 @@ class MockitoFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         with(result.output) {
-            it.count('acme.TestWithUnnecessaryStubbings > unnecessary Mockito stubbings FAILED') == 2
+            it.count('TestWithUnnecessaryStubbings > unnecessary Mockito stubbings FAILED') == 2
             !it.contains("unable to retry the following test methods, which is unexpected.")
         }
 
