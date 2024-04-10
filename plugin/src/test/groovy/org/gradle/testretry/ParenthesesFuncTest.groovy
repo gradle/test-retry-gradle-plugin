@@ -17,6 +17,7 @@ package org.gradle.testretry
 
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
+import static groovy.lang.Tuple2.tuple
 
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
@@ -42,10 +43,10 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
             // Kotlin plugin compatible from 6.8 onwards
             GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it) >= GradleVersion.version("6.8") },
             [
-                new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5TestWithParentheses()),
-                new Tuple2<>({ bf -> setupJunit5Test(bf) }, junit5ParameterizedTestWithParentheses()),
-                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParams()),
-                new Tuple2<>({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParamsWithTestCaseName())
+                tuple({ bf -> setupJunit5Test(bf) }, junit5TestWithParentheses()),
+                tuple({ bf -> setupJunit5Test(bf) }, junit5ParameterizedTestWithParentheses()),
+                tuple({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParams()),
+                tuple({ bf -> setupJunit4Test(bf) }, junit4TestWithJUnitParamsWithTestCaseName())
             ]
         ].combinations()
     }
