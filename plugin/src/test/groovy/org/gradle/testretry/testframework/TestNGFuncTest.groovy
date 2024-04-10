@@ -39,7 +39,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SuccessfulTests {
@@ -77,7 +77,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SomeTests {
@@ -110,7 +110,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.testng.annotations.*;
@@ -130,7 +130,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class ParameterTest extends AbstractTest {
@@ -157,7 +157,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             abstract class AbstractTest {
@@ -168,7 +168,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class FlakyTests extends AbstractTest {
@@ -198,7 +198,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.testng.annotations.*;
@@ -240,7 +240,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.testng.annotations.*;
@@ -281,7 +281,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.testng.annotations.*;
@@ -345,7 +345,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SomeTests {
@@ -356,7 +356,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             }
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class LoggingTestListener extends org.testng.TestListenerAdapter {
@@ -389,7 +389,7 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
             import org.testng.annotations.*;
             import java.nio.file.*;

@@ -146,7 +146,7 @@ class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
     }
 
     private void successfulJUnit5Test() {
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             public class SuccessfulTests {

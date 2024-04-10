@@ -1201,11 +1201,6 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
     }
 
     @Override
-    String testLanguage() {
-        'groovy'
-    }
-
-    @Override
     protected String buildConfiguration() {
         return """
             dependencies {

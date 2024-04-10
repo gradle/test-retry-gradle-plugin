@@ -46,8 +46,9 @@ abstract class AbstractPluginFuncTest extends Specification {
 
         testProjectDir.newFolder('src', 'test', 'java', 'acme')
         testProjectDir.newFolder('src', 'test', 'groovy', 'acme')
+        testProjectDir.newFolder('src', 'test', 'kotlin', 'acme')
 
-        writeTestSource flakyAssertClass()
+        writeJavaTestSource flakyAssertClass()
     }
 
     String markerFileExistsCheck(String id = "id") {
@@ -138,10 +139,6 @@ abstract class AbstractPluginFuncTest extends Specification {
         baseBuildScript().replace("id 'org.gradle.test-retry'", "id 'org.gradle.test-retry' apply false")
     }
 
-    String testLanguage() {
-        'java'
-    }
-
     protected String buildConfiguration() {
         return 'dependencies { testImplementation "junit:junit:4.13.2" }'
     }
@@ -155,22 +152,28 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")
-    void writeTestSource(String source) {
+    void writeTestSource(
+        String source,
+        String language,
+        String extension
+    ) {
         String packageName = (source =~ /package\s+([\w.]+)/)[0][1]
         String className = (source =~ /(class|interface)\s+(\w+)\s+/)[0][2]
-        String sourceFilePackage = "src/test/${testLanguage()}/${packageName.replace('.', '/')}"
+        String sourceFilePackage = "src/test/$language/${packageName.replace('.', '/')}"
         new File(testProjectDir.root, sourceFilePackage).mkdirs()
-        testProjectDir.newFile("$sourceFilePackage/${className}.${testLanguage()}") << source
+        testProjectDir.newFile("$sourceFilePackage/${className}.$extension") << source
     }
 
     void writeJavaTestSource(@Language("JAVA") String source) {
-        assert testLanguage() == 'java'
-        writeTestSource(source)
+        writeTestSource(source, 'java', 'java')
     }
 
     void writeGroovyTestSource(@Language("Groovy") String source) {
-        assert testLanguage() == 'groovy'
-        writeTestSource(source)
+        writeTestSource(source, 'groovy', 'groovy')
+    }
+
+    void writeKotlinTestSource(@Language("kotlin") String source) {
+        writeTestSource(source, 'kotlin', 'kt')
     }
 
     GradleRunner gradleRunner(String gradleVersion, String... arguments = ['test', '-S']) {

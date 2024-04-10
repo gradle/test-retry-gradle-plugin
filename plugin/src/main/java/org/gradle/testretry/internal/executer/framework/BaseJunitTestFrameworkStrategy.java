@@ -30,10 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(JunitTestFrameworkStrategy.class);
+    private static final Pattern PARAMETERIZED_SUFFIX_PATTERN = Pattern.compile("(?:\\([^)]*?\\))?(?:\\[[^]]*?])?$");
     static final Set<String> ERROR_SYNTHETIC_TEST_NAMES = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList(
             "classMethod",
@@ -118,7 +120,11 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private void addPotentiallyParameterizedSuffixed(TestFilterBuilder filters, String className, String name) {
         // It's a common pattern to add all the parameters on the end of a literal method name with []
-        String strippedParameterName = name.replaceAll("(?:\\([^)]*?\\)|\\[[^]]*?])*$", "");
+        // The regex takes care of removing trailing (...) or (...)[...], for e.g. the following cases
+        // * `test that contains (parentheses)()`
+        // * `test that contains (parentheses)(int, int)[1]`
+        // * `test(1, true) [0]`
+        String strippedParameterName = PARAMETERIZED_SUFFIX_PATTERN.matcher(name).replaceAll("");
         filters.test(className, strippedParameterName);
         filters.test(className, name);
     }

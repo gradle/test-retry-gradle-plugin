@@ -34,7 +34,7 @@ class MockitoFuncTest extends AbstractFrameworkFuncTest {
             test.retry.maxRetries = 1
         """
 
-        writeTestSource """
+        writeJavaTestSource """
             package acme;
 
             import org.junit.*;
