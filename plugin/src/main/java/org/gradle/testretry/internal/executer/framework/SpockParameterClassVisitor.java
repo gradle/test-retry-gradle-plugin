@@ -19,16 +19,19 @@ import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
 import static org.objectweb.asm.Opcodes.ASM7;
 
 /**
@@ -42,7 +45,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
 
     private final Set<String> failedTestNames;
     private final TestsReader testsReader;
-    private final SpockParameterMethodVisitor spockMethodVisitor = new SpockParameterMethodVisitor();
+    private final Map<String, SpockParameterMethodVisitor> spockMethodVisitorByMethodName = new HashMap<>();
     private boolean isSpec;
 
     public SpockParameterClassVisitor(Set<String> testMethodName, TestsReader testsReader) {
@@ -57,22 +60,35 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
         }
 
         Map<String, List<String>> map = new HashMap<>();
-        spockMethodVisitor.annotationVisitor.testMethodPatterns.forEach(
-            methodPattern -> {
-                // Replace params in the method name with .*
-                String methodPatternRegex = Arrays.stream(methodPattern.split(SPOCK_PARAM_PATTERN))
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining(WILDCARD))
-                    + WILDCARD; // For when no params in name - [iterationNum] implicitly added to end
-
-                failedTestNames.forEach(failedTestName -> {
-                    List<String> matches = map.computeIfAbsent(failedTestName, ignored -> new ArrayList<>());
-                    if (methodPattern.equals(failedTestName) || failedTestName.matches(methodPatternRegex)) {
-                        matches.add(methodPattern);
-                    }
-                });
+        spockMethodVisitorByMethodName.values().stream()
+            .filter(SpockParameterMethodVisitor::isSpockTestMethod)
+            .forEach(spockMethodVisitor -> {
+                Optional<String> unrollTemplate = spockMethodVisitor.getUnrollTemplate();
+                if (unrollTemplate.isPresent()) {
+                    // if failed tests match the unroll template, we rerun the declared test method
+                    addMatchingMethodForFailedTests(map, unrollTemplate.get(), spockMethodVisitor.getTestMethodName());
+                } else {
+                    // if failed tests match the declared test method name/template, we rerun the declared test method
+                    addMatchingMethodForFailedTests(map, spockMethodVisitor.getTestMethodName(), spockMethodVisitor.getTestMethodName());
+                }
             });
+
         return map;
+    }
+
+    private void addMatchingMethodForFailedTests(Map<String, List<String>> matchingMethodsPerFailedTest, String methodPattern, String methodName) {
+        // Replace params in the method name with .*
+        String methodPatternRegex = Arrays.stream(methodPattern.split(SPOCK_PARAM_PATTERN))
+            .map(Pattern::quote)
+            .collect(Collectors.joining(WILDCARD))
+            + WILDCARD; // For when no params in name - [iterationNum] implicitly added to end
+
+        failedTestNames.forEach(failedTestName -> {
+            List<String> matches = matchingMethodsPerFailedTest.computeIfAbsent(failedTestName, ignored -> new ArrayList<>());
+            if (methodPattern.equals(failedTestName) || failedTestName.matches(methodPatternRegex)) {
+                matches.add(methodName);
+            }
+        });
     }
 
     @Override
@@ -89,12 +105,15 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        return isSpec ? spockMethodVisitor : null;
+        return isSpec ? spockMethodVisitorByMethodName.computeIfAbsent(name, __ -> new SpockParameterMethodVisitor()) : null;
     }
 
     private static final class SpockParameterMethodVisitor extends MethodVisitor {
 
-        private final SpockFeatureMetadataAnnotationVisitor annotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
+        @Nullable
+        private SpockFeatureMetadataAnnotationVisitor featureMethodAnnotationVisitor;
+        @Nullable
+        private SpockUnrollAnnotationVisitor unrollAnnotationVisitor;
 
         public SpockParameterMethodVisitor() {
             super(ASM7);
@@ -103,9 +122,26 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
         @Override
         public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
             if (descriptor.contains("org/spockframework/runtime/model/FeatureMetadata")) {
-                return annotationVisitor;
+                featureMethodAnnotationVisitor = new SpockFeatureMetadataAnnotationVisitor();
+                return featureMethodAnnotationVisitor;
+            }
+            if (descriptor.contains("spock/lang/Unroll")) {
+                unrollAnnotationVisitor = new SpockUnrollAnnotationVisitor();
+                return unrollAnnotationVisitor;
             }
             return null;
+        }
+
+        public boolean isSpockTestMethod() {
+            return featureMethodAnnotationVisitor != null;
+        }
+
+        public String getTestMethodName() {
+            return requireNonNull(requireNonNull(featureMethodAnnotationVisitor).testMethodName);
+        }
+
+        public Optional<String> getUnrollTemplate() {
+            return Optional.ofNullable(unrollAnnotationVisitor).map(visitor -> visitor.unrollTemplate);
         }
 
         /**
@@ -120,7 +156,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
          */
         private static final class SpockFeatureMetadataAnnotationVisitor extends AnnotationVisitor {
 
-            private final List<String> testMethodPatterns = new ArrayList<>();
+            private String testMethodName;
 
             public SpockFeatureMetadataAnnotationVisitor() {
                 super(ASM7);
@@ -129,7 +165,30 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
             @Override
             public void visit(String name, Object value) {
                 if ("name".equals(name)) {
-                    testMethodPatterns.add((String) value);
+                    testMethodName = (String) value;
+                }
+            }
+
+        }
+
+        /**
+         * Looking for signatures like:
+         * spock/lang/Unroll;(
+         * value="test for #a",
+         * )
+         */
+        private static final class SpockUnrollAnnotationVisitor extends AnnotationVisitor {
+
+            private String unrollTemplate;
+
+            public SpockUnrollAnnotationVisitor() {
+                super(ASM7);
+            }
+
+            @Override
+            public void visit(String name, Object value) {
+                if ("value".equals(name)) {
+                    unrollTemplate = (String) value;
                 }
             }
 
