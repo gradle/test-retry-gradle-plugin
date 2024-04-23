@@ -13,45 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gradle.testretry.testframework
+package org.gradle.testretry.testframework.cucumber
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
 
-class CucumberJUnit4FuncTest extends AbstractFrameworkFuncTest {
+abstract class AbstractCucumberFuncTest extends AbstractFrameworkFuncTest {
 
     def setup() {
         buildFile << """
             dependencies {
                 testImplementation 'io.cucumber:cucumber-java:7.0.0'
-                testImplementation 'io.cucumber:cucumber-junit:7.0.0'
             }
             
             test.retry.maxRetries = 1
         """
     }
 
-    def "retries scenarios independently from each other (gradle version #gradleVersion)"(String gradleVersion) {
-        given:
-        writeFlakyFeatureFile()
-        writeFlakyStepDefinitions()
-        writeCucumberEntrypoint()
-
-        when:
-        def runner = gradleRunner(gradleVersion as String)
-        def result = runner.build()
-
-        then:
-        with(result.output) {
-            it.count("Passing scenario PASSED") == 1
-            it.count("Flaky scenario FAILED") == 1
-            it.count("Flaky scenario PASSED") == 1
-        }
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    private void writeFlakyFeatureFile() {
+    protected void writeFlakyFeatureFile() {
         writeFeatureFile("flaky_and_passing_scenarios", """
             Feature: Retry feature
               
@@ -67,13 +45,13 @@ class CucumberJUnit4FuncTest extends AbstractFrameworkFuncTest {
         """)
     }
 
-    private void writeFeatureFile(String name, String content) {
+    protected void writeFeatureFile(String name, String content) {
         def featuresDir = "src/test/resources/features"
         new File(testProjectDir.root, featuresDir).mkdirs()
         testProjectDir.newFile("$featuresDir/${name}.feature") << content
     }
 
-    private void writeFlakyStepDefinitions() {
+    protected void writeFlakyStepDefinitions() {
         writeJavaTestSource """
             package acme;
 
@@ -98,20 +76,6 @@ class CucumberJUnit4FuncTest extends AbstractFrameworkFuncTest {
                 public void flakyVerification() {
                     ${flakyAssert("cucumber")}
                 }
-            }
-        """
-    }
-
-    private writeCucumberEntrypoint() {
-        writeJavaTestSource """
-            package acme;
-
-            @org.junit.runner.RunWith(io.cucumber.junit.Cucumber.class)
-            @io.cucumber.junit.CucumberOptions(
-                features = "src/test/resources/features",
-                glue = "acme"
-            )
-            public class RetryFeatureTest {
             }
         """
     }
