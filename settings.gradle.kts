@@ -1,6 +1,6 @@
 buildscript {
     dependencies {
-        classpath("com.google.code.gson:gson:2.10.1")
+        classpath("com.google.code.gson:gson:2.11.0")
     }
 }
 
