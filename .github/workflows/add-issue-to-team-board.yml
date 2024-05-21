@@ -1,0 +1,18 @@
+name: 'Add issue/PR to the team board'
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+
+jobs:
+  add-to-project:
+    name: Add issue/PR to the team board
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/add-to-project@v1.0.1
+        with:
+          # Testing team's project board
+          project-url: https://github.com/orgs/gradle/projects/27
+          github-token: ${{ secrets.GH_BOT_GITHUB_TOKEN }}
