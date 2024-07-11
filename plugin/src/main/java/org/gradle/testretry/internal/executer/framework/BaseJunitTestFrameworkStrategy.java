@@ -77,6 +77,10 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                     return;
                 }
 
+                if (processTestNGTest(filters, testsReader, className, tests)) {
+                    return;
+                }
+
                 tests.forEach(name -> addPotentiallyParameterizedSuffixed(filters, className, name));
             });
     }
@@ -113,8 +117,28 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 return true;
             }
         } catch (Throwable t) {
-            LOGGER.warn("Unable to determine if class " + className + " contains Spock @Unroll parameterizations", t);
+            LOGGER.warn("Unable to determine if class {} contains Spock @Unroll parameterizations", className, t);
         }
+        return false;
+    }
+
+    private boolean processTestNGTest(TestFilterBuilder filters, TestsReader testsReader, String className, Set<String> tests) {
+        try {
+            Optional<TestNgClassVisitor.ClassInfo> resultOpt = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
+            if (resultOpt.isPresent()) {
+                TestNgClassVisitor.ClassInfo result = resultOpt.get();
+
+                tests.forEach(test -> {
+                    addPotentiallyParameterizedSuffixed(filters, className, test);
+                    result.dependsOn(test).forEach(dependency -> filters.test(className, dependency));
+                });
+
+                return true;
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("Unable to determine dependency between methods of a TestNG test class {}", className, t);
+        }
+
         return false;
     }
 

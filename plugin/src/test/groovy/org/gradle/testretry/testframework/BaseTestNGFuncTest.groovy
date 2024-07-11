@@ -212,7 +212,7 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
             public class OrderedTests {
                 @Test(dependsOnMethods = {"childTest"})
-                public void grandchildTest() {}
+                public void grandChildTest() {}
 
                 @Test(dependsOnMethods = {"parentTest"})
                 public void childTest() {
@@ -229,12 +229,14 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         with(result.output) {
-            it.count('childTest FAILED') == 1
             it.count('parentTest PASSED') == 2
 
+            it.count('childTest FAILED') == 1
+            it.count('childTest PASSED') == 1
+
             // grandchildTest gets skipped initially because flaky childTest failed, but is ran as part of the retry
-            it.count('grandchildTest SKIPPED') == 1
-            it.count('grandchildTest PASSED') == 1
+            it.count('grandChildTest SKIPPED') == 1
+            it.count('grandChildTest PASSED') == 1
         }
 
         where:
