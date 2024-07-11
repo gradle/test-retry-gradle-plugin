@@ -18,7 +18,10 @@ package org.gradle.testretry.testframework
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import spock.lang.Issue
 
-class TestNGFuncTest extends AbstractFrameworkFuncTest {
+import javax.annotation.Nullable
+import java.util.regex.Pattern
+
+abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getLanguagePlugin() {
         return 'java'
@@ -32,6 +35,10 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
             }
         """
     }
+
+    abstract String reportedLifecycleMethodName(String methodName)
+
+    abstract String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation)
 
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
@@ -58,8 +65,8 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         with(result.output) {
-            it.count('lifecycle FAILED') == 1
-            it.count('lifecycle PASSED') == 1
+            it.count("${reportedLifecycleMethodName('lifecycle')} FAILED") == 1
+            it.count("${reportedLifecycleMethodName('lifecycle')} PASSED") == 1
             !it.contains("The following test methods could not be retried")
         }
 
@@ -143,8 +150,8 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output) {
-            it.count('test[0](0) PASSED') == 2
-            it.count('test[1](1) FAILED') == 2
+            it.count("${reportedParameterizedMethodName('test', 'int', 0, '0')} PASSED") == 2
+            it.count("${reportedParameterizedMethodName('test', 'int', 1, '1')} FAILED") == 2
         }
 
         where:
@@ -266,8 +273,8 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output) {
-            it.count('test[0](0) PASSED') == 2
-            it.count('test[1](1) FAILED') == 2
+            it.count("${reportedParameterizedMethodName('test', 'int', 0, '0')} PASSED") == 2
+            it.count("${reportedParameterizedMethodName('test', 'int', 1, '1')} FAILED") == 2
         }
 
         where:
@@ -319,8 +326,8 @@ class TestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output.readLines()) {
-            it.findAll { line -> line.matches('.*test\\[0].* PASSED') }.size() == 2
-            it.findAll { line -> line.matches('.*test\\[1].* FAILED') }.size() == 2
+            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName('test', 'acme.ParameterTest$Foo', 0, ''))}.* PASSED/) }.size() == 2
+            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName('test', 'acme.ParameterTest$Foo', 1, ''))}.* FAILED/) }.size() == 2
         }
 
         where:
