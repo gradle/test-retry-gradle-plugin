@@ -27,6 +27,7 @@ import org.gradle.util.GradleVersion;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
@@ -74,6 +75,9 @@ public interface TestFrameworkStrategy {
 
     boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName);
 
-    TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests);
+    TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound);
 
+    default boolean isExpectedUnretriedTest(String className, String test) {
+        return false;
+    }
 }

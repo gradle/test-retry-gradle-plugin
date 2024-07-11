@@ -15,22 +15,27 @@
  */
 package org.gradle.testretry.internal.executer;
 
+import java.util.Set;
+
 final class RoundResult {
 
     final TestNames failedTests;
     final TestNames nonRetriedTests;
     final boolean lastRound;
     final boolean hasRetryFilteredFailures;
+    final Set<String> testClassesSeenInCurrentRound;
 
     RoundResult(
         TestNames failedTests,
         TestNames nonRetriedTests,
         boolean lastRound,
-        boolean hasRetryFilteredFailures
+        boolean hasRetryFilteredFailures,
+        Set<String> testClassesSeenInCurrentRound
     ) {
         this.failedTests = failedTests;
         this.nonRetriedTests = nonRetriedTests;
         this.lastRound = lastRound;
         this.hasRetryFilteredFailures = hasRetryFilteredFailures;
+        this.testClassesSeenInCurrentRound = testClassesSeenInCurrentRound;
     }
 }

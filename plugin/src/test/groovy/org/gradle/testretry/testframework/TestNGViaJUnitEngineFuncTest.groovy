@@ -19,6 +19,8 @@ import javax.annotation.Nullable
 
 class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
 
+    private static final Set<String> UNREPORTED_LIFECYCLE_METHODS = ['BeforeTest', 'AfterTest', 'AfterClass']
+
     def setup() {
         buildFile << """
             dependencies {
@@ -39,5 +41,10 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
     @Override
     String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation) {
         "${methodName}(${paramType}) > [${invocationNumber}] ${paramValueRepresentation ?: ''}"
+    }
+
+    @Override
+    boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType) {
+        !UNREPORTED_LIFECYCLE_METHODS.contains(lifecycleMethodType)
     }
 }

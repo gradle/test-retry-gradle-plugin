@@ -27,4 +27,9 @@ class TestNGPlainFuncTest extends BaseTestNGFuncTest {
     String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation) {
         "${methodName}[${invocationNumber}]${paramValueRepresentation ? "(${paramValueRepresentation})" : ""}"
     }
+
+    @Override
+    boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType) {
+        true
+    }
 }

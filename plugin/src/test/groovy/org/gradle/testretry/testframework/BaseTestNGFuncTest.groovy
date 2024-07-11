@@ -40,6 +40,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
     abstract String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation)
 
+    abstract boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType)
+
     def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
         given:
         buildFile << """
@@ -66,14 +68,14 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             it.count("${reportedLifecycleMethodName('lifecycle')} FAILED") == 1
-            it.count("${reportedLifecycleMethodName('lifecycle')} PASSED") == 1
+            it.count("${reportedLifecycleMethodName('lifecycle')} PASSED") == (reportsSuccessfulLifecycleExecutions(lifecycle) ? 1 : 0)
             !it.contains("The following test methods could not be retried")
         }
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeClass', 'BeforeTest', 'BeforeMethod', 'AfterClass', 'AfterTest', 'AfterMethod']
+            ['BeforeTest', 'BeforeClass', 'BeforeMethod', 'AfterMethod', 'AfterClass', 'AfterTest']
         ])
         // Note: we don't handle BeforeSuite AfterSuite
     }
