@@ -47,4 +47,54 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
     boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType) {
         !UNREPORTED_LIFECYCLE_METHODS.contains(lifecycleMethodType)
     }
+
+    def "retries all classes if failure occurs in #lifecycle (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            public class SuccessfulTestsWithFailingLifecycle {
+                @org.testng.annotations.${lifecycle}
+                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                    ${flakyAssert()}
+                }
+
+                @org.testng.annotations.Test
+                public void successTestWithLifecycle() {}
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            public class SuccessfulTestsPotentiallyDependingOnLifecycle {
+                @org.testng.annotations.Test
+                public void successTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).build()
+
+        then:
+        with(result.output) {
+            // if BeforeTest fails, then methods won't be executed
+            it.count('successTest SKIPPED') == (lifecycle == 'BeforeTest' ? 1 : 0)
+            it.count('successTestWithLifecycle SKIPPED') == (lifecycle == 'BeforeTest' ? 1 : 0)
+
+            it.count('successTest PASSED') == (lifecycle == 'BeforeTest' ? 1 : 2)
+            it.count('successTestWithLifecycle PASSED') == (lifecycle == 'BeforeTest' ? 1 : 2)
+            !it.contains("The following test methods could not be retried")
+        }
+
+        where:
+        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ['BeforeTest', 'AfterClass', 'AfterTest']
+        ])
+    }
 }

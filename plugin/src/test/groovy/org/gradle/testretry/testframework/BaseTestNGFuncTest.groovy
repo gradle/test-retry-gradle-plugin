@@ -80,6 +80,45 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         // Note: we don't handle BeforeSuite AfterSuite
     }
 
+    def "correctly reports exhausted retries on failures in #lifecycle (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            public class AlwaysFailingLifecycle {
+                @org.testng.annotations.${lifecycle}
+                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                    throw new RuntimeException("Lifecycle goes boom!");
+                }
+
+                @org.testng.annotations.Test
+                public void successTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
+
+        then:
+        with(result.output) {
+            // if BeforeTest fails, then methods won't be executed
+            it.count('successTest SKIPPED') == (lifecycle.contains('Before') ? 2 : 0)
+            it.count('successTest PASSED') == (lifecycle.contains('Before') ? 0 : 2)
+            it.count("${reportedLifecycleMethodName('lifecycle')} FAILED") == 2
+            !it.contains("The following test methods could not be retried")
+        }
+
+        where:
+        [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ['BeforeTest', 'BeforeClass', 'BeforeMethod', 'AfterMethod', 'AfterClass', 'AfterTest']
+        ])
+    }
+
     def "does not handle flaky static initializers (gradle version #gradleVersion)"() {
         given:
         buildFile << """
