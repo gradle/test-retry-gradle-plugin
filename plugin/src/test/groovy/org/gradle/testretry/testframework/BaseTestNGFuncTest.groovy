@@ -21,6 +21,13 @@ import spock.lang.Issue
 import javax.annotation.Nullable
 import java.util.regex.Pattern
 
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.AFTER_CLASS
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.AFTER_METHOD
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.AFTER_TEST
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.BEFORE_CLASS
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.BEFORE_METHOD
+import static org.gradle.testretry.testframework.BaseTestNGFuncTest.TestNGLifecycleType.BEFORE_TEST
+
 abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
     @Override
     String getLanguagePlugin() {
@@ -36,13 +43,30 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         """
     }
 
-    abstract String reportedLifecycleMethodName(String methodName)
+    enum TestNGLifecycleType {
+        BEFORE_SUITE('BeforeSuite'),
+        BEFORE_TEST('BeforeTest'),
+        BEFORE_CLASS('BeforeClass'),
+        BEFORE_METHOD('BeforeMethod'),
+        AFTER_METHOD('AfterMethod'),
+        AFTER_CLASS('AfterClass'),
+        AFTER_TEST('AfterTest'),
+        AFTER_SUITE('AfterSuite')
 
-    abstract String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation)
+        final String annotation
 
-    abstract boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType)
+        TestNGLifecycleType(String annotation) {
+            this.annotation = annotation
+        }
+    }
 
-    def "handles failure in #lifecycle (gradle version #gradleVersion)"() {
+    abstract String reportedLifecycleMethodName(String gradleVersion, TestNGLifecycleType lifecycleType, String methodName)
+
+    abstract String reportedParameterizedMethodName(String gradleVersion, String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation)
+
+    abstract boolean reportsSuccessfulLifecycleExecutions(TestNGLifecycleType lifecycleType)
+
+    def "handles failure in #lifecycle (gradle version #gradleVersion)"(String gradleVersion, TestNGLifecycleType lifecycle) {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -52,8 +76,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
             package acme;
 
             public class SuccessfulTests {
-                @org.testng.annotations.${lifecycle}
-                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                @org.testng.annotations.${lifecycle.annotation}
+                public ${lifecycle.annotation.contains('Class') ? 'static ' : ''}void lifecycle() {
                     ${flakyAssert()}
                 }
 
@@ -67,20 +91,20 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
         then:
         with(result.output) {
-            it.count("${reportedLifecycleMethodName('lifecycle')} FAILED") == 1
-            it.count("${reportedLifecycleMethodName('lifecycle')} PASSED") == (reportsSuccessfulLifecycleExecutions(lifecycle) ? 1 : 0)
+            it.count("${reportedLifecycleMethodName(gradleVersion, lifecycle, 'lifecycle')} FAILED") == 1
+            it.count("${reportedLifecycleMethodName(gradleVersion, lifecycle, 'lifecycle')} PASSED") == (reportsSuccessfulLifecycleExecutions(lifecycle) ? 1 : 0)
             !it.contains("The following test methods could not be retried")
         }
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeTest', 'BeforeClass', 'BeforeMethod', 'AfterMethod', 'AfterClass', 'AfterTest']
+            [BEFORE_TEST, BEFORE_CLASS, BEFORE_METHOD, AFTER_METHOD, AFTER_CLASS, AFTER_TEST]
         ])
         // Note: we don't handle BeforeSuite AfterSuite
     }
 
-    def "correctly reports exhausted retries on failures in #lifecycle (gradle version #gradleVersion)"() {
+    def "correctly reports exhausted retries on failures in #lifecycle (gradle version #gradleVersion)"(String gradleVersion, TestNGLifecycleType lifecycle) {
         given:
         buildFile << """
             test.retry.maxRetries = 1
@@ -90,8 +114,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
             package acme;
 
             public class AlwaysFailingLifecycle {
-                @org.testng.annotations.${lifecycle}
-                public ${lifecycle.contains('Class') ? 'static ' : ''}void lifecycle() {
+                @org.testng.annotations.${lifecycle.annotation}
+                public ${lifecycle.annotation.contains('Class') ? 'static ' : ''}void lifecycle() {
                     throw new RuntimeException("Lifecycle goes boom!");
                 }
 
@@ -106,50 +130,17 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             // if BeforeTest fails, then methods won't be executed
-            it.count('successTest SKIPPED') == (lifecycle.contains('Before') ? 2 : 0)
-            it.count('successTest PASSED') == (lifecycle.contains('Before') ? 0 : 2)
-            it.count("${reportedLifecycleMethodName('lifecycle')} FAILED") == 2
+            it.count('successTest SKIPPED') == (lifecycle.annotation.contains('Before') ? 2 : 0)
+            it.count('successTest PASSED') == (lifecycle.annotation.contains('Before') ? 0 : 2)
+            it.count("${reportedLifecycleMethodName(gradleVersion, lifecycle, 'lifecycle')} FAILED") == 2
             !it.contains("The following test methods could not be retried")
         }
 
         where:
         [gradleVersion, lifecycle] << GroovyCollections.combinations((Iterable) [
             GRADLE_VERSIONS_UNDER_TEST,
-            ['BeforeTest', 'BeforeClass', 'BeforeMethod', 'AfterMethod', 'AfterClass', 'AfterTest']
+            [BEFORE_TEST, BEFORE_CLASS, BEFORE_METHOD, AFTER_METHOD, AFTER_CLASS, AFTER_TEST]
         ])
-    }
-
-    def "does not handle flaky static initializers (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test.retry.maxRetries = 1
-        """
-
-        writeJavaTestSource """
-            package acme;
-
-            public class SomeTests {
-
-                static {
-                    ${flakyAssert()}
-                }
-
-                @org.testng.annotations.Test
-                public void someTest() {}
-            }
-        """
-
-        when:
-        def result = gradleRunner(gradleVersion as String).buildAndFail()
-
-        then:
-        with(result.output) {
-            it.contains('There were failing tests. See the report')
-            !it.contains('The following test methods could not be retried')
-        }
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
     def "handles parameterized test in super class (gradle version #gradleVersion)"() {
@@ -191,8 +182,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output) {
-            it.count("${reportedParameterizedMethodName('test', 'int', 0, '0')} PASSED") == 2
-            it.count("${reportedParameterizedMethodName('test', 'int', 1, '1')} FAILED") == 2
+            it.count("${reportedParameterizedMethodName(gradleVersion, 'test', 'int', 0, '0')} PASSED") == 2
+            it.count("${reportedParameterizedMethodName(gradleVersion, 'test', 'int', 1, '1')} FAILED") == 2
         }
 
         where:
@@ -316,8 +307,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output) {
-            it.count("${reportedParameterizedMethodName('test', 'int', 0, '0')} PASSED") == 2
-            it.count("${reportedParameterizedMethodName('test', 'int', 1, '1')} FAILED") == 2
+            it.count("${reportedParameterizedMethodName(gradleVersion, 'test', 'int', 0, '0')} PASSED") == 2
+            it.count("${reportedParameterizedMethodName(gradleVersion, 'test', 'int', 1, '1')} FAILED") == 2
         }
 
         where:
@@ -369,8 +360,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         then:
         // we can't rerun just the failed parameter
         with(result.output.readLines()) {
-            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName('test', 'acme.ParameterTest$Foo', 0, ''))}.* PASSED/) }.size() == 2
-            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName('test', 'acme.ParameterTest$Foo', 1, ''))}.* FAILED/) }.size() == 2
+            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName(gradleVersion, 'test', 'acme.ParameterTest$Foo', 0, ''))}.* PASSED/) }.size() == 2
+            it.findAll { line -> line.matches(/.*${Pattern.quote(reportedParameterizedMethodName(gradleVersion, 'test', 'acme.ParameterTest$Foo', 1, ''))}.* FAILED/) }.size() == 2
         }
 
         where:

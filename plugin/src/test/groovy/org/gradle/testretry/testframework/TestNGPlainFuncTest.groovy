@@ -19,17 +19,53 @@ import javax.annotation.Nullable
 
 class TestNGPlainFuncTest extends BaseTestNGFuncTest {
     @Override
-    String reportedLifecycleMethodName(String methodName) {
+    String reportedLifecycleMethodName(String gradleVersion, TestNGLifecycleType lifecycleType, String methodName) {
         methodName
     }
 
     @Override
-    String reportedParameterizedMethodName(String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation) {
+    String reportedParameterizedMethodName(String gradleVersion, String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation) {
         "${methodName}[${invocationNumber}]${paramValueRepresentation ? "(${paramValueRepresentation})" : ""}"
     }
 
     @Override
-    boolean reportsSuccessfulLifecycleExecutions(String lifecycleMethodType) {
+    boolean reportsSuccessfulLifecycleExecutions(TestNGLifecycleType lifecycleType) {
         true
+    }
+
+    /**
+     * If JUnit's TestNG engine is used, then tests won't even run and the failure is silently swallowed.
+     */
+    def "does not handle flaky static initializers (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            public class SomeTests {
+
+                static {
+                    ${flakyAssert()}
+                }
+
+                @org.testng.annotations.Test
+                public void someTest() {}
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion as String).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.contains('There were failing tests. See the report')
+            !it.contains('The following test methods could not be retried')
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 }
