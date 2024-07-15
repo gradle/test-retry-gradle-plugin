@@ -24,6 +24,7 @@ import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
 
 import java.lang.reflect.Constructor;
+import java.util.Set;
 
 import static org.gradle.testretry.internal.executer.framework.JunitTestFrameworkStrategy.JunitTestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
@@ -31,8 +32,8 @@ import static org.gradle.testretry.internal.executer.framework.TestFrameworkStra
 final class JunitTestFrameworkStrategy extends BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
-        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, true, template);
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound) {
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, true, template, testClassesSeenInCurrentRound);
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 

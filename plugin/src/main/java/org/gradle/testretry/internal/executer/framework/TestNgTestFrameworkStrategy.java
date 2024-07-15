@@ -70,7 +70,7 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound) {
         DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, template);
 
         return testFrameworkProvider(template, testFramework)

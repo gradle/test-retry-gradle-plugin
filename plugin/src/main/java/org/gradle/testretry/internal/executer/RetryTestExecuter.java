@@ -129,7 +129,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             } else if (result.lastRound) {
                 break;
             } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, spec.getTestFramework(), result.failedTests);
+                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, spec.getTestFramework(), result.failedTests, result.testClassesSeenInCurrentRound);
                 testExecutionSpec = testExecutionSpecFor(retryTestFramework, spec);
                 retryTestResultProcessor.reset(++retryCount == maxRetries);
             }

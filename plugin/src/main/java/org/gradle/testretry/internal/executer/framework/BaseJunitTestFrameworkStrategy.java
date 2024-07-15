@@ -36,6 +36,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(JunitTestFrameworkStrategy.class);
     private static final Pattern PARAMETERIZED_SUFFIX_PATTERN = Pattern.compile("(?:\\([^)]*?\\))?(?:\\[[^]]*?])?$");
+    private static final String ERROR_SYNTHETIC_TESTNG_CLASS_NAME = "UnknownClass";
     static final Set<String> ERROR_SYNTHETIC_TEST_NAMES = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList(
             "classMethod",
@@ -50,14 +51,18 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
         return ERROR_SYNTHETIC_TEST_NAMES.contains(testName);
     }
 
-    protected DefaultTestFilter testFilterFor(TestNames failedTests, boolean canRunParameterizedSpockMethods, TestFrameworkTemplate template) {
-        TestFilterBuilder filter = template.filterBuilder();
-        addFilters(filter, template.testsReader, failedTests, canRunParameterizedSpockMethods);
+    @Override
+    public boolean isExpectedUnretriedTest(String className, String test) {
+        return ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className);
+    }
 
+    protected DefaultTestFilter testFilterFor(TestNames failedTests, boolean canRunParameterizedSpockMethods, TestFrameworkTemplate template, Set<String> testClassesSeenInCurrentRound) {
+        TestFilterBuilder filter = template.filterBuilder();
+        addFilters(filter, template.testsReader, failedTests, canRunParameterizedSpockMethods, testClassesSeenInCurrentRound);
         return filter.build();
     }
 
-    protected void addFilters(TestFilterBuilder filters, TestsReader testsReader, TestNames failedTests, boolean canRunParameterizedSpockMethods) {
+    protected void addFilters(TestFilterBuilder filters, TestsReader testsReader, TestNames failedTests, boolean canRunParameterizedSpockMethods, Set<String> testClassesSeenInCurrentRound) {
         failedTests.stream()
             .forEach(entry -> {
                 String className = entry.getKey();
@@ -69,11 +74,25 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
 
                 if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
-                    filters.clazz(className);
+                    if (ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className)) {
+                        // Gradle can't properly attribute some of the TestNG lifecycle method failures to classes
+                        // Those are @BeforeTest, @AfterTest, @AfterClass methods
+                        // In case of @BeforeTest and @AfterTest, we should retry all classes belonging to the TestNG Test
+                        // However, we don't know this association and retry all classes instead
+                        // In case of @AfterClass, we should be able to retry just a single class
+                        // Due to erroneous reporting from TestNG we don't know which one it is
+                        testClassesSeenInCurrentRound.forEach(filters::clazz);
+                    } else {
+                        filters.clazz(className);
+                    }
                     return;
                 }
 
                 if (processSpockTest(filters, testsReader, canRunParameterizedSpockMethods, className, tests)) {
+                    return;
+                }
+
+                if (processTestNGTest(filters, testsReader, className, tests)) {
                     return;
                 }
 
@@ -113,8 +132,28 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 return true;
             }
         } catch (Throwable t) {
-            LOGGER.warn("Unable to determine if class " + className + " contains Spock @Unroll parameterizations", t);
+            LOGGER.warn("Unable to determine if class {} contains Spock @Unroll parameterizations", className, t);
         }
+        return false;
+    }
+
+    private boolean processTestNGTest(TestFilterBuilder filters, TestsReader testsReader, String className, Set<String> tests) {
+        try {
+            Optional<TestNgClassVisitor.ClassInfo> resultOpt = testsReader.readTestClassDirClass(className, TestNgClassVisitor::new);
+            if (resultOpt.isPresent()) {
+                TestNgClassVisitor.ClassInfo result = resultOpt.get();
+
+                tests.forEach(test -> {
+                    addPotentiallyParameterizedSuffixed(filters, className, test);
+                    result.dependsOn(test).forEach(dependency -> filters.test(className, dependency));
+                });
+
+                return true;
+            }
+        } catch (Throwable t) {
+            LOGGER.warn("Unable to determine dependency between methods of a TestNG test class {}", className, t);
+        }
+
         return false;
     }
 

@@ -33,7 +33,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toMap;
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
 final class RetryTestResultProcessor implements TestResultProcessor {
@@ -91,6 +93,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     @Override
     public void completed(Object testId, TestCompleteEvent testCompleteEvent) {
         if (testId.equals(rootTestDescriptorId)) {
+            // nothing failed in the current round, but we have some un-retried tests
+            if (currentRoundFailedTests.isEmpty() && !previousRoundFailedTests.isEmpty()) {
+                ignoreExpectedUnretriedTests();
+            }
             if (!lastRun()) {
                 return;
             }
@@ -127,11 +133,22 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                         }
                     });
                 }
-
             }
         }
 
         delegate.completed(testId, testCompleteEvent);
+    }
+
+    private void ignoreExpectedUnretriedTests() {
+        // check with the framework implementation if it is expected
+        Map<String, Set<String>> expectedUnretriedTests = previousRoundFailedTests.stream()
+            .collect(toMap(
+                Map.Entry::getKey,
+                entry -> entry.getValue().stream()
+                    .filter(test -> testFrameworkStrategy.isExpectedUnretriedTest(entry.getKey(), test))
+                    .collect(Collectors.toSet())
+            ));
+        expectedUnretriedTests.forEach((className, tests) -> previousRoundFailedTests.remove(className, tests::contains));
     }
 
     private boolean isLifecycleFailure(String className, String name) {
@@ -253,10 +270,12 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     }
 
     public RoundResult getResult() {
-        return new RoundResult(currentRoundFailedTests,
+        return new RoundResult(
+            currentRoundFailedTests,
             cleanedUpFailedTestsOfPreviousRound(),
             lastRun(),
-            hasRetryFilteredFailures
+            hasRetryFilteredFailures,
+            testClassesSeenInCurrentRound
         );
     }
 

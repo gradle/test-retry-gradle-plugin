@@ -24,6 +24,7 @@ import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkProvider.ProviderForCurrentGradleVersion;
 
 import java.lang.reflect.Constructor;
+import java.util.Set;
 
 import static org.gradle.testretry.internal.executer.framework.Junit5TestFrameworkStrategy.Junit5TestFrameworkProvider.testFrameworkProvider;
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
@@ -37,8 +38,8 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     }
 
     @Override
-    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests) {
-        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, isSpock2Used, template);
+    public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound) {
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, isSpock2Used, template, testClassesSeenInCurrentRound);
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
     }
 
