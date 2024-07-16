@@ -32,7 +32,10 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
     private static final EnumSet<TestNGLifecycleType> CLASS_LIFECYCLE_METHODS = EnumSet.of(BEFORE_CLASS, BEFORE_METHOD, AFTER_METHOD)
 
     private static final GradleVersion GRADLE_5_0 = GradleVersion.version("5.0")
-    private static final GradleVersion GRADLE_5_4_1 = GradleVersion.version("5.4.1")
+    private static final GradleVersion GRADLE_6_1 = GradleVersion.version("6.1")
+    private static final GradleVersion GRADLE_7_0 = GradleVersion.version("7.0")
+    private static final GradleVersion GRADLE_7_6_4 = GradleVersion.version("7.6.4")
+    private static final GradleVersion GRADLE_8_1 = GradleVersion.version("8.1")
 
     def setup() {
         buildFile << """
@@ -55,9 +58,12 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
 
     @Override
     String reportedParameterizedMethodName(String gradleVersion, String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation) {
-        GradleVersion.version(gradleVersion) > GRADLE_5_4_1
-            ? "${methodName}(${paramType}) > [${invocationNumber}] ${paramValueRepresentation ?: ''}"
-            : "${methodName}(${paramType})[${invocationNumber}]"
+        switch (GradleVersion.version(gradleVersion)) {
+            case { it < GRADLE_6_1 }: return "${methodName}(${paramType})[${invocationNumber}]"
+            case { it < GRADLE_7_0 }: return "[${invocationNumber}] ${paramValueRepresentation ?: ''}"
+            case { it < GRADLE_8_1 && it != GRADLE_7_6_4 }: return "${methodName}(${paramType})[${invocationNumber}]"
+            default: return "${methodName}(${paramType}) > [${invocationNumber}] ${paramValueRepresentation ?: ''}"
+        }
     }
 
     @Override
