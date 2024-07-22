@@ -163,8 +163,14 @@ tasks.test {
     )
 }
 
-tasks.register<Test>("testGradleReleases") {
-    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getReleasedVersions))
+listOf(5, 6, 7, 8).map { gradleMajorVersion ->
+    tasks.register<Test>("testGradle${gradleMajorVersion}Releases") {
+        jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider {
+            GradleVersionData.getReleasedVersions(
+                gradleMajorVersion
+            )
+        })
+    }
 }
 
 tasks.register<Test>("testGradleNightlies") {

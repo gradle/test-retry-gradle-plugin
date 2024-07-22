@@ -6,7 +6,6 @@ import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.PROMPT
 import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
 import jetbrains.buildServer.configs.kotlin.v2019_2.project
 import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.schedule
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.v2019_2.version
 
 /*
@@ -48,20 +47,23 @@ project {
             }
         }
     }
-    val crossVersionTestLinux = buildType("CrossVersionTest Gradle Releases Linux - Java 1.8") {
-        steps {
-            gradle {
-                tasks = "clean testGradleReleases"
-                buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
-                param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
-            }
-        }
 
-        dependencies {
-            snapshot(quickFeedbackBuildType) {
-                onDependencyFailure = FailureAction.CANCEL
-                onDependencyCancel = FailureAction.CANCEL
+    val crossVersionTestLinuxGroup = listOf(5, 6, 7, 8).map { gradleMajorVersion ->
+        buildType("CrossVersionTest Gradle $gradleMajorVersion.x Releases Linux - Java 1.8") {
+            steps {
+                gradle {
+                    tasks = "clean testGradle${gradleMajorVersion}Releases"
+                    buildFile = ""
+                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+                    param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
+                }
+            }
+
+            dependencies {
+                snapshot(quickFeedbackBuildType) {
+                    onDependencyFailure = FailureAction.CANCEL
+                    onDependencyCancel = FailureAction.CANCEL
+                }
             }
         }
     }
@@ -99,9 +101,11 @@ project {
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }
-            snapshot(crossVersionTestLinux) {
-                onDependencyFailure = FailureAction.CANCEL
-                onDependencyCancel = FailureAction.CANCEL
+            crossVersionTestLinuxGroup.map {
+                snapshot(it) {
+                    onDependencyFailure = FailureAction.CANCEL
+                    onDependencyCancel = FailureAction.CANCEL
+                }
             }
             snapshot(nightliesTestLinux) {
                 onDependencyFailure = FailureAction.CANCEL
@@ -140,7 +144,8 @@ project {
 
             steps {
                 gradle {
-                    tasks = "clean snapshot publishPluginMavenPublicationToGradleBuildInternalSnapshotsRepository -x test"
+                    tasks =
+                        "clean snapshot publishPluginMavenPublicationToGradleBuildInternalSnapshotsRepository -x test"
                     gradleParams =
                         "-s $useGradleInternalScansServer $buildCacheSetup $useGradleInternalScansServer"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
@@ -223,6 +228,5 @@ project {
         }
 
     }
-
 
 }

@@ -6,7 +6,7 @@ import org.gradle.util.GradleVersion
 
 import java.util.regex.Pattern
 
-import static java.util.Map.*
+import static java.util.Map.Entry
 
 @CompileStatic
 class GradleVersionData {
@@ -28,15 +28,16 @@ class GradleVersionData {
         releaseNightly['version']
     }
 
-    static List<String> getReleasedVersions() {
+    static List<String> getReleasedVersions(int majorVersion) {
         def GRADLE_5 = GradleVersion.version("5.0")
 
         new JsonSlurper().parse(new URL("https://services.gradle.org/versions/all"))
             .findAll { !it['nightly'] && !it['snapshot'] } // filter out snapshots and nightlies
             .findAll { !it['rcFor'] || it['activeRc'] } // filter out inactive rcs
             .findAll { !it['milestoneFor'] } // filter out milestones
-            .<String, GradleVersion, String>collectEntries { [(it['version']): GradleVersion.version(it['version'] as String)] }
+            .<String, GradleVersion, String> collectEntries { [(it['version']): GradleVersion.version(it['version'] as String)] }
             .findAll { it.value >= GRADLE_5 } // only 5.0 and above
+            .findAll { major(it.value) == majorVersion }
             .inject([] as List<Entry<String, GradleVersion>>) { releasesToTest, version -> // only test against latest patch versions
                 if (!releasesToTest.any { major(it.value) == major(version.value) && minor(it.value) == minor(version.value) }) {
                     releasesToTest + version
@@ -44,7 +45,7 @@ class GradleVersionData {
                     releasesToTest
                 }
             }
-            .collect { Entry<String, GradleVersion> it ->  it.key.toString() }
+            .collect { Entry<String, GradleVersion> it -> it.key.toString() }
     }
 
     static int major(GradleVersion gradle) {
@@ -61,13 +62,12 @@ class GradleVersionData {
         if (matcher.matches()) {
             try {
                 return Integer.parseInt(matcher.group(groupName))
-            } catch(RuntimeException exc) {
+            } catch (RuntimeException exc) {
                 throw new IllegalArgumentException("Failed to determine ${groupName} group for version ${version}", exc)
             }
         } else {
             throw new IllegalArgumentException("Failed to determine ${groupName} group for version ${version}")
         }
     }
-
 }
 
