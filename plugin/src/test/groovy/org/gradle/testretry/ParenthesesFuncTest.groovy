@@ -17,9 +17,17 @@ package org.gradle.testretry
 
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
+
 import static groovy.lang.Tuple2.tuple
 
+@IgnoreIf(
+    value = { COMPATIBLE_GRADLE_VERSIONS_UNDER_TEST.empty },
+    reason = "Kotlin plugin compatible from 6.8 onwards"
+)
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
+
+    private static final List<String> COMPATIBLE_GRADLE_VERSIONS_UNDER_TEST = GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it) >= GradleVersion.version("6.8") }
 
     @Override
     String getLanguagePlugin() {
@@ -40,8 +48,7 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
         where:
         [gradleVersion, scenarios] << [
-            // Kotlin plugin compatible from 6.8 onwards
-            GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it) >= GradleVersion.version("6.8") },
+            COMPATIBLE_GRADLE_VERSIONS_UNDER_TEST,
             [
                 tuple({ bf -> setupJunit5Test(bf) }, junit5TestWithParentheses()),
                 tuple({ bf -> setupJunit5Test(bf) }, junit5ParameterizedTestWithParentheses()),
@@ -50,7 +57,6 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
             ]
         ].combinations()
     }
-
 
     private static void setupJunit4Test(File buildFile) {
         buildFile << """
