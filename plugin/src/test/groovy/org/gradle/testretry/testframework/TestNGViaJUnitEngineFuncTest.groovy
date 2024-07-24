@@ -40,7 +40,6 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
     def setup() {
         buildFile << """
             dependencies {
-                testImplementation 'org.testng:testng:7.5'
                 testRuntimeOnly 'org.junit.support:testng-engine:1.0.5'
             }
             test {
@@ -64,6 +63,11 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
             case { it < GRADLE_8_1 && it != GRADLE_7_6_4 }: return "${methodName}(${paramType})[${invocationNumber}]"
             default: return "${methodName}(${paramType}) > [${invocationNumber}] ${paramValueRepresentation ?: ''}"
         }
+    }
+
+    @Override
+    String reportedFactoryMethodName(String gradleVersion, String methodName, int invocationNumber, String paramValueRepresentation) {
+        "${methodName}[${invocationNumber}](${paramValueRepresentation})"
     }
 
     @Override

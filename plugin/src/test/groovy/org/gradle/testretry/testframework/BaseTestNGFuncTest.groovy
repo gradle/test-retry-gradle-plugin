@@ -64,6 +64,8 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
     abstract String reportedParameterizedMethodName(String gradleVersion, String methodName, String paramType, int invocationNumber, @Nullable String paramValueRepresentation)
 
+    abstract String reportedFactoryMethodName(String gradleVersion, String methodName, int invocationNumber, String paramValueRepresentation)
+
     abstract boolean reportsSuccessfulLifecycleExecutions(TestNGLifecycleType lifecycleType)
 
     def "handles failure in #lifecycle (gradle version #gradleVersion)"(String gradleVersion, TestNGLifecycleType lifecycle) {
@@ -554,6 +556,63 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles @Factory tests (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.testng.annotations.*;
+            import org.testng.Assert;
+
+            import static org.testng.AssertJUnit.assertEquals;
+
+            public class FactoryWithPassedAndFailingTest {
+                private final int count;
+
+                @Factory(dataProvider = "dataProvider")
+                public FactoryWithPassedAndFailingTest(int count) {
+                    this.count = count;
+                }
+            
+                @DataProvider
+                static Object[][] dataProvider() {
+                    return new Object[][]{
+                        {0},
+                        {1}
+                    };
+                }
+            
+                @Test
+                public void successfulTest() {
+                }
+            
+                @Test
+                public void failingTest() {
+                    Assert.assertFalse(count > 0, "Test fail when count is bigger than 10");
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            // the reported name format is too volatile to create a more reasonable assertion
+            it.findAll(/.*successfulTest.* PASSED/).size() == 2
+            // both iterations are retried
+            it.count("${reportedFactoryMethodName(gradleVersion, 'failingTest', 0, '0')} PASSED") == 2
+            it.count("${reportedFactoryMethodName(gradleVersion, 'failingTest', 1, '1')} FAILED") == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     @Override
     protected String buildConfiguration() {
         return """
@@ -575,10 +634,6 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
 
         ParameterExceptionString(String representation) {
             this.representation = representation
-        }
-
-        String getRepresentation() {
-            return representation
         }
     }
 }

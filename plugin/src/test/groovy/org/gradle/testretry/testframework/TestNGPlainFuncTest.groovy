@@ -29,6 +29,11 @@ class TestNGPlainFuncTest extends BaseTestNGFuncTest {
     }
 
     @Override
+    String reportedFactoryMethodName(String gradleVersion, String methodName, int invocationNumber, String paramValueRepresentation) {
+        methodName
+    }
+
+    @Override
     boolean reportsSuccessfulLifecycleExecutions(TestNGLifecycleType lifecycleType) {
         true
     }
