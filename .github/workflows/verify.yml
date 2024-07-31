@@ -5,6 +5,7 @@ on:
     branches:
     - main
   pull_request:
+  workflow_dispatch:
 
 # https://stackoverflow.com/a/72408109/16358266
 concurrency:
@@ -16,10 +17,13 @@ jobs:
     runs-on: 'ubuntu-latest'
     steps:
     - uses: actions/checkout@v4
+
     - name: "Setup Build Environment"
       uses: ./.github/actions/setup-environment
 
     - name: "Verify"
+      env:
+        DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       run: "./gradlew build -s"
 
     - name: "Store reports"
