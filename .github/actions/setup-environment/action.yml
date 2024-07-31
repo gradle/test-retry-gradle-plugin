@@ -14,9 +14,6 @@ runs:
     shell: bash
     run: echo "JDK8=$JAVA_HOME" >> $GITHUB_ENV
 
-  - name: 'Setup Gradle'
-    uses: gradle/actions/setup-gradle@v3
-
   - name: Setup Git user
     shell: bash
     run: |
