@@ -22,7 +22,7 @@ jobs:
       uses: ./.github/actions/setup-environment
 
     - name: 'Setup Gradle'
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
         develocity-access-key: ${{ secrets.DEVELOCITY_GRADLE_ORG_ACCESS_KEY }}
 
