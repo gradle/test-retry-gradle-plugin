@@ -15,12 +15,12 @@ dependencyResolutionManagement {
     }
 }
 
-val isCI = providers.environmentVariable("CI").isPresent
+val isCI = providers.environmentVariable("CI").presence()
 
 develocity {
     server = "https://ge.gradle.org"
     buildScan {
-        uploadInBackground = !isCI
+        uploadInBackground = isCI.not()
         publishing.onlyIf { it.isAuthenticated }
         obfuscation {
             ipAddresses { addresses -> addresses.map { "0.0.0.0" } }
@@ -36,8 +36,8 @@ buildCache {
     remote(develocity.buildCache) {
         server = "https://eu-build-cache.gradle.org"
         isEnabled = true
-        val accessKey = System.getenv("DEVELOCITY_ACCESS_KEY")
-        isPush = isCI && !accessKey.isNullOrEmpty()
+        val hasAccessKey = providers.environmentVariable("DEVELOCITY_ACCESS_KEY").map { it.isNotBlank() }.orElse(false)
+        isPush = hasAccessKey.zip(isCI) { accessKey, ci -> ci && accessKey }.get()
     }
 }
 
@@ -45,3 +45,6 @@ rootProject.name = "test-retry-plugin"
 
 include("plugin")
 include("sample-tests")
+
+fun Provider<*>.presence(): Provider<Boolean> = map { true }.orElse(false)
+fun Provider<Boolean>.not(): Provider<Boolean> = map { !it }
