@@ -15,7 +15,7 @@ if (!gradle.startParameter.systemPropertiesArgs.containsKey("disableScanPlugin")
 fun configureExtension(extension: Any) {
     extension.withGroovyBuilder {
         "publishAlways"()
-        setProperty("server", "https://e.grdev.net")
+        setProperty("server", "https://develocity.grdev.net")
         if (System.getenv("CI") !in listOf(null, "false")) {
             "tag"("CI")
         }
