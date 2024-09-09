@@ -47,6 +47,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private final TestResultProcessor delegate;
 
     private final int maxFailures;
+    private final boolean failOnSkippedAfterRetry;
     private boolean lastRetry;
     private boolean hasRetryFilteredFailures;
     private Method failureMethod;
@@ -66,7 +67,8 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         ClassRetryMatcher classRetryMatcher,
         TestsReader testsReader,
         TestResultProcessor delegate,
-        int maxFailures
+        int maxFailures,
+        boolean failOnSkippedAfterRetry
     ) {
         this.testFrameworkStrategy = testFrameworkStrategy;
         this.filter = filter;
@@ -74,6 +76,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.testsReader = testsReader;
         this.delegate = delegate;
         this.maxFailures = maxFailures;
+        this.failOnSkippedAfterRetry = failOnSkippedAfterRetry;
     }
 
     @Override
@@ -107,7 +110,8 @@ final class RetryTestResultProcessor implements TestResultProcessor {
                 String name = descriptor.getName();
 
                 boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
-                if (failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED) {
+                boolean shouldRetrySkippedTestThatPreviouslyFailed = failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED && failOnSkippedAfterRetry;
+                if (shouldRetrySkippedTestThatPreviouslyFailed) {
                     addRetry(descriptor);
                 }
 

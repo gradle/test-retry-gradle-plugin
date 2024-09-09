@@ -72,6 +72,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         int maxRetries = extension.getMaxRetries();
         int maxFailures = extension.getMaxFailures();
         boolean failOnPassedAfterRetry = extension.getFailOnPassedAfterRetry();
+        boolean failOnSkippedAfterRetry = extension.getFailOnSkippedAfterRetry();
 
         if (maxRetries <= 0) {
             delegate.execute(spec, testResultProcessor);
@@ -106,7 +107,8 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
             classRetryMatcher,
             frameworkTemplate.testsReader,
             testResultProcessor,
-            maxFailures
+            maxFailures,
+            failOnSkippedAfterRetry
         );
 
         int retryCount = 0;

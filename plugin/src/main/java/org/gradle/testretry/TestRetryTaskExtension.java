@@ -45,6 +45,18 @@ public interface TestRetryTaskExtension {
     Property<Boolean> getFailOnPassedAfterRetry();
 
     /**
+     * Whether tests that initially fail and then are skipped on retry should fail the task.
+     * <p>
+     * This setting defaults to {@code true} (for backward compatibility),
+     * which results in the task failing if any of tests skip on retry.
+     * <p>
+     * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
+     *
+     * @return whether tests that initially fails and then are skipped on retry should fail the task
+     */
+    Property<Boolean> getFailOnSkippedAfterRetry();
+
+    /**
      * The maximum number of times to retry an individual test.
      * <p>
      * This setting defaults to {@code 0}, which results in no retries.
