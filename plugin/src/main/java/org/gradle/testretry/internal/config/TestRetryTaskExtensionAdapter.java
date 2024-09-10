@@ -36,6 +36,7 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
     private static final int DEFAULT_MAX_RETRIES = 0;
     private static final int DEFAULT_MAX_FAILURES = 0;
     private static final boolean DEFAULT_FAIL_ON_PASSED_AFTER_RETRY = false;
+    private static final boolean DEFAULT_FAIL_ON_SKIPPED_AFTER_RETRY = true;
 
     private final ProviderFactory providerFactory;
     private final TestRetryTaskExtension extension;
@@ -62,6 +63,7 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
             extension.getMaxRetries().convention(DEFAULT_MAX_RETRIES);
             extension.getMaxFailures().convention(DEFAULT_MAX_FAILURES);
             extension.getFailOnPassedAfterRetry().convention(DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+            extension.getFailOnSkippedAfterRetry().convention(DEFAULT_FAIL_ON_SKIPPED_AFTER_RETRY);
             filter.getIncludeClasses().convention(emptySet());
             filter.getIncludeAnnotationClasses().convention(emptySet());
             filter.getExcludeClasses().convention(emptySet());
@@ -93,9 +95,28 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
         }
     }
 
+    Callable<Provider<Boolean>> getFailOnSkippedAfterRetryInput() {
+        if (useConventions) {
+            return extension::getFailOnSkippedAfterRetry;
+        } else {
+            return () -> {
+                if (extension.getFailOnSkippedAfterRetry().isPresent()) {
+                    return extension.getFailOnSkippedAfterRetry();
+                } else {
+                    return providerFactory.provider(TestRetryTaskExtensionAdapter.this::getFailOnSkippedAfterRetry);
+                }
+            };
+        }
+    }
+
     @Override
     public boolean getFailOnPassedAfterRetry() {
         return read(extension.getFailOnPassedAfterRetry(), DEFAULT_FAIL_ON_PASSED_AFTER_RETRY);
+    }
+
+    @Override
+    public boolean getFailOnSkippedAfterRetry() {
+        return read(extension.getFailOnSkippedAfterRetry(), DEFAULT_FAIL_ON_SKIPPED_AFTER_RETRY);
     }
 
     @Override

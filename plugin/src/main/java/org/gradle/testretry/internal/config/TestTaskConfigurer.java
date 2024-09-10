@@ -54,6 +54,8 @@ public final class TestTaskConfigurer {
 
         test.getInputs().property("retry.failOnPassedAfterRetry", adapter.getFailOnPassedAfterRetryInput());
 
+        test.getInputs().property("retry.failOnSkippedAfterRetry", adapter.getFailOnSkippedAfterRetryInput());
+
         Provider<Boolean> shouldReplaceTestExecutor = shouldReplaceTestExecutor(test, objectFactory, providerFactory, gradleVersion);
         test.getInputs().property("isDeactivatedByTestDistributionPlugin", shouldReplaceTestExecutor);
 

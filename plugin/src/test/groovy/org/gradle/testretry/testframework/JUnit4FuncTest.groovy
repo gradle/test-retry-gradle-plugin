@@ -375,6 +375,39 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "test that is skipped after failure with option 'failOnSkippedAfterRetry = false' is passes (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+            test.retry.failOnSkippedAfterRetry = false
+        """
+
+        writeJavaTestSource """
+            package acme;
+            import java.nio.file.*;
+
+            public class FlakyTests {
+                @org.junit.Test
+                public void flakyAssumeTest() {
+                   ${flakyAssert()};
+                   org.junit.Assume.assumeFalse(${markerFileExistsCheck()});
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            it.count('flakyAssumeTest FAILED') == 1
+            it.count('flakyAssumeTest SKIPPED') == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "handles failure in rule before = #failBefore (gradle version #gradleVersion)"(String gradleVersion, boolean failBefore) {
         given:
         buildFile << """

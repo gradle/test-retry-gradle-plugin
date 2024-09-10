@@ -21,6 +21,8 @@ public interface TestRetryTaskExtensionAccessor {
 
     boolean getFailOnPassedAfterRetry();
 
+    boolean getFailOnSkippedAfterRetry();
+
     int getMaxRetries();
 
     int getMaxFailures();
