@@ -205,7 +205,21 @@ project {
                     "releaseScope", "", label = "releaseScope", description = "The scope of the release",
                     display = PROMPT, options = listOf("major", "minor", "patch")
                 )
-                password("env.GRGIT_USER", "", label = "GitHub Access Token", display = PROMPT)
+                text(
+                    "env.GIT_USERNAME",
+                    "",
+                    label = "GitHub username",
+                    description = "Your GitHub username",
+                    display = PROMPT,
+                    allowEmpty = false
+                )
+                password(
+                    "env.GIT_PASSWORD",
+                    "",
+                    label = "GitHub Access Token",
+                    description = "Your personal access token with repo permission",
+                    display = PROMPT
+                )
                 param("env.GRADLE_PUBLISH_KEY", "%plugin.portal.publish.key%")
                 password("env.GRADLE_PUBLISH_SECRET", "%plugin.portal.publish.secret%", display = NORMAL)
                 password("env.PGP_SIGNING_KEY", "%pgpSigningKey%")
