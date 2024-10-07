@@ -1,5 +1,5 @@
 [versions]
-asmVersion = "9.7"
+asmVersion = "9.7.1"
 spockframework = "2.3-groovy-3.0"
 
 [libraries]
