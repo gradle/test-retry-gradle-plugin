@@ -1,6 +1,6 @@
 [versions]
 asmVersion = "9.7.1"
-spockframework = "2.3-groovy-3.0"
+spockframework = "2.3-groovy-4.0"
 
 [libraries]
 spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spockframework" }
