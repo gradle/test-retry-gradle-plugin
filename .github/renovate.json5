@@ -2,5 +2,16 @@
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     extends: [
         "github>gradle/renovate-agent//presets/dv.json5"
+    ],
+    packageRules: [
+        // We need to use Spock 2.x with Groovy 3.0 as Gradle uses Groovy 3.0 at the moment
+        // This rule prevents renovate from upgrading Spock to groovy-4.0
+        {
+            matchPackagePrefixes: [
+                "org.spockframework:"
+            ],
+            matchCurrentValue: "/^2\\./",
+            allowedVersions: "/^[0-9]+\\.[0-9]+(\\.[0-9]+)?-groovy-3\\.0$/"
+        }
     ]
 }
