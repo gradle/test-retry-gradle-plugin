@@ -8,5 +8,5 @@ spock-core.module = "org.spockframework:spock-core"
 spock-junit4.module = "org.spockframework:spock-junit4"
 nekohtml = "net.sourceforge.nekohtml:nekohtml:1.9.22"
 asm = { module = "org.ow2.asm:asm", version.ref = "asmVersion" }
-jetbrains-annotations = "org.jetbrains:annotations:26.0.0"
+jetbrains-annotations = "org.jetbrains:annotations:26.0.1"
 codenarc = "org.codenarc:CodeNarc:3.5.0-groovy-4.0"
