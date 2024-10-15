@@ -164,7 +164,7 @@ tasks.test {
     systemProperty("junit4Version", "4.13.2")
     systemProperty("junit5Version", "5.11.2")
     systemProperty("junitPlatformLauncherVersion", "1.11.2")
-    systemProperty("mockitoVersion", "3.11.2")
+    systemProperty("mockitoVersion", "4.11.0")
     systemProperty("spock1Version", "1.3-groovy-2.5")
     systemProperty("spock2Version", "2.3-groovy-3.0")
     systemProperty("testNgVersion", "5.11.2")
