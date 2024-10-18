@@ -558,7 +558,7 @@ abstract class BaseTestNGFuncTest extends AbstractFrameworkFuncTest {
     protected String buildConfiguration() {
         return """
             dependencies {
-                testImplementation 'org.testng:testng:7.5'
+                testImplementation '${testNgDependency()}'
             }
             test {
                 useTestNG()

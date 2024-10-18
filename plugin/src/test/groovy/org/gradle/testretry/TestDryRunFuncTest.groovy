@@ -21,14 +21,12 @@ import org.gradle.util.GradleVersion
 class TestDryRunFuncTest extends AbstractGeneralPluginFuncTest {
 
     private static final GradleVersion GRADLE_8_3 = GradleVersion.version("8.3")
-    private static final String MIN_JUPITER_VERSION_DRY_RUN = "5.10.0-RC1"
-    private static final String MIN_PLATFORM_VERSION_DRY_RUN = "1.10.0-RC1"
 
     @Override
     protected String buildConfiguration() {
         return """dependencies {
-            testImplementation 'org.junit.jupiter:junit-jupiter:$MIN_JUPITER_VERSION_DRY_RUN'
-            testRuntimeOnly 'org.junit.platform:junit-platform-launcher:$MIN_PLATFORM_VERSION_DRY_RUN'
+            testImplementation '${jupiterDependency()}'
+            testRuntimeOnly '${junitPlatformLauncherDependency()}'
         }"""
     }
 

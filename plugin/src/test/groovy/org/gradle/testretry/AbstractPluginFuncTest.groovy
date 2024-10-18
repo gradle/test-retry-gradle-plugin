@@ -27,7 +27,7 @@ import spock.lang.Specification
 
 import java.lang.management.ManagementFactory
 
-abstract class AbstractPluginFuncTest extends Specification {
+abstract class AbstractPluginFuncTest extends Specification implements TestFrameworkVersionData {
 
     public static final List<String> GRADLE_VERSIONS_UNDER_TEST = gradleVersionsUnderTest()
 
@@ -140,7 +140,11 @@ abstract class AbstractPluginFuncTest extends Specification {
     }
 
     protected String buildConfiguration() {
-        return 'dependencies { testImplementation "junit:junit:4.13.2" }'
+        return """
+            dependencies {
+                testImplementation "${junit4Dependency()}"
+            }
+        """
     }
 
     static String flakyAssert(String id = "id", int failures = 1) {
