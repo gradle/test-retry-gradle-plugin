@@ -161,13 +161,13 @@ tasks.test {
         GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
         project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
     )
-    systemProperty("junit4Version", "4.13.2")
-    systemProperty("junit5Version", "5.11.2")
-    systemProperty("junitPlatformLauncherVersion", "1.11.2")
-    systemProperty("mockitoVersion", "4.11.0")
-    systemProperty("spock1Version", "1.3-groovy-2.5")
-    systemProperty("spock2Version", "2.3-groovy-3.0")
-    systemProperty("testNgVersion", "5.11.2")
+    systemProperty("junit4Version", libs.test.framework.junit4.get().version.toString())
+    systemProperty("junit5Version", libs.test.framework.junit5.get().version.toString())
+    systemProperty("junitPlatformLauncherVersion", libs.test.framework.junit.platform.launcher.get().version.toString())
+    systemProperty("mockitoVersion", libs.test.framework.mockito.get().version.toString())
+    systemProperty("spock1Version", libs.test.framework.spock1.get().version.toString())
+    systemProperty("spock2Version", libs.test.framework.spock2.get().version.toString())
+    systemProperty("testNgVersion", libs.test.framework.testNg.get().version.toString())
 }
 
 listOf(5, 6, 7, 8).map { gradleMajorVersion ->
