@@ -21,7 +21,7 @@ jobs:
           git config --global url."https://bot-githubaction:${TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: Import GPG key
-        uses: crazy-max/ghaction-import-gpg@ea88154188003ca5aeb616063b2d0dd6a9cf86e2
+        uses: crazy-max/ghaction-import-gpg@cb9bde2e2525e640591a934b1fd28eef1dcaf5e5
         with:
           gpg_private_key: ${{ secrets.GH_BOT_PGP_PRIVATE_KEY }}
           passphrase: ${{ secrets.GH_BOT_PGP_PASSPHRASE }}
