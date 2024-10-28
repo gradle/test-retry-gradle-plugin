@@ -74,8 +74,8 @@ tasks.shadowJar {
     }
     relocate("org.objectweb.asm", "org.gradle.testretry.org.objectweb.asm")
     archiveClassifier.set("")
-    from(file("../LICENSE")) {
-        into("META-INF")
+    into(".") {
+        from(rootProject.layout.projectDirectory.file("LICENSE"))
     }
 }
 
@@ -104,7 +104,7 @@ tasks.pluginUnderTestMetadata {
 
 license {
     header = rootProject.file("gradle/licenseHeader.txt")
-    excludes(listOf("**/*.tokens", "META-INF/LICENSE", "META-INF/NOTICE.txt", "META-INF/licenses/**"))
+    excludes(listOf("**/*.tokens", "LICENSE", "NOTICE.txt", "licenses/**"))
     mapping(
         mapOf(
             "java" to "SLASHSTAR_STYLE",
