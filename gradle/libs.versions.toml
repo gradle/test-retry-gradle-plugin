@@ -1,12 +1,25 @@
 [versions]
 asmVersion = "9.7.1"
-spockframework = "2.3-groovy-3.0"
+junit4 = "4.13.2"
+junit5Jupiter = "5.11.2"
+junitPlatformLauncher = "1.11.2"
+mockito = "4.11.0"
+spock1 = "1.3-groovy-2.5"
+spock2 = "2.3-groovy-3.0"
+testNg = "5.11.2"
 
 [libraries]
-spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spockframework" }
+spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spock2" }
 spock-core.module = "org.spockframework:spock-core"
 spock-junit4.module = "org.spockframework:spock-junit4"
 nekohtml = "net.sourceforge.nekohtml:nekohtml:1.9.22"
 asm = { module = "org.ow2.asm:asm", version.ref = "asmVersion" }
 jetbrains-annotations = "org.jetbrains:annotations:26.0.1"
 codenarc = "org.codenarc:CodeNarc:3.5.0-groovy-4.0"
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+junit5-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit5Jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatformLauncher" }
+mockito = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+spock1 = { module = "org.spockframework:spock-core", version.ref = "spock1" }
+spock2 = { module = "org.spockframework:spock-core", version.ref = "spock2" }
+testNg = { module = "org.testng:testng", version.ref = "testNg" }

@@ -1220,7 +1220,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
                     where:
                     a << [1, 2]
                 }
-                
+
 
                 def successfulTest() {
                     expect:
@@ -1264,7 +1264,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
                     where:
                     a << [1, 2]
                 }
-                
+
 
                 def "test for c"() {
                     expect:
@@ -1308,7 +1308,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
                     where:
                     a << [1, 2]
                 }
-                
+
 
                 def "test for c"() {
                     expect:
@@ -1337,7 +1337,7 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
         return """
             dependencies {
                 implementation "org.codehaus.groovy:groovy:2.5.8"
-                testImplementation "org.spockframework:spock-core:1.3-groovy-2.5"
+                testImplementation "${spock1Dependency()}"
             }
         """
     }
