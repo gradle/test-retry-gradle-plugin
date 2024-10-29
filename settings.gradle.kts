@@ -41,7 +41,7 @@ buildCache {
     }
 }
 
-rootProject.name = "test-retry-plugin"
+rootProject.name = "test-retry-gradle-plugin"
 
 include("plugin")
 include("sample-tests")
