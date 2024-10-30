@@ -156,7 +156,7 @@ tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
 
-tasks.test {
+tasks.withType<Test> {
     systemProperty(
         GradleVersionsCommandLineArgumentProvider.PROPERTY_NAME,
         project.findProperty("testedGradleVersion") ?: gradle.gradleVersion
