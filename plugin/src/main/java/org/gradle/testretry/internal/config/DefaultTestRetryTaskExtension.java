@@ -19,7 +19,9 @@ import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.process.JavaForkOptions;
 import org.gradle.testretry.TestRetryTaskExtension;
+import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 
@@ -32,6 +34,8 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     private final Filter filter;
 
     private final ClassRetryCriteria classRetryCriteria;
+
+    private Action<? super JavaForkOptions> onRetry;
 
     @Inject
     public DefaultTestRetryTaskExtension(ObjectFactory objects) {
@@ -77,6 +81,16 @@ public class DefaultTestRetryTaskExtension implements TestRetryTaskExtension {
     @Override
     public void classRetry(Action<? super ClassRetryCriteria> action) {
         action.execute(classRetryCriteria);
+    }
+
+    @Override
+    public void onRetry(Action<? super JavaForkOptions> action) {
+        onRetry = action;
+    }
+
+    @Override
+    public @Nullable Action<? super JavaForkOptions> getOnRetry() {
+        return onRetry;
     }
 
     private static final class FilterImpl implements Filter {

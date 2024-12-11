@@ -15,10 +15,12 @@
  */
 package org.gradle.testretry.internal.config;
 
+import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.provider.SetProperty;
+import org.gradle.process.JavaForkOptions;
 import org.gradle.testretry.TestRetryTaskExtension;
 import org.gradle.util.GradleVersion;
 
@@ -166,6 +168,11 @@ public final class TestRetryTaskExtensionAdapter implements TestRetryTaskExtensi
 
     private <T> T read(Property<T> property, T defaultValue) {
         return useConventions ? property.get() : property.getOrElse(defaultValue);
+    }
+
+    @Override
+    public Action<? super JavaForkOptions> getOnRetry() {
+        return extension.getOnRetry();
     }
 
     private <T> Set<T> read(SetProperty<T> property, Set<T> defaultValue) {

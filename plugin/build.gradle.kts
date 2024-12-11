@@ -22,7 +22,7 @@ group = "org.gradle"
 description = "Mitigate flaky tests by retrying tests when they fail"
 
 val javaToolchainVersion: String? by project
-val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(8)
+val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(21)
 
 java {
     toolchain {
