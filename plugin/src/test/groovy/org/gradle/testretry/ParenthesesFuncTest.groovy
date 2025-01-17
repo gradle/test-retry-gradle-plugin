@@ -157,7 +157,7 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
     private static String junit5ParameterizedTestWithParentheses() {
         """
             package acme
-            
+
             import org.junit.jupiter.params.ParameterizedTest;
             import org.junit.jupiter.params.provider.Arguments;
             import org.junit.jupiter.params.provider.MethodSource;
@@ -170,7 +170,7 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
                     assert(a == b)
                     ${flakyAssert()}
                 }
-                
+
                 companion object {
                     @JvmStatic
                     fun data() = listOf(

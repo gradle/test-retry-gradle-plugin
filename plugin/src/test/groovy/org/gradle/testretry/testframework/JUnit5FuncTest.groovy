@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
+import org.gradle.util.GradleVersion
 
 import javax.annotation.Nullable
 
@@ -716,6 +717,66 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "supports dynamic tests (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.junit.jupiter.api.*;
+            import java.util.stream.Stream;
+
+            class MyTest {
+                @TestFactory
+                DynamicContainer dynamicContainerTest() {
+                    return DynamicContainer.dynamicContainer("container", Stream.of(
+                        DynamicTest.dynamicTest("test name 1", () -> {
+                            ${flakyAssert()}
+                        })
+                    ));
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        def gv = GradleVersion.version(gradleVersion)
+        def testname = dynamicTestName(gv)
+
+        with(result.output) {
+            it.count("${testname} FAILED") == 1
+            it.count("${testname} PASSED") == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    private static String dynamicTestName(GradleVersion gv) {
+        if (gv >= GradleVersion.version("8.8")) {
+            return 'MyTest > dynamicContainerTest() > container > test name 1'
+        } else if ((gv >= GradleVersion.version("8.1") && gv < GradleVersion.version("8.8")) || (gv >= GradleVersion.version("7.6") && gv < GradleVersion.version("8.0"))) {
+            return 'MyTest > dynamicContainerTest() > container > acme.MyTest.test name 1'
+        } else if ((gv >= GradleVersion.version("7.0") && gv < GradleVersion.version("7.6")) || (gv >= GradleVersion.version("8.0") && gv < GradleVersion.version("8.1"))) {
+            return 'MyTest > dynamicContainerTest() > container > acme.MyTest.dynamicContainerTest()[1][1]'
+        } else if ((gv >= GradleVersion.version("6.7") && gv < GradleVersion.version("7.0")) || (gv >= GradleVersion.version("6.1") && gv < GradleVersion.version("6.6"))) {
+            return 'MyTest > test name 1'
+        } else if (gv >= GradleVersion.version("6.6") && gv < GradleVersion.version("6.7")) {
+            return 'acme.MyTest > test name 1'
+        } else {
+            return 'acme.MyTest > dynamicContainerTest()[1][1]'
+        }
     }
 
     String reportedTestName(String testName) {
