@@ -37,13 +37,24 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion == "5.0" ? "${className}.${testName}" : "${className} > ${testName}"
     }
 
+    private static String classAndMethodForNested(String parentClassName, String testName, String gradleVersion) {
+        classAndMethodForNested(parentClassName, null, testName, null, gradleVersion)
+    }
+
     private static String classAndMethodForNested(String parentClassName, @Nullable String nestedClassName, String testName, String gradleVersion) {
+        classAndMethodForNested(parentClassName, nestedClassName, testName, null, gradleVersion)
+    }
+
+    private static String classAndMethodForNested(String parentClassName, @Nullable String nestedClassName, String testName, @Nullable String nestedTestName, String gradleVersion) {
         if (nestedClassName == null) {
             "${parentClassName} > ${testName}"
         } else {
-            gradleVersion == "5.0"
-                ? "${nestedClassName}.${testName}"
-                : "${nestedClassName} > ${testName}"
+            def delimiter = gradleVersion == "5.0" ? "." : " > "
+            if (nestedTestName == null) {
+                "${nestedClassName}${delimiter}${testName}"
+            } else {
+                "${nestedClassName}${delimiter}${testName}${delimiter}${nestedTestName}"
+            }
         }
     }
 
@@ -640,9 +651,9 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             // only failing methods of TopLevelTest should be retried
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testOk()', gradleVersion)} PASSED") == 1
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} FAILED") == 1
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testFlaky()', gradleVersion)} PASSED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'testOk()', gradleVersion)} PASSED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'testFlaky()', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('TopLevelTest', 'testFlaky()', gradleVersion)} PASSED") == 1
 
             // all methods of NestedTest1 should be retried
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest', 'testOk()', gradleVersion)} PASSED") == 2
@@ -704,7 +715,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             // all methods of TopLevelTest are rerun
-            it.count("${classAndMethodForNested('TopLevelTest', null, 'testOk()', gradleVersion)} PASSED") == 2
+            it.count("${classAndMethodForNested('TopLevelTest', 'testOk()', gradleVersion)} PASSED") == 2
 
             // all methods of nested classes are retried
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testOk()', gradleVersion)} PASSED") == 2
@@ -712,6 +723,48 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest1', 'testFlaky()', gradleVersion)} PASSED") == 1
 
             it.count("${classAndMethodForNested('TopLevelTest', 'NestedTest2', 'testOk()', gradleVersion)} PASSED") == 2
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "supports dynamic tests (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.junit.jupiter.api.*;
+            import java.util.stream.Stream;
+
+            class MyTest {
+                @TestFactory
+                DynamicContainer dynamicContainerTest() {
+                    return DynamicContainer.dynamicContainer("container", Stream.of(
+                        DynamicTest.dynamicTest("test name 1", () -> {
+                            ${flakyAssert()}
+                        })
+                    ));
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        with(result.output) {
+            // all methods of TopLevelTest are rerun
+            it.count("${classAndMethodForNested('MyTest', 'dynamicContainerTest()', 'container', 'test name 1', gradleVersion)} FAILED") == 1
+            it.count("${classAndMethodForNested('MyTest', 'dynamicContainerTest()', 'container', 'test name 1', gradleVersion)} PASSED") == 1
         }
 
         where:

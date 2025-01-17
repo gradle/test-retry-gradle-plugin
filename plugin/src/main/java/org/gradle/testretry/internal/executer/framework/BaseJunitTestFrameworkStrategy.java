@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(JunitTestFrameworkStrategy.class);
-    private static final Pattern PARAMETERIZED_SUFFIX_PATTERN = Pattern.compile("(?:\\([^)]*?\\))?(?:\\[[^]]*?])?$");
+    private static final Pattern PARAMETERIZED_SUFFIX_PATTERN = Pattern.compile("(?:\\([^)]*?\\))?(?:\\[[^]]*?])*$");
     private static final String ERROR_SYNTHETIC_TESTNG_CLASS_NAME = "UnknownClass";
     static final Set<String> ERROR_SYNTHETIC_TEST_NAMES = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList(
