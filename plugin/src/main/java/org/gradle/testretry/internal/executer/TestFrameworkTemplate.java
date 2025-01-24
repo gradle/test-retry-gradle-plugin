@@ -38,6 +38,6 @@ public class TestFrameworkTemplate {
     }
 
     public TestFilterBuilder filterBuilder() {
-        return new TestFilterBuilder();
+        return new TestFilterBuilder(objectFactory);
     }
 }
