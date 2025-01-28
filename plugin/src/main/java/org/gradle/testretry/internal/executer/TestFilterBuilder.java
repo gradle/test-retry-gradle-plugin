@@ -16,10 +16,15 @@
 package org.gradle.testretry.internal.executer;
 
 import org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter;
+import org.gradle.api.model.ObjectFactory;
 
 public final class TestFilterBuilder {
 
-    private final DefaultTestFilter filter = new DefaultTestFilter();
+    private final DefaultTestFilter filter;
+
+    public TestFilterBuilder(ObjectFactory objectFactory) {
+        this.filter = objectFactory.newInstance(DefaultTestFilter.class);
+    }
 
     public void test(String className, String methodName) {
         filter.includeTest(className, methodName);
