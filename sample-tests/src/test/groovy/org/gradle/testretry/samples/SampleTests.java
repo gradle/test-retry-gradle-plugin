@@ -11,7 +11,14 @@ import org.junit.runner.RunWith;
 @RunWith(GradleSamplesRunner.class)
 @SamplesRoot("build/samples")
 @SampleModifiers(ExecutableGradleWrapperModifier.class)
-@SamplesOutputNormalizers({FileSeparatorOutputNormalizer.class, GradleOutputNormalizer.class, FailedTestOutputNormalizer.class, ConfigurationCacheWarningOutputNormalizer.class, PlaceholderAssertionErrorOutputNormalizer.class})
+@SamplesOutputNormalizers({
+    FileSeparatorOutputNormalizer.class,
+    GradleOutputNormalizer.class,
+    FailedTestOutputNormalizer.class,
+    ConfigurationCacheWarningOutputNormalizer.class,
+    PlaceholderAssertionErrorOutputNormalizer.class,
+    GithubActionsRunnerOutputNormalizer.class
+})
 public class SampleTests {
 
 }
