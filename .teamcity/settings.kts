@@ -214,7 +214,7 @@ project {
                     allowEmpty = false
                 )
                 password(
-                    "env.GIT_PASSWORD",
+                    "env.GIT_ACCESS_TOKEN",
                     "",
                     label = "GitHub Access Token",
                     description = "Your personal access token with repo permission",
@@ -226,11 +226,21 @@ project {
                 password("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
             }
             steps {
+                script {
+                    scriptContent = """
+                        git config credential.helper '!f() { sleep 1; echo "username=${'$'}{GIT_USERNAME}"; echo "password=${'$'}{GIT_ACCESS_TOKEN}"; }; f' 
+                    """.trimIndent()
+                }
+
                 gradle {
                     tasks = "clean final -x test"
                     buildFile = ""
                     gradleParams =
                         "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% %pluginPortalPublishingFlags%"
+                }
+
+                script {
+                    scriptContent = "git config --unset credential.helper"
                 }
             }
             dependencies {
