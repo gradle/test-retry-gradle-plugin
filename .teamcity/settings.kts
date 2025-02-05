@@ -1,12 +1,13 @@
-import jetbrains.buildServer.configs.kotlin.v2019_2.*
-import jetbrains.buildServer.configs.kotlin.v2019_2.BuildTypeSettings.Type.COMPOSITE
-import jetbrains.buildServer.configs.kotlin.v2019_2.FailureAction
-import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.NORMAL
-import jetbrains.buildServer.configs.kotlin.v2019_2.ParameterDisplay.PROMPT
-import jetbrains.buildServer.configs.kotlin.v2019_2.buildSteps.gradle
-import jetbrains.buildServer.configs.kotlin.v2019_2.project
-import jetbrains.buildServer.configs.kotlin.v2019_2.triggers.schedule
-import jetbrains.buildServer.configs.kotlin.v2019_2.version
+import jetbrains.buildServer.configs.kotlin.*
+import jetbrains.buildServer.configs.kotlin.buildSteps.script
+import jetbrains.buildServer.configs.kotlin.BuildTypeSettings.Type.COMPOSITE
+import jetbrains.buildServer.configs.kotlin.FailureAction
+import jetbrains.buildServer.configs.kotlin.ParameterDisplay.NORMAL
+import jetbrains.buildServer.configs.kotlin.ParameterDisplay.PROMPT
+import jetbrains.buildServer.configs.kotlin.buildSteps.gradle
+import jetbrains.buildServer.configs.kotlin.project
+import jetbrains.buildServer.configs.kotlin.triggers.schedule
+import jetbrains.buildServer.configs.kotlin.version
 
 /*
 The settings script is an entry point for defining a TeamCity
@@ -30,7 +31,7 @@ To debug in IntelliJ Idea, open the 'Maven Projects' tool window (View
 'Debug' option is available in the context menu for the task.
 */
 
-version = "2021.1"
+version = "2024.12"
 
 project {
     params {
@@ -214,7 +215,7 @@ project {
                     allowEmpty = false
                 )
                 password(
-                    "env.GIT_PASSWORD",
+                    "env.GIT_ACCESS_TOKEN",
                     "",
                     label = "GitHub Access Token",
                     description = "Your personal access token with repo permission",
@@ -226,11 +227,21 @@ project {
                 password("env.PGP_SIGNING_KEY_PASSPHRASE", "%pgpSigningPassphrase%")
             }
             steps {
+                script {
+                    scriptContent = """
+                        git config credential.helper '!f() { sleep 1; echo "username=${'$'}{GIT_USERNAME}"; echo "password=${'$'}{GIT_ACCESS_TOKEN}"; }; f' 
+                    """.trimIndent()
+                }
+
                 gradle {
                     tasks = "clean final -x test"
                     buildFile = ""
                     gradleParams =
                         "-s $useGradleInternalScansServer -Prelease.scope=%releaseScope% %pluginPortalPublishingFlags%"
+                }
+
+                script {
+                    scriptContent = "git config --unset credential.helper"
                 }
             }
             dependencies {
