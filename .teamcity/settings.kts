@@ -1,4 +1,5 @@
 import jetbrains.buildServer.configs.kotlin.*
+import jetbrains.buildServer.configs.kotlin.buildSteps.script
 import jetbrains.buildServer.configs.kotlin.BuildTypeSettings.Type.COMPOSITE
 import jetbrains.buildServer.configs.kotlin.FailureAction
 import jetbrains.buildServer.configs.kotlin.ParameterDisplay.NORMAL
