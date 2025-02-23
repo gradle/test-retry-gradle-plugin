@@ -1,5 +1,5 @@
 plugins {
-    id("nebula.release") version "20.0.2"
+    id("nebula.release") version "20.1.0"
     id("org.gradle.wrapper-upgrade") version "0.12"
 }
 
