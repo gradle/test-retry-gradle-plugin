@@ -790,6 +790,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
                 testImplementation '${jupiterApiDependency()}'
                 testImplementation '${jupiterParamsDependency()}'
                 testRuntimeOnly '${jupiterEngineDependency()}'
+                testRuntimeOnly '${junitPlatformLauncherDependency()}'
             }
             test {
                 useJUnitPlatform()
