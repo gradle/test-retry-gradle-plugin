@@ -20,12 +20,12 @@ After executing all tests, any failed tests are retried.
 The process repeats with tests that continue to fail until the maximum specified number of retries has been attempted,
 or there are no more failing tests.
 
-By default, all failed tests passing on retry prevents the test task from failing.
-This mode prevents _flaky_ tests from causing build failure.
+By default, all failed tests passing on retry prevent the test task from failing.
+This mode prevents _flaky_ tests from causing a build failure.
 This setting can be changed so that flaky tests cause build failure, which can be used to identify flaky tests.
 
-When something goes badly wrong and all tests start failing, it can be preferable to not keep retrying tests.
-This can happen for example if a disk fills up or a required database is not available.
+When something goes badly wrong, and all tests start failing, it can be preferable not to keep retrying tests.
+This can happen, for example, if a disk fills up or a required database is not available.
 To avoid this, the plugin can be configured to stop retrying after a certain number of total test failures.
 
 **NOTE:** Retrying tests alone is not a viable flaky test mitigation strategy.
@@ -119,7 +119,7 @@ public interface TestRetryTaskExtension {
      * <p>
      * This setting has no effect if {@link Test#getIgnoreFailures()} is set to true.
      *
-     * @return whether tests that initially fails and then pass on retry should fail the task
+     * @return whether tests that initially fail and then pass on retry should fail the task
      */
     Property<Boolean> getFailOnPassedAfterRetry();
 
