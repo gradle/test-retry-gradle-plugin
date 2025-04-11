@@ -3,7 +3,7 @@ plugins {
     id("org.gradle.wrapper-upgrade") version "0.12"
 }
 
-buildScan {
+develocity.buildScan {
     val buildUrl = System.getenv("BUILD_URL") ?: ""
     if (buildUrl.isNotBlank()) {
         link("Build URL", buildUrl)
