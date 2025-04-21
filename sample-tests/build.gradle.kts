@@ -8,7 +8,7 @@ plugins {
 dependencies {
     testImplementation(localGroovy())
     testImplementation(gradleTestKit())
-    testImplementation("org.gradle.exemplar:samples-check:1.0.2")
+    testImplementation("org.gradle.exemplar:samples-check:1.0.3")
     testImplementation("junit:junit:4.13.2")
 }
 
