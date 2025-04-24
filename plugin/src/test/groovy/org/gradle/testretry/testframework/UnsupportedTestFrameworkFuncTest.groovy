@@ -22,10 +22,12 @@ import org.gradle.util.GradleVersion
 class UnsupportedTestFrameworkFuncTest extends AbstractFrameworkFuncTest {
 
     private static final GradleVersion GRADLE_7_999 = GradleVersion.version("7.999")
+    private static final GradleVersion GRADLE_8_999 = GradleVersion.version("8.999")
 
     def "logs warning if test framework is unsupported"(String gradleVersion) {
         given:
-        def gradle8OrAbove = GradleVersion.version(gradleVersion) > GRADLE_7_999
+        def version = GradleVersion.version(gradleVersion)
+        def isGradle8 = version > GRADLE_7_999 && version < GRADLE_8_999
 
         buildFile << """
             test.retry.maxRetries = 2
@@ -40,7 +42,7 @@ class UnsupportedTestFrameworkFuncTest extends AbstractFrameworkFuncTest {
                     this.delegate = new org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework(
                         testTask,
                         testFilter,
-                        ${gradle8OrAbove ? 'true' : ''}
+                        ${isGradle8 ? 'true' : ''}
                     )
                 }
             }
