@@ -43,6 +43,8 @@ class JUnit4ViaJUnitVintageFuncTest extends JUnit4FuncTest {
                 testImplementation "${junit4Dependency()}"
                 testImplementation "${jupiterApiDependency()}"
                 testRuntimeOnly "${junitVintageEngineDependency()}"
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly "${junitPlatformLauncherDependency()}"
             }
 
             test {

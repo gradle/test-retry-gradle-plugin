@@ -42,6 +42,8 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
             dependencies {
                 testImplementation 'org.testng:testng:7.5'
                 testRuntimeOnly 'org.junit.support:testng-engine:1.0.5'
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly '${junitPlatformLauncherDependency()}'
             }
             test {
                 useJUnitPlatform()

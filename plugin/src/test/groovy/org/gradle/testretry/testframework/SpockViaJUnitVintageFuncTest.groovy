@@ -40,6 +40,8 @@ class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
                 testImplementation "${spock1Dependency()}"
                 testImplementation "${jupiterApiDependency()}"
                 testRuntimeOnly "${junitVintageEngineDependency()}"
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly "${junitPlatformLauncherDependency()}"
             }
 
             test {
