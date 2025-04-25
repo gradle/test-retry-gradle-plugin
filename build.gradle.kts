@@ -26,11 +26,11 @@ tasks.named("releaseCheck") {
 }
 
 tasks.named("final") {
-    dependsOn(publishPlugins)
+    publishPlugins?.let { dependsOn(it) }
 }
 
 tasks.named("candidate") {
-    dependsOn(publishPlugins)
+    publishPlugins?.let { dependsOn(it) }
 }
 
 wrapperUpgrade {
