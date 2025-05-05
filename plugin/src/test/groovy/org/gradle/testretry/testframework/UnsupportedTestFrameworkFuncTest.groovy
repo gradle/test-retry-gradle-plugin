@@ -24,10 +24,31 @@ class UnsupportedTestFrameworkFuncTest extends AbstractFrameworkFuncTest {
     private static final GradleVersion GRADLE_7_999 = GradleVersion.version("7.999")
     private static final GradleVersion GRADLE_8_999 = GradleVersion.version("8.999")
 
+    private static String newJUnitTestFrameworkInstanceFor(GradleVersion version) {
+        if (version > GRADLE_8_999) {
+            """
+                testTask.objectFactory.newInstance(
+                   org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework.class,
+                   testFilter,
+                   new org.gradle.internal.Factory<java.io.File>() {
+                        @Override
+                        public java.io.File create() {
+                            return new java.io.File("some/unused/temp/dir");
+                        }
+                   },
+                   org.gradle.api.internal.provider.Providers.TRUE 
+                )
+            """
+        } else if (version > GRADLE_7_999) {
+            "new org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework(testTask, testFilter, true)"
+        } else {
+            "new org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework(testTask, testFilter)"
+        }
+    }
+
     def "logs warning if test framework is unsupported"(String gradleVersion) {
         given:
         def version = GradleVersion.version(gradleVersion)
-        def isGradle8 = version > GRADLE_7_999 && version < GRADLE_8_999
 
         buildFile << """
             test.retry.maxRetries = 2
@@ -38,15 +59,9 @@ class UnsupportedTestFrameworkFuncTest extends AbstractFrameworkFuncTest {
 
                 CustomTestFramework(org.gradle.api.tasks.testing.Test testTask) {
                     def testFilter = new org.gradle.api.internal.tasks.testing.filter.DefaultTestFilter()
-
-                    this.delegate = new org.gradle.api.internal.tasks.testing.junit.JUnitTestFramework(
-                        testTask,
-                        testFilter,
-                        ${isGradle8 ? 'true' : ''}
-                    )
+                    this.delegate = ${newJUnitTestFrameworkInstanceFor(version)}
                 }
             }
-
             test.useTestFramework(new CustomTestFramework(test))
         """
 
