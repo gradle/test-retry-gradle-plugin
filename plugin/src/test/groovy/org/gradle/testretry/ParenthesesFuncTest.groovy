@@ -58,12 +58,14 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         ].combinations()
     }
 
-    private static void setupJunit4Test(File buildFile) {
+    private void setupJunit4Test(File buildFile) {
         buildFile << """
             dependencies {
-                testImplementation "junit:junit:4.13.2"
+                testImplementation "${junit4Dependency()}"
                 testImplementation 'pl.pragmatists:JUnitParams:1.1.1'
-                testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.9.2"
+                testRuntimeOnly "${junitVintageEngineDependency()}"
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly "${junitPlatformLauncherDependency()}"
             }
 
             test {
@@ -76,11 +78,13 @@ class ParenthesesFuncTest extends AbstractPluginFuncTest {
         """
     }
 
-    private static void setupJunit5Test(File buildFile) {
+    private void setupJunit5Test(File buildFile) {
         buildFile << """
             dependencies {
-                testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
-                testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.2'
+                testImplementation "${jupiterDependency()}"
+                testImplementation "${jupiterParamsDependency()}"
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly "${junitPlatformLauncherDependency()}"
             }
 
             test {

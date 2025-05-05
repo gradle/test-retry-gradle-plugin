@@ -31,6 +31,14 @@ class KotlinDslFuncTest extends AbstractPluginFuncTest {
                 id("org.gradle.test-retry")
             }
 
+            repositories {
+                mavenCentral()
+            }
+
+            dependencies {
+                testImplementation("${junit4Dependency()}")
+            }
+
             tasks.test {
                 retry {
                     maxRetries.set(2)
@@ -38,10 +46,26 @@ class KotlinDslFuncTest extends AbstractPluginFuncTest {
             }
         """
 
+        // Adding a single test because Gradle 9 fails the test task if no tests are found.
+        writeJavaTestSource(passingTest())
+
         expect:
         gradleRunner(gradleVersion).build()
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    private static String passingTest() {
+        """
+            package acme;
+            
+            public class PassingTest {
+                @org.junit.Test
+                public void test() {
+                    // Nothing to do
+                }
+            }
+        """
     }
 }

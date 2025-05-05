@@ -44,6 +44,8 @@ class Spock2FuncTest extends SpockBaseJunit5FuncTest {
         return """
             dependencies {
                 implementation '${spock2Dependency()}'
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                testRuntimeOnly '${junitPlatformLauncherDependency()}'
             }
             test {
                 useJUnitPlatform()
