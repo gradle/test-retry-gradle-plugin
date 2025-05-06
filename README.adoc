@@ -394,7 +394,7 @@ test {
 
             // configure by class level annotations
             // Note: @Inherited annotations are respected
-            includeAnnotationClasses("Stepwise")
+            includeAnnotationClasses.add("Stepwise")
         }
     }
 }
