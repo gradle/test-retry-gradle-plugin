@@ -19,7 +19,11 @@ fun BuildType.notEc2Requirement() {
 }
 
 fun ParametrizedWithType.java8Home(os: Os) {
-    param("env.JAVA_HOME", "%${os.name}.java8.oracle.64bit%")
+    param("env.JDK8", "%${os.name}.java8.oracle.64bit%")
+}
+
+fun ParametrizedWithType.java17Home(os: Os) {
+    param("env.JDK17", "%${os.name}.java17.openjdk.64bit%")
 }
 
 const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan.init.gradle.kts"
@@ -52,6 +56,7 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
 
         params {
             java8Home(Os.linux)
+            java17Home(Os.linux)
 
             param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
             param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
