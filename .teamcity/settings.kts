@@ -36,6 +36,7 @@ version = "2024.12"
 project {
     params {
         java8Home(Os.linux)
+        java17Home(Os.linux)
         text("systemProp.org.gradle.internal.publish.checksums.insecure", "true")
     }
 
@@ -74,7 +75,7 @@ project {
             gradle {
                 tasks = "clean testGradleNightlies"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=17"
             }
         }
 
