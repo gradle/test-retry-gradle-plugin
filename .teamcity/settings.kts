@@ -70,7 +70,7 @@ project {
         }
     }
 
-    val nightliesTestLinux = buildType("CrossVersionTest Gradle Nightlies Linux - Java 1.8") {
+    val nightliesTestLinux = buildType("CrossVersionTest Gradle Nightlies Linux - Java 17") {
         steps {
             gradle {
                 tasks = "clean testGradleNightlies"
