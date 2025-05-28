@@ -40,6 +40,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: "Setup Build Environment"
+      uses: ./.github/actions/setup-environment
+
     - name: Setup Git user
       shell: bash
       run: |
