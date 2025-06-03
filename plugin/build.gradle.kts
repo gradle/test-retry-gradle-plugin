@@ -180,8 +180,15 @@ listOf(5, 6, 7, 8).map { gradleMajorVersion ->
     }
 }
 
+tasks.register<Test>("testGradle8Nightlies") {
+    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider { -> listOf(GradleVersionData.getLatestReleaseNightly()) })
+}
+
 tasks.register<Test>("testGradleNightlies") {
-    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getNightlyVersions))
+    jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider { -> listOf(GradleVersionData.getLatestNightly()) })
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    })
 }
 
 private data class VersionDownloadInfo(val version: String, val downloadUrl: String)

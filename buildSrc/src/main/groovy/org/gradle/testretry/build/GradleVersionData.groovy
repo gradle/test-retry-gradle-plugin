@@ -18,12 +18,12 @@ class GradleVersionData {
         releaseNightly ? [releaseNightly] + getLatestNightly() : [getLatestNightly()]
     }
 
-    private static String getLatestNightly() {
+    static String getLatestNightly() {
         def nightly = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/nightly"))
         nightly['version']
     }
 
-    private static String getLatestReleaseNightly() {
+    static String getLatestReleaseNightly() {
         def releaseNightly = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/release-nightly"))
         releaseNightly['version']
     }

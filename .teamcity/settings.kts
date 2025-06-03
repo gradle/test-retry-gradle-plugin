@@ -73,7 +73,7 @@ project {
     val nightliesTestLinux = buildType("CrossVersionTest Gradle Nightlies Linux - Java 17") {
         steps {
             gradle {
-                tasks = "clean testGradleNightlies"
+                tasks = "clean testGradle8Nightlies testGradleNightlies"
                 buildFile = ""
                 gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=17"
             }
@@ -230,7 +230,7 @@ project {
             steps {
                 script {
                     scriptContent = """
-                        git config credential.helper '!f() { sleep 1; echo "username=${'$'}{GIT_USERNAME}"; echo "password=${'$'}{GIT_ACCESS_TOKEN}"; }; f' 
+                        git config credential.helper '!f() { sleep 1; echo "username=${'$'}{GIT_USERNAME}"; echo "password=${'$'}{GIT_ACCESS_TOKEN}"; }; f'
                     """.trimIndent()
                 }
 
