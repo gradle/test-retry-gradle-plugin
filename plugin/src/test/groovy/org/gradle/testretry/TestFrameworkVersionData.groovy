@@ -45,6 +45,10 @@ trait TestFrameworkVersionData {
         "org.junit.platform:junit-platform-launcher:" + System.getProperty("junitPlatformLauncherVersion")
     }
 
+    String junitPlatformSuiteEngineDependency() {
+        "org.junit.platform:junit-platform-suite-engine:1.13.0"
+    }
+
     String mockitoDependency() {
         "org.mockito:mockito-core:" + System.getProperty("mockitoVersion")
     }

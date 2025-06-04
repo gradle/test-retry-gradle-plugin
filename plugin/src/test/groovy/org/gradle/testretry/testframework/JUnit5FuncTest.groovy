@@ -524,7 +524,7 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         given:
         buildFile << """
             dependencies {
-                testImplementation('org.junit.platform:junit-platform-suite-engine:1.9.2')
+                testImplementation('${junitPlatformSuiteEngineDependency()}')
             }
             test {
                 useJUnitPlatform {
