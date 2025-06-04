@@ -15,6 +15,12 @@
  */
 package org.gradle.testretry.testframework
 
+import spock.lang.IgnoreIf
+
+@IgnoreIf(
+    value = { COMPATIBLE_GRADLE_VERSIONS_SPOCK_1.empty },
+    reason = "Gradle 9 requires at least JDK 17, but Spock 1 isn't compatible with this version anymore"
+)
 class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
 
     @Override
@@ -40,7 +46,7 @@ class SpockViaJUnitVintageFuncTest extends SpockBaseJunit5FuncTest {
                 testImplementation "${spock1Dependency()}"
                 testImplementation "${jupiterApiDependency()}"
                 testRuntimeOnly "${junitVintageEngineDependency()}"
-                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle.
                 testRuntimeOnly "${junitPlatformLauncherDependency()}"
             }
 
