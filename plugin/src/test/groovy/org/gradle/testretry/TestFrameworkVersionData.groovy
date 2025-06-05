@@ -46,7 +46,7 @@ trait TestFrameworkVersionData {
     }
 
     String junitPlatformSuiteEngineDependency() {
-        "org.junit.platform:junit-platform-suite-engine:1.13.0"
+        "org.junit.platform:junit-platform-suite-engine:" + System.getProperty("junitPlatformLauncherVersion")
     }
 
     String mockitoDependency() {
