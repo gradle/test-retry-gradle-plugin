@@ -16,11 +16,15 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
+import org.gradle.util.GradleVersion
 import spock.lang.Issue
 
 import static org.junit.Assume.assumeTrue
 
 abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
+
+    static final List<String> COMPATIBLE_GRADLE_VERSIONS_SPOCK_1 = GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it).baseVersion < GradleVersion.version("9.0") }
+
     @Override
     String getLanguagePlugin() {
         return 'groovy'

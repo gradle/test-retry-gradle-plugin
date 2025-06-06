@@ -35,6 +35,7 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
     private static final GradleVersion GRADLE_6_1 = GradleVersion.version("6.1")
     private static final GradleVersion GRADLE_7_0 = GradleVersion.version("7.0")
     private static final GradleVersion GRADLE_7_6_4 = GradleVersion.version("7.6.4")
+    private static final GradleVersion GRADLE_8_0 = GradleVersion.version("8.0")
     private static final GradleVersion GRADLE_8_1 = GradleVersion.version("8.1")
 
     def setup() {
@@ -42,7 +43,7 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
             dependencies {
                 testImplementation 'org.testng:testng:7.5'
                 testRuntimeOnly 'org.junit.support:testng-engine:1.0.5'
-                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle. 
+                // Since Gradle 9, the JUnit platform launcher is no longer provided by Gradle.
                 testRuntimeOnly '${junitPlatformLauncherDependency()}'
             }
             test {
@@ -63,7 +64,7 @@ class TestNGViaJUnitEngineFuncTest extends BaseTestNGFuncTest {
         switch (GradleVersion.version(gradleVersion)) {
             case { it < GRADLE_6_1 }: return "${methodName}(${paramType})[${invocationNumber}]"
             case { it < GRADLE_7_0 }: return "[${invocationNumber}] ${paramValueRepresentation ?: ''}"
-            case { it < GRADLE_8_1 && it != GRADLE_7_6_4 }: return "${methodName}(${paramType})[${invocationNumber}]"
+            case { (GRADLE_8_0 <= it && it < GRADLE_8_1) || it < GRADLE_7_6_4 }: return "${methodName}(${paramType})[${invocationNumber}]"
             default: return "${methodName}(${paramType}) > [${invocationNumber}] ${paramValueRepresentation ?: ''}"
         }
     }

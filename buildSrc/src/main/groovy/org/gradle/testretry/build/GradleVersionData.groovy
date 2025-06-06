@@ -13,19 +13,14 @@ class GradleVersionData {
 
     static final Pattern MAJOR_AND_MINOR_VERSION_PATTERN = ~/(?<major>\d+)\.(?<minor>\d+).*/
 
-    static List<String> getNightlyVersions() {
-        def releaseNightly = getLatestReleaseNightly()
-        releaseNightly ? [releaseNightly] + getLatestNightly() : [getLatestNightly()]
-    }
-
-    private static String getLatestNightly() {
+    static List<String> getLatestNightly() {
         def nightly = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/nightly"))
-        nightly['version']
+        [nightly['version'] as String]
     }
 
-    private static String getLatestReleaseNightly() {
+    static List<String> getLatestReleaseNightly() {
         def releaseNightly = new JsonSlurper().parse(new URL("https://services.gradle.org/versions/release-nightly"))
-        releaseNightly['version']
+        [releaseNightly['version'] as String]
     }
 
     static List<String> getReleasedVersions(int majorVersion) {
