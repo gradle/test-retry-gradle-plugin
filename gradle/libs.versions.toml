@@ -1,8 +1,8 @@
 [versions]
 asmVersion = "9.8"
 junit4 = "4.13.2"
-junit5Jupiter = "5.13.2"
-junitPlatformLauncher = "1.13.2"
+junit5Jupiter = "5.13.3"
+junitPlatformLauncher = "1.13.3"
 mockito = "4.11.0"
 spock1 = "1.3-groovy-2.5"
 spock2 = "2.3-groovy-3.0"
