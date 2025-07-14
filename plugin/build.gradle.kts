@@ -180,7 +180,7 @@ listOf(5, 6, 7, 8).map { gradleMajorVersion ->
     }
 }
 
-tasks.register<Test>("testGradle8Nightlies") {
+tasks.register<Test>("testGradleReleaseNightlies") {
     jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider(GradleVersionData::getLatestReleaseNightly))
 }
 

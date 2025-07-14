@@ -73,9 +73,9 @@ project {
     val nightliesTestLinux = buildType("CrossVersionTest Gradle Nightlies Linux - Java 17") {
         steps {
             gradle {
-                tasks = "clean testGradle8Nightlies"
+                tasks = "clean testGradleReleaseNightlies"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=17"
             }
             gradle {
                 tasks = "clean testGradleNightlies"
