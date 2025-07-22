@@ -15,9 +15,14 @@
  */
 package org.gradle.testretry.testframework
 
+import org.gradle.util.GradleVersion
+
 import javax.annotation.Nullable
 
 class TestNGPlainFuncTest extends BaseTestNGFuncTest {
+
+    private static final GradleVersion GRADLE_9 = GradleVersion.version("9.0")
+
     @Override
     String reportedLifecycleMethodName(String gradleVersion, TestNGLifecycleType lifecycleType, String methodName) {
         methodName
@@ -60,9 +65,17 @@ class TestNGPlainFuncTest extends BaseTestNGFuncTest {
         def result = gradleRunner(gradleVersion as String).buildAndFail()
 
         then:
-        with(result.output) {
-            it.contains('There were failing tests. See the report')
-            !it.contains('The following test methods could not be retried')
+        if (GradleVersion.version(gradleVersion) < GRADLE_9) {
+            with(result.output) {
+                it.contains('There were failing tests. See the report')
+                !it.contains('The following test methods could not be retried')
+            }
+        } else {
+            with(result.output) {
+                // Gradle 9 detects this as a fatal test framework error
+                it.contains('Could not complete execution for Gradle Test Executor')
+                !it.contains('The following test methods could not be retried')
+            }
         }
 
         where:
