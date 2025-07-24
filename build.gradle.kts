@@ -20,7 +20,7 @@ val publishPlugins = tasks.findByPath(":plugin:publishPlugins")
 tasks.named("releaseCheck") {
     doFirst {
         if (!JavaVersion.current().isJava8) {
-            throw GradleException("Plugin releases should use Java 8.")
+            throw GradleException("Plugin releases should use Java 8, but used ${JavaVersion.current()} instead.")
         }
     }
 }
