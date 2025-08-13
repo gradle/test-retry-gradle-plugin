@@ -50,13 +50,14 @@ project {
         }
     }
 
-    val crossVersionTestLinuxGroup = listOf(5, 6, 7, 8).map { gradleMajorVersion ->
-        buildType("CrossVersionTest Gradle $gradleMajorVersion.x Releases Linux - Java 1.8") {
+    val crossVersionTestLinuxGroup = listOf(5, 6, 7, 8, 9).map { gradleMajorVersion ->
+        val toolchainVersion = if(gradleMajorVersion >= 9) 17 else 8
+        buildType("CrossVersionTest Gradle $gradleMajorVersion.x Releases Linux - Java $toolchainVersion") {
             steps {
                 gradle {
                     tasks = "clean testGradle${gradleMajorVersion}Releases"
                     buildFile = ""
-                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
+                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=$toolchainVersion"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                 }
             }
@@ -75,12 +76,12 @@ project {
             gradle {
                 tasks = "clean testGradleReleaseNightlies"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=17"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
             gradle {
                 tasks = "clean testGradleNightlies"
                 buildFile = ""
-                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=17"
+                gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup"
             }
         }
 
