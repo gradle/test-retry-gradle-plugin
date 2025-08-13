@@ -16,14 +16,15 @@ plugins {
     signing
     id("com.gradle.plugin-publish") version "1.3.1"
     id("com.github.hierynomus.license") version "0.16.1"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.0.1"
 }
 
 group = "org.gradle"
 description = "Mitigate flaky tests by retrying tests when they fail"
 
 val javaToolchainVersion: String? by project
-val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(8)
+val javaLanguageVersion = javaToolchainVersion?.let { JavaLanguageVersion.of(it) } ?: JavaLanguageVersion.of(17)
+val isGradle9OrNewer = GradleVersion.current() >= GradleVersion.version("9.0.0")
 
 java {
     toolchain {
@@ -58,12 +59,14 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation(platform(libs.spock.bom))
+    testImplementation(platform(libs.spock.groovy4.bom))
     testImplementation(libs.spock.core)
     testImplementation(libs.spock.junit4)
     testImplementation(libs.nekohtml)
     testImplementation(libs.asm)
     testImplementation(libs.jetbrains.annotations)
+
+    testRuntimeOnly(libs.junit.platform.launcher)
 
     codenarc(libs.codenarc)
 }
@@ -167,7 +170,7 @@ tasks.withType<Test> {
     systemProperty("junitPlatformLauncherVersion", libs.versions.junitPlatformLauncher.get())
     systemProperty("mockitoVersion", libs.versions.mockito.get())
     systemProperty("spock1Version", libs.versions.spock1.get())
-    systemProperty("spock2Version", libs.versions.spock2.get())
+    systemProperty("spock2Version", if (isGradle9OrNewer) libs.versions.spock2.groovy4.get() else libs.versions.spock2.groovy3.get())
     systemProperty("testNgVersion", libs.versions.testNg.get())
 }
 
