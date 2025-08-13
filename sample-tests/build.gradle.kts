@@ -13,7 +13,7 @@ dependencies {
 }
 
 val snippetsDir = file("../samples")
-val processedSnippetsDir = file("$buildDir/samples")
+val processedSnippetsDir = layout.buildDirectory.file("samples")
 
 val tokens: Map<String, Provider<String>> = mapOf(
     "test-retry-plugin-version" to provider {

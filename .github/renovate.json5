@@ -4,14 +4,17 @@
         "github>gradle/renovate-agent//presets/dv-automerge-minor.json5"
     ],
     packageRules: [
-        // We need to use Spock 2.x with Groovy 3.0 as Gradle uses Groovy 3.0 at the moment
-        // This rule prevents renovate from upgrading Spock to groovy-4.0
+        // We need to use Spock 2.x with a Groovy version compatible with the Gradle version used (Groovy 4.0 for Gradle 9 or newer and Groovy 3.0 otherwise)
+        // This rule ensures that renovate keeps the groovy version classifier when updating Spock
         {
-            matchPackagePrefixes: [
-                "org.spockframework:"
-            ],
-            matchCurrentValue: "/^2\\./",
-            allowedVersions: "/^[0-9]+\\.[0-9]+(\\.[0-9]+)?-groovy-3\\.0$/"
+            matchPackageNames: ["/^org.spockframework:spock-/"],
+            matchCurrentVersion: "/-groovy-3\\.0$/",
+            allowedVersions: "/-groovy-3\\.0$/"
+        },
+        {
+            matchPackageNames: ["/^org.spockframework:spock-/"],
+            matchCurrentVersion: "/-groovy-4\\.0$/",
+            allowedVersions: "/-groovy-4\\.0$/"
         }
     ]
 }
