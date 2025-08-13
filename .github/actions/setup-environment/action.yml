@@ -10,11 +10,11 @@ runs:
       distribution: 'temurin'
       java-version: 17
 
-  - name: Prepare JDK17 env var
+  - name: 'Prepare JDK17 env var'
     shell: bash
     run: echo "JDK17=$JAVA_HOME" >> $GITHUB_ENV
 
-  - name: Setup Git user
+  - name: 'Setup Git user'
     shell: bash
     run: |
       git config --global user.name "$(git --no-pager log --format=format:'%an' -n 1)"
