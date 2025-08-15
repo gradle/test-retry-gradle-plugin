@@ -174,7 +174,7 @@ tasks.withType<Test> {
     systemProperty("testNgVersion", libs.versions.testNg.get())
 }
 
-listOf(5, 6, 7, 8).map { gradleMajorVersion ->
+listOf(5, 6, 7, 8, 9).map { gradleMajorVersion ->
     tasks.register<Test>("testGradle${gradleMajorVersion}Releases") {
         jvmArgumentProviders.add(GradleVersionsCommandLineArgumentProvider {
             GradleVersionData.getReleasedVersions(
