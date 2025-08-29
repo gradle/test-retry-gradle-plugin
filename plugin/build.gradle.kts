@@ -16,7 +16,7 @@ plugins {
     signing
     id("com.gradle.plugin-publish") version "1.3.1"
     id("com.github.hierynomus.license") version "0.16.1"
-    id("com.gradleup.shadow") version "9.0.2"
+    id("com.gradleup.shadow") version "9.1.0"
 }
 
 group = "org.gradle"
