@@ -97,7 +97,7 @@ public final class TestsReader {
             if (file.isDirectory()) {
                 File classFile = new File(file, classFileName);
                 if (classFile.exists()) {
-                    return Optional.of(visitClassFile(classFile, factory.get()));
+                    return Optional.ofNullable(visitClassFile(classFile, factory.get()));
                 } else {
                     continue;
                 }
