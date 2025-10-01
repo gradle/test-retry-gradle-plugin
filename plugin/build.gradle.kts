@@ -59,7 +59,7 @@ dependencies {
 
     testImplementation(gradleTestKit())
     testImplementation(localGroovy())
-    testImplementation(platform(libs.spock.groovy4.bom))
+    testImplementation(platform(libs.spock.groovy3.bom))
     testImplementation(libs.spock.core)
     testImplementation(libs.spock.junit4)
     testImplementation(libs.nekohtml)
