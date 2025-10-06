@@ -25,6 +25,14 @@ abstract class SpockBaseFuncTest extends AbstractFrameworkFuncTest {
 
     static final List<String> COMPATIBLE_GRADLE_VERSIONS_SPOCK_1 = GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it).baseVersion < GradleVersion.version("9.0") }
 
+    static int javaMajorVersion() {
+        def version = System.getProperty("java.version")
+        if (version.startsWith("1.")) {
+            return Integer.parseInt(version.substring(2, 3)) // "1.8" → 8
+        }
+        return Integer.parseInt(version.split("\\.")[0]) // "17.0.2" → 17
+    }
+
     @Override
     String getLanguagePlugin() {
         return 'groovy'
