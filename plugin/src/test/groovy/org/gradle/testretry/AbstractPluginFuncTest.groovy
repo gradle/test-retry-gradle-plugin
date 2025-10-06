@@ -126,8 +126,29 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
                     events "passed", "skipped", "failed"
                 }
             }
+
+            ${jdkConfigurationForTest()}
         """
     }
+
+    String jdkConfigurationForTest() {
+        def maybeTestJdkVersion = testJavaToolchainVersion()
+
+        if (maybeTestJdkVersion.present) {
+            def testJdkVersion = maybeTestJdkVersion.get()
+            println "Test runs with JDK ${testJdkVersion}"
+
+            """
+                java {
+                    toolchain {
+                        languageVersion = JavaLanguageVersion.of(${testJdkVersion})
+                    }
+                }            
+            """
+        } else {
+            return ""
+        }
+   }
 
     abstract String getLanguagePlugin()
 
@@ -221,6 +242,11 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
         assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && !it.failure.isEmpty() }.size() == expectedFailCount
         assert xml.'**'.findAll { it.name() == 'testcase' && it.@classname == "acme.${testClazz}" && it.failure.isEmpty() }.size() == expectedSuccessCount
         true
+    }
+
+    Optional<Integer> testJavaToolchainVersion() {
+        Optional.ofNullable(System.getProperty("testJavaToolchainVersion"))
+            .map(s -> s.toInteger())
     }
 
     static private List<String> gradleVersionsUnderTest() {

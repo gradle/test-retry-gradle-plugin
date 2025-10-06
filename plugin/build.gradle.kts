@@ -172,6 +172,11 @@ tasks.withType<Test> {
     systemProperty("spock1Version", libs.versions.spock1.get())
     systemProperty("spock2Version", if (isGradle9OrNewer) libs.versions.spock2.groovy4.get() else libs.versions.spock2.groovy3.get())
     systemProperty("testNgVersion", libs.versions.testNg.get())
+
+    if (project.hasProperty("testJavaToolchainVersion")) {
+        val testJavaToolchainVersion = project.property("testJavaToolchainVersion").toString()
+        systemProperty("testJavaToolchainVersion", testJavaToolchainVersion)
+    }
 }
 
 listOf(5, 6, 7, 8, 9).map { gradleMajorVersion ->
