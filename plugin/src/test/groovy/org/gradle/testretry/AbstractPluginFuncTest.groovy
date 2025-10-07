@@ -20,12 +20,15 @@ import groovy.xml.XmlSlurper
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.gradle.util.internal.VersionNumber
 import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import java.lang.management.ManagementFactory
+
+import static java.util.Arrays.asList
 
 abstract class AbstractPluginFuncTest extends Specification implements TestFrameworkVersionData {
 
@@ -132,16 +135,16 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
     }
 
     String jdkConfigurationForTest() {
-        def maybeTestJdkVersion = testJavaToolchainVersion()
+        def maybeTestJavaVersion = testJavaToolchainVersion()
 
-        if (maybeTestJdkVersion.present) {
-            def testJdkVersion = maybeTestJdkVersion.get()
-            println "Test runs with JDK ${testJdkVersion}"
+        if (maybeTestJavaVersion.present) {
+            def testJavaVersion = maybeTestJavaVersion.get()
+            println "Test runs with Java ${testJavaVersion}"
 
             """
                 java {
                     toolchain {
-                        languageVersion = JavaLanguageVersion.of(${testJdkVersion})
+                        languageVersion = JavaLanguageVersion.of(${testJavaVersion})
                     }
                 }            
             """
@@ -244,17 +247,33 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
         true
     }
 
-    Optional<Integer> testJavaToolchainVersion() {
+    static Optional<Integer> testJavaToolchainVersion() {
         Optional.ofNullable(System.getProperty("testJavaToolchainVersion"))
             .map(s -> s.toInteger())
     }
 
     static private List<String> gradleVersionsUnderTest() {
+        def testJavaVersion = testJavaToolchainVersion()
         def explicitGradleVersions = System.getProperty('org.gradle.test.gradleVersions')
         if (explicitGradleVersions) {
-            return Arrays.asList(explicitGradleVersions.split("\\|"))
+            def gradleVersions = asList(explicitGradleVersions.split("\\|"))
+
+            if (testJavaVersion?.orElse(null) >= 25) {
+                // Java 25 is only supported for Gradle 9.1.0 and above
+                removedVersionsBefore(9, 1, gradleVersions)
+            } else {
+                gradleVersions
+            }
+
         } else {
             [GradleVersion.current().toString()]
+        }
+    }
+
+    static private List<String> removedVersionsBefore(int major, int minor, List<String> versions) {
+        versions.findAll {
+            def version = VersionNumber.parse(it)
+            (version.major == major && version.minor >= minor) || version.major > major
         }
     }
 }
