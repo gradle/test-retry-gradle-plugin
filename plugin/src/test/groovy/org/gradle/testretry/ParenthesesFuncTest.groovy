@@ -25,6 +25,10 @@ import static groovy.lang.Tuple2.tuple
     value = { COMPATIBLE_GRADLE_VERSIONS_UNDER_TEST.empty },
     reason = "Kotlin plugin compatible from 6.8 onwards"
 )
+@IgnoreIf(
+    value = { effectiveTestJavaMajorVersion() > 21 },
+    reason = "Kotlin does not support Java 25 yet"
+)
 class ParenthesesFuncTest extends AbstractPluginFuncTest {
 
     private static final List<String> COMPATIBLE_GRADLE_VERSIONS_UNDER_TEST = GRADLE_VERSIONS_UNDER_TEST.findAll { GradleVersion.version(it) >= GradleVersion.version("6.8") }

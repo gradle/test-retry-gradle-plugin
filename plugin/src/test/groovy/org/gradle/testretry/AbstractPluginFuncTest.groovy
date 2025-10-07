@@ -247,9 +247,31 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
         true
     }
 
+    /**
+     * Returns the Java major version that runs this test class.
+     */
+
+    static int javaMajorVersion() {
+        def version = System.getProperty("java.version")
+        if (version.startsWith("1.")) {
+            return Integer.parseInt(version.substring(2, 3)) // "1.8" → 8
+        }
+        return Integer.parseInt(version.split("\\.")[0]) // "17.0.2" → 17
+    }
+
+    /**
+     * Returns the Java major version to configure builds running in this test class.
+     */
     static Optional<Integer> testJavaToolchainVersion() {
         Optional.ofNullable(System.getProperty("testJavaToolchainVersion"))
             .map(s -> s.toInteger())
+    }
+
+    /**
+     * Returns the Java major version builds running in this test class use.
+     */
+    static int effectiveTestJavaMajorVersion() {
+        testJavaToolchainVersion().orElseGet { javaMajorVersion() }
     }
 
     static private List<String> gradleVersionsUnderTest() {
