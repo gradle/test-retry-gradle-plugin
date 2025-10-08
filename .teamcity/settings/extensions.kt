@@ -26,6 +26,11 @@ fun ParametrizedWithType.java17Home(os: Os) {
     param("env.JDK17", "%${os.name}.java17.openjdk.64bit%")
 }
 
+fun ParametrizedWithType.java25Home(os: Os) {
+    // Currently hard-coded for Linux
+    param("env.JDK25", "/opt/jdk/open-jdk-25")
+}
+
 const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan.init.gradle.kts"
 
 const val buildCacheSetup = "--build-cache -Dgradle.cache.remote.push=true"
@@ -57,6 +62,7 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
         params {
             java8Home(Os.linux)
             java17Home(Os.linux)
+            java25Home(Os.linux)
 
             param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
             param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")

@@ -37,6 +37,7 @@ project {
     params {
         java8Home(Os.linux)
         java17Home(Os.linux)
+        java25Home(Os.linux)
         text("systemProp.org.gradle.internal.publish.checksums.insecure", "true")
     }
 
