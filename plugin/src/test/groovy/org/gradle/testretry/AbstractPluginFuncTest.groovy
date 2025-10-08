@@ -37,11 +37,23 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
     @Rule
     TemporaryFolder testProjectDir = new TemporaryFolder()
 
+    File gradleProperties
+
     File settingsFile
 
     File buildFile
 
     def setup() {
+        gradleProperties = testProjectDir.newFile('gradle.properties')
+        testJavaToolchainVersion().ifPresent { major ->
+            // When a specific Java version is specified that tests should configure,
+            // we have to configure the build to allow finding the version via an env variable.
+            def expectedEnvVar = "JDK${major}"
+            assert (System.getenv(expectedEnvVar) != null) : "Test toolchain version is configured but env var ${expectedEnvVar} is missing!"
+
+            gradleProperties << "org.gradle.java.installations.fromEnv=${expectedEnvVar}"
+        }
+
         settingsFile = testProjectDir.newFile('settings.gradle')
         settingsFile << "rootProject.name = 'hello-world'"
         buildFile = testProjectDir.newFile('build.gradle')
