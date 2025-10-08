@@ -16,7 +16,12 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 
+@IgnoreIf(
+    value = { effectiveTestJavaMajorVersion() >= 21 },
+    reason = "Current version of spock2-groovy4 does not support Java 21 or above"
+)
 class Spock2FuncTest extends SpockBaseJunit5FuncTest {
 
     @Override

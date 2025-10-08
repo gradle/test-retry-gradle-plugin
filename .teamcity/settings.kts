@@ -50,14 +50,43 @@ project {
         }
     }
 
-    val crossVersionTestLinuxGroup = listOf(5, 6, 7, 8, 9).map { gradleMajorVersion ->
-        val toolchainVersion = if(gradleMajorVersion >= 9) 17 else 8
-        buildType("CrossVersionTest Gradle $gradleMajorVersion.x Releases Linux - Java $toolchainVersion") {
+    data class CrossVersionTestConfiguration(
+        val gradleMajorVersion: Int,
+        val javaToolchainVersion: Int,
+        val testJavaToolchainVersion: Int?,
+    ) {
+        constructor(gradleMajorVersion: Int, testJavaToolchainVersion: Int) : this(
+            gradleMajorVersion,
+            if(gradleMajorVersion >= 9) 17 else 8,
+            testJavaToolchainVersion,
+        )
+
+        constructor(gradleMajorVersion: Int) : this(
+            gradleMajorVersion,
+            if(gradleMajorVersion >= 9) 17 else 8,
+            null,
+        )
+    }
+
+    val crossVersionGroupConfigs = listOf(
+        CrossVersionTestConfiguration(gradleMajorVersion = 5),
+        CrossVersionTestConfiguration(gradleMajorVersion = 6),
+        CrossVersionTestConfiguration(gradleMajorVersion = 7),
+        CrossVersionTestConfiguration(gradleMajorVersion = 8),
+        CrossVersionTestConfiguration(gradleMajorVersion = 9),
+        CrossVersionTestConfiguration(gradleMajorVersion = 9, testJavaToolchainVersion = 25),
+    )
+
+    val crossVersionTestLinuxGroups = crossVersionGroupConfigs.map { config ->
+        val testConfig = if (config.testJavaToolchainVersion == null) "" else " (tests use Java ${config.testJavaToolchainVersion})"
+        buildType("CrossVersionTest Gradle ${config.gradleMajorVersion}.x Releases Linux - Java ${config.javaToolchainVersion}${testConfig}") {
+            val javaToolchainVersionParameter = "-PjavaToolchainVersion=${config.javaToolchainVersion}"
+            val testJavaToolchainVersionParameter = if (config.testJavaToolchainVersion == null) "" else "-PtestJavaToolchainVersion=${config.testJavaToolchainVersion}"
             steps {
                 gradle {
-                    tasks = "clean testGradle${gradleMajorVersion}Releases"
+                    tasks = "clean testGradle${config.gradleMajorVersion}Releases"
                     buildFile = ""
-                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup -PjavaToolchainVersion=$toolchainVersion"
+                    gradleParams = "-s $useGradleInternalScansServer $buildCacheSetup $javaToolchainVersionParameter $testJavaToolchainVersionParameter"
                     param("org.jfrog.artifactory.selectedDeployableServer.defaultModuleVersionConfiguration", "GLOBAL")
                 }
             }
@@ -109,7 +138,7 @@ project {
                 onDependencyFailure = FailureAction.CANCEL
                 onDependencyCancel = FailureAction.CANCEL
             }
-            crossVersionTestLinuxGroup.map {
+            crossVersionTestLinuxGroups.map {
                 snapshot(it) {
                     onDependencyFailure = FailureAction.CANCEL
                     onDependencyCancel = FailureAction.CANCEL

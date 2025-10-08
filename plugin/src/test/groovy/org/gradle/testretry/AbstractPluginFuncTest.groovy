@@ -20,12 +20,15 @@ import groovy.xml.XmlSlurper
 import org.cyberneko.html.parsers.SAXParser
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.util.GradleVersion
+import org.gradle.util.internal.VersionNumber
 import org.intellij.lang.annotations.Language
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
 
 import java.lang.management.ManagementFactory
+
+import static java.util.Arrays.asList
 
 abstract class AbstractPluginFuncTest extends Specification implements TestFrameworkVersionData {
 
@@ -126,8 +129,29 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
                     events "passed", "skipped", "failed"
                 }
             }
+
+            ${jdkConfigurationForTest()}
         """
     }
+
+    String jdkConfigurationForTest() {
+        def maybeTestJavaVersion = testJavaToolchainVersion()
+
+        if (maybeTestJavaVersion.present) {
+            def testJavaVersion = maybeTestJavaVersion.get()
+            println "Test runs with Java ${testJavaVersion}"
+
+            """
+                java {
+                    toolchain {
+                        languageVersion = JavaLanguageVersion.of(${testJavaVersion})
+                    }
+                }            
+            """
+        } else {
+            return ""
+        }
+   }
 
     abstract String getLanguagePlugin()
 
@@ -223,12 +247,55 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
         true
     }
 
+    /**
+     * Returns the Java major version that runs this test class.
+     */
+
+    static int javaMajorVersion() {
+        def version = System.getProperty("java.version")
+        if (version.startsWith("1.")) {
+            return Integer.parseInt(version.substring(2, 3)) // "1.8" → 8
+        }
+        return Integer.parseInt(version.split("\\.")[0]) // "17.0.2" → 17
+    }
+
+    /**
+     * Returns the Java major version to configure builds running in this test class.
+     */
+    static Optional<Integer> testJavaToolchainVersion() {
+        Optional.ofNullable(System.getProperty("testJavaToolchainVersion"))
+            .map(s -> s.toInteger())
+    }
+
+    /**
+     * Returns the Java major version builds running in this test class use.
+     */
+    static int effectiveTestJavaMajorVersion() {
+        testJavaToolchainVersion().orElseGet { javaMajorVersion() }
+    }
+
     static private List<String> gradleVersionsUnderTest() {
+        def testJavaVersion = testJavaToolchainVersion()
         def explicitGradleVersions = System.getProperty('org.gradle.test.gradleVersions')
         if (explicitGradleVersions) {
-            return Arrays.asList(explicitGradleVersions.split("\\|"))
+            def gradleVersions = asList(explicitGradleVersions.split("\\|"))
+
+            if (testJavaVersion?.orElse(null) >= 25) {
+                // Java 25 is only supported for Gradle 9.1.0 and above
+                removedVersionsBefore(9, 1, gradleVersions)
+            } else {
+                gradleVersions
+            }
+
         } else {
             [GradleVersion.current().toString()]
+        }
+    }
+
+    static private List<String> removedVersionsBefore(int major, int minor, List<String> versions) {
+        versions.findAll {
+            def version = VersionNumber.parse(it)
+            (version.major == major && version.minor >= minor) || version.major > major
         }
     }
 }

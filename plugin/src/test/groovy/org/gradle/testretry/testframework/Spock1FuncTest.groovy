@@ -19,7 +19,11 @@ import spock.lang.IgnoreIf
 
 @IgnoreIf(
     value = { COMPATIBLE_GRADLE_VERSIONS_SPOCK_1.empty },
-    reason = "Gradle 9 requires at least JDK 17, but Spock 1 isn't compatible with this version anymore"
+    reason = "Gradle 9 requires at least Java 17, but Spock 1 isn't compatible with this version anymore"
+)
+@IgnoreIf(
+    value = { effectiveTestJavaMajorVersion() >= 17 },
+    reason = "Spock 1 tests do not run with Java 17 or higher"
 )
 class Spock1FuncTest extends SpockBaseFuncTest {
     @Override
