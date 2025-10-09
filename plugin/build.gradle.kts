@@ -71,6 +71,13 @@ dependencies {
     codenarc(libs.codenarc)
 }
 
+// The following block makes sure that the produced module descriptor
+// (located in `build/publications/pluginMaven/module.json`) has the proper
+// attribute `"org.gradle.jvm.version": 8`.
+configurations.named(JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME).configure {
+    attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 8)
+}
+
 tasks.shadowJar {
     configurations = listOf(plugin)
     dependencies {
