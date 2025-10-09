@@ -19,7 +19,7 @@ fun BuildType.notEc2Requirement() {
 }
 
 fun ParametrizedWithType.java8Home(os: Os) {
-    param("env.JDK8", "%${os.name}.java8.oracle.64bit%")
+    param("env.JDK8", "%${os.name}.java8.openjdk.64bit%")
 }
 
 fun ParametrizedWithType.java17Home(os: Os) {
@@ -27,8 +27,7 @@ fun ParametrizedWithType.java17Home(os: Os) {
 }
 
 fun ParametrizedWithType.java25Home(os: Os) {
-    // Currently hard-coded for Linux
-    param("env.JDK25", "/opt/jdk/open-jdk-25")
+    param("env.JDK25", "%${os.name}.java25.openjdk.64bit%")
 }
 
 const val useGradleInternalScansServer = "-I gradle/init-scripts/build-scan.init.gradle.kts"
