@@ -1,0 +1,23 @@
+# JDKs are downloaded from: https://bell-sw.com/pages/downloads
+# SHA256 have to be manually calculated via `sha256 <jdk.XY.tar.gz`
+# Verify provided SHA1 before calculating the SHA256
+version: v1
+jdks:
+  - param: "linux.java8.openjdk.64bit"
+    os: linux
+    arch: amd64
+    vendor: "liberica"
+    version: "8u462+11"
+    sha256: 32e4a0aac6fb0e5cdecbf00733e501653b614efa9356ef265dfa4cf9954f9255
+  - param: "linux.java17.openjdk.64bit"
+    os: linux
+    arch: amd64
+    vendor: "liberica"
+    version: "17.0.16+12"
+    sha256: 7c6d6c4bf37f2373c3e8a89244ab1db9eaa5b7b9528aed6a88e92f2c4408b0d8
+  - param: "linux.java25.openjdk.64bit"
+    os: linux
+    arch: amd64
+    vendor: "liberica"
+    version: "25+37"
+    sha256: 4efe14df08e2ec35c5052e09b7581daf4e035de5a13ba04f4de27e32f08d704a
