@@ -158,7 +158,7 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
                     toolchain {
                         languageVersion = JavaLanguageVersion.of(${testJavaVersion})
                     }
-                }            
+                }
             """
         } else {
             return ""
@@ -228,8 +228,8 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
             }
     }
 
-    def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
-        assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
+    def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount, GradleVersion gradleVersion) {
+        assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount, gradleVersion)
         assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         true
     }
@@ -239,11 +239,19 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
     }
 
     @SuppressWarnings("GroovyAssignabilityCheck")
-    def assertHtmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount) {
+    def assertHtmlReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount, GradleVersion gradleVersion) {
         def parser = new SAXParser()
-        def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, "build/reports/tests/test/classes/acme.${testClazz}.html"))
-        assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed' }.size() == expectedSuccessCount
-        assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed' }.size() == expectedFailCount
+        def hasNewReportFormat = gradleVersion >= GradleVersion.version("9.3")
+        def reportPath = "build/reports/tests/test/${hasNewReportFormat ? "acme.${testClazz}/index.html" : "classes/acme.${testClazz}.html"}"
+        def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, reportPath))
+        if (hasNewReportFormat) {
+            assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[1].text() as int } == expectedSuccessCount + expectedFailCount // Tests
+            assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[2].text() as int } == expectedFailCount // Failures
+            assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[3].text() as int } == 0 // Skipped
+        } else {
+            assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed' }.size() == expectedSuccessCount
+            assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed' }.size() == expectedFailCount
+        }
         true
     }
 
