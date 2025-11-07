@@ -16,7 +16,6 @@
 package org.gradle.testretry
 
 import org.gradle.testkit.runner.BuildResult
-import org.gradle.util.GradleVersion
 
 import static groovy.util.GroovyCollections.combinations
 
