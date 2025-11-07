@@ -36,7 +36,7 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         def result = gradleRunner(gradleVersion, 'test', '--info').buildAndFail()
 
         then:
-        assertNotRetried(result)
+        assertNotRetried(result, gradleVersion)
         result.output.contains("handled by the Develocity plugin")
 
         where:
@@ -78,7 +78,7 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        assertNotRetried(result)
+        assertNotRetried(result, gradleVersion)
 
         where:
         //noinspection GroovyAssignabilityCheck
@@ -94,7 +94,7 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        assertRetried(result)
+        assertRetried(result, gradleVersion)
 
         where:
         //noinspection GroovyAssignabilityCheck
@@ -110,7 +110,7 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
-        assertRetried(result)
+        assertRetried(result, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -127,26 +127,26 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         def result = gradleRunner(gradleVersion, 'test', '--info').buildAndFail()
 
         then:
-        assertNotRetried(result)
+        assertNotRetried(result, gradleVersion)
         result.output.contains("handled by the Develocity plugin")
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
-    def assertRetried(BuildResult result) {
-        assertRetries(result, 1)
+    def assertRetried(BuildResult result, String gradleVersion) {
+        assertRetries(result, 1, gradleVersion)
     }
 
-    def assertNotRetried(BuildResult result) {
-        assertRetries(result, 0)
+    def assertNotRetried(BuildResult result, String gradleVersion) {
+        assertRetries(result, 0, gradleVersion)
     }
 
-    def assertRetries(BuildResult result, int retries) {
+    def assertRetries(BuildResult result, int retries, String gradleVersion) {
         // 1 initial + retries + 1 overall task FAILED + 1 build FAILED
         with(result.output) {
             it.count('FAILED') == 1 + retries + 1 + 1
         }
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries, gradleVersion)
     }
 }

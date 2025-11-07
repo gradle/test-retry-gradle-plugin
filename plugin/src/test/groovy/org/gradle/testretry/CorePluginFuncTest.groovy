@@ -43,7 +43,7 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         gradleRunner(gradleVersion).build()
 
         then:
-        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
+        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -56,7 +56,7 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
 
         then:
         result.output.contains("There were failing tests.")
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -80,8 +80,8 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         // 2 individual tests FAILED + 1 overall task FAILED + 1 overall build FAILED
         result.output.count('FAILED') == 2 + 1 + 1
 
-        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0)
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2)
+        assertTestReportContains("SuccessfulTests", reportedTestName("successTest"), 1, 0, gradleVersion)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 2, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -104,7 +104,7 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         }
 
         then:
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
@@ -127,7 +127,7 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
             it.count('FAILED') == 1
         }
 
-        assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1)
+        assertTestReportContains("FlakyTests", reportedTestName("flaky"), 1, 1, gradleVersion)
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
