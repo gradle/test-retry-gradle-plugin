@@ -228,8 +228,8 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
             }
     }
 
-    def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount, GradleVersion gradleVersion) {
-        assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount, gradleVersion)
+    def assertTestReportContains(String testClazz, String testName, int expectedSuccessCount, int expectedFailCount, String gradleVersion) {
+        assertHtmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount, GradleVersion.version(gradleVersion))
         assertXmlReportContains(testClazz, testName, expectedSuccessCount, expectedFailCount)
         true
     }

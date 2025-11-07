@@ -148,6 +148,6 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
         with(result.output) {
             it.count('FAILED') == 1 + retries + 1 + 1
         }
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries, GradleVersion.version(gradleVersion))
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries, gradleVersion)
     }
 }
