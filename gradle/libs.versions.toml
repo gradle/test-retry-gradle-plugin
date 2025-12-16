@@ -1,5 +1,5 @@
 [versions]
-asmVersion = "9.9"
+asmVersion = "9.9.1"
 junit4 = "4.13.2"
 junit5Jupiter = "5.14.1"
 junitPlatformLauncher = "1.14.1"
