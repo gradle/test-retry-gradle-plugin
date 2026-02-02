@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
+import org.gradle.util.GradleVersion
 import spock.lang.Issue
 
 class JUnit4FuncTest extends AbstractFrameworkFuncTest {
@@ -38,6 +39,10 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
 
     protected String beforeClassErrorTestMethodName(String gradleVersion) {
         "classMethod"
+    }
+
+    protected String runnerInitializationErrorSyntheticTestMethodName(String gradleVersion) {
+        GradleVersion.version(gradleVersion) >= GradleVersion.version("9.3.0") ? "executionError" : initializationErrorSyntheticTestMethodName(gradleVersion)
     }
 
     def "handles failure in #lifecycle - exhaustive #exhaust (gradle version #gradleVersion)"(String gradleVersion, String lifecycle, boolean exhaust) {
@@ -244,7 +249,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
         then:
 
         with(result.output) {
-            it.count("FlakyTests > ${initializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
+            it.count("FlakyTests > ${runnerInitializationErrorSyntheticTestMethodName(gradleVersion)} FAILED") == 1
             it.count('FlakyTests > someTest PASSED') == 1
         }
 
