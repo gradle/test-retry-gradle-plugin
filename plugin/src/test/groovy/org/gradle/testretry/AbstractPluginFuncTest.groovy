@@ -245,9 +245,9 @@ abstract class AbstractPluginFuncTest extends Specification implements TestFrame
         def reportPath = "build/reports/tests/test/${hasNewReportFormat ? "acme.${testClazz}/index.html" : "classes/acme.${testClazz}.html"}"
         def page = new XmlSlurper(parser).parse(new File(testProjectDir.root, reportPath))
         if (hasNewReportFormat) {
-            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[1].text() as int } == expectedSuccessCount + expectedFailCount // Tests
-            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[2].text() as int } == expectedFailCount // Failures
-            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[3].text() as int } == 0 // Skipped
+            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[2].text() as int } == expectedSuccessCount + expectedFailCount // Tests
+            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[3].text() as int } == expectedFailCount // Failures
+            assert page.'**'.findAll { it.name() == "TABLE" && it.@class == 'test-results' }[0].'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName }.sum { it -> it.TD[4].text() as int } == 0 // Skipped
         } else {
             assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'passed' }.size() == expectedSuccessCount
             assert page.'**'.findAll { it.name() == 'TR' && it.TD[0].text() == testName && it.TD[2].text() == 'failed' }.size() == expectedFailCount
