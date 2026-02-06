@@ -15,6 +15,10 @@
  */
 package org.gradle.testretry.internal.config;
 
+import org.gradle.api.Action;
+import org.gradle.api.tasks.testing.Test;
+import org.gradle.process.JavaForkOptions;
+
 import java.util.Set;
 
 public interface TestRetryTaskExtensionAccessor {
@@ -41,4 +45,5 @@ public interface TestRetryTaskExtensionAccessor {
 
     boolean getSimulateNotRetryableTest();
 
+    Action<? super JavaForkOptions> getOnRetry();
 }
