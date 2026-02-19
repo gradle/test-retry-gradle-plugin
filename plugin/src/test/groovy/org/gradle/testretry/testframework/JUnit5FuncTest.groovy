@@ -554,9 +554,12 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         def result = gradleRunner(gradleVersion).buildAndFail()
 
         then:
+        // In 9.4.0 we start to properly report discovery errors as part of "JUnit Jupiter" instead of the class(es)
+        // we were trying to run. This means we don't try to re-run it because there's no associated class name.
+        def discoveryErrorIsClassifiedUnderRootClass = GradleVersion.version(gradleVersion) <= GradleVersion.version("9.3.1")
         with(result.output) {
             it.contains("> There were failing tests.")
-            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == (discoveryErrorIsClassifiedUnderRootClass ? 3 : 1)
         }
 
         where:
