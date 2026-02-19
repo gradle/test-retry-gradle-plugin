@@ -520,6 +520,49 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "handles setup failure caused by errors in discovery (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 2
+            
+            dependencies {
+                testCompileOnly gradleApi()
+            }
+        """
+
+        and:
+        writeJavaTestSource """
+            package acme;
+
+            import org.gradle.api.Task;
+
+            public class DiscoveryClassLoadingErrorTest {
+                // Add a reliance on class that won't be present at runtime,
+                // but also won't fail immediately at link time.
+                // It needs to fail specifically during discovery.
+                public Task dummyTaskMethod() {
+                    return null;
+                }
+
+                @org.junit.jupiter.api.Test
+                public void unimportantTestMethod() {
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.contains("> There were failing tests.")
+            it.count("${beforeClassErrorTestMethodName(gradleVersion)} FAILED") == 3
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     def "can rerun the whole class in JUnit5's Suite via className (gradle version #gradleVersion)"() {
         given:
         buildFile << """
