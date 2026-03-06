@@ -64,10 +64,12 @@ public class RetryFilter {
 
         if (!excludeAnnotationClasses.isEmpty()) {
             annotations = annotations == null ? annotationInspector.getClassAnnotations(className) : annotations;
-            return !anyMatch(excludeAnnotationClasses, annotations);
+            if (!anyMatch(excludeAnnotationClasses, annotations)) {
+                return false;
+            }
         }
 
-        return true;
+        return !className.isEmpty();
     }
 
     private static boolean anyMatch(Set<GlobPattern> patterns, String string) {
