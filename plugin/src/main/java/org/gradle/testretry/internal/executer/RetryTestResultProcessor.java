@@ -176,7 +176,7 @@ final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
     private void registerSeenTestClass(TestDescriptorInternal descriptor) {
         String maybeTestClassName = descriptor.getClassName();
 
-        if (maybeTestClassName != null) {
+        if (maybeTestClassName != null && !maybeTestClassName.isEmpty()) {
             testClassesSeenInCurrentRound.add(maybeTestClassName);
         }
     }
@@ -267,12 +267,14 @@ final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
         final TestDescriptorInternal descriptor = activeDescriptorsById.get(testId);
         if (descriptor != null) {
             String className = descriptor.getClassName();
-            if (className != null) {
+            if (className != null && !className.isEmpty()) {
                 if (filter.canRetry(className)) {
                     addRetry(descriptor);
                 } else {
                     hasRetryFilteredFailures = true;
                 }
+            } else if (isLifecycleFailure(descriptor.getClassName(), descriptor.getName())){
+                addRetry(descriptor);
             }
         }
     }
