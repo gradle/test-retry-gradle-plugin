@@ -27,6 +27,7 @@ import org.gradle.testretry.internal.filter.RetryFilter;
 import org.gradle.testretry.internal.testsreader.TestsReader;
 import org.gradle.util.GradleVersion;
 
+import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toMap;
 import static org.gradle.api.tasks.testing.TestResult.ResultType.SKIPPED;
 
-final class RetryTestResultProcessor implements TestResultProcessor {
+final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
 
     private final TestFrameworkStrategy testFrameworkStrategy;
     private final RetryFilter filter;
@@ -60,6 +61,7 @@ final class RetryTestResultProcessor implements TestResultProcessor {
     private TestNames previousRoundFailedTests = new TestNames();
 
     private Object rootTestDescriptorId;
+    private TestCompleteEvent rootCompleteEvent;
 
     RetryTestResultProcessor(
         TestFrameworkStrategy testFrameworkStrategy,
@@ -77,6 +79,15 @@ final class RetryTestResultProcessor implements TestResultProcessor {
         this.delegate = delegate;
         this.maxFailures = maxFailures;
         this.failOnSkippedAfterRetry = failOnSkippedAfterRetry;
+    }
+
+    @Override
+    public void close() {
+        if (rootCompleteEvent != null) {
+            delegate.completed(rootTestDescriptorId, rootCompleteEvent);
+            rootTestDescriptorId = null;
+            rootCompleteEvent = null;
+        }
     }
 
     @Override
@@ -100,7 +111,10 @@ final class RetryTestResultProcessor implements TestResultProcessor {
             if (currentRoundFailedTests.isEmpty() && !previousRoundFailedTests.isEmpty()) {
                 ignoreExpectedUnretriedTests();
             }
-            if (!lastRun()) {
+            if (lastRun()) {
+                rootCompleteEvent = null;
+            } else {
+                rootCompleteEvent = testCompleteEvent;
                 return;
             }
         } else {
