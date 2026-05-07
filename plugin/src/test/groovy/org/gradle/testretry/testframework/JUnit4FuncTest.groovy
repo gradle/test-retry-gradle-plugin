@@ -29,7 +29,7 @@ class JUnit4FuncTest extends AbstractFrameworkFuncTest {
     }
 
     protected String initializationErrorSyntheticTestMethodName(String gradleVersion) {
-        "initializationError"
+        gradleVersion > "9.3" ?  "executionError" : "initializationError"
     }
 
     protected String afterClassErrorTestMethodName(String gradleVersion) {
