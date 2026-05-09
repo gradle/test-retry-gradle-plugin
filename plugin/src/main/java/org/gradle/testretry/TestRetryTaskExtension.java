@@ -19,6 +19,8 @@ import org.gradle.api.Action;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.process.JavaForkOptions;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows configuring test retry mechanics.
@@ -90,6 +92,13 @@ public interface TestRetryTaskExtension {
      * The filter for specifying which tests may be retried.
      */
     void filter(Action<? super Filter> action);
+
+    /**
+     * Invoked when test are retried.
+     */
+    void onRetry(Action<? super JavaForkOptions> action);
+
+    @Nullable Action<? super JavaForkOptions> getOnRetry();
 
     /**
      * A filter for specifying which tests may be retried.

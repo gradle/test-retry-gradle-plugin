@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry.internal.executer;
 
+import org.gradle.api.Action;
 import org.gradle.api.internal.tasks.testing.JvmTestExecutionSpec;
 import org.gradle.api.internal.tasks.testing.TestExecuter;
 import org.gradle.api.internal.tasks.testing.TestFramework;
@@ -22,6 +23,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.process.JavaForkOptions;
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAccessor;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
@@ -115,6 +117,12 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         JvmTestExecutionSpec testExecutionSpec = spec;
 
         while (true) {
+            if (retryCount == 1) {
+                Action<? super JavaForkOptions> onRetry = extension.getOnRetry();
+                if (onRetry != null) {
+                    onRetry.execute(testExecutionSpec.getJavaForkOptions());
+                }
+            }
             delegate.execute(testExecutionSpec, retryTestResultProcessor);
             RoundResult result = retryTestResultProcessor.getResult();
             lastResult = result;
