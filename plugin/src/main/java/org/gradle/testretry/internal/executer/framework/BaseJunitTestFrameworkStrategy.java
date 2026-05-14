@@ -53,7 +53,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
     public boolean isExpectedUnretriedTest(String className, String test) {
-        return ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className);
+        return ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className) || className.isEmpty();
     }
 
     protected DefaultTestFilter testFilterFor(TestNames failedTests, boolean canRunParameterizedSpockMethods, TestFrameworkTemplate template, Set<String> testClassesSeenInCurrentRound) {
@@ -74,7 +74,7 @@ abstract class BaseJunitTestFrameworkStrategy implements TestFrameworkStrategy {
                 }
 
                 if (tests.stream().anyMatch(ERROR_SYNTHETIC_TEST_NAMES::contains)) {
-                    if (ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className)) {
+                    if (ERROR_SYNTHETIC_TESTNG_CLASS_NAME.equals(className) || className.isEmpty()) {
                         // Gradle can't properly attribute some of the TestNG lifecycle method failures to classes
                         // Those are @BeforeTest, @AfterTest, @AfterClass methods
                         // In case of @BeforeTest and @AfterTest, we should retry all classes belonging to the TestNG Test

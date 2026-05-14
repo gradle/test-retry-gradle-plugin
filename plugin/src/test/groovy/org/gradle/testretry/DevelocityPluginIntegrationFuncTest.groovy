@@ -135,18 +135,18 @@ class DevelocityPluginIntegrationFuncTest extends AbstractGeneralPluginFuncTest 
     }
 
     def assertRetried(BuildResult result, String gradleVersion) {
-        assertRetries(result, 1, gradleVersion)
+        assertRetries(result, 1)
     }
 
     def assertNotRetried(BuildResult result, String gradleVersion) {
-        assertRetries(result, 0, gradleVersion)
+        assertRetries(result, 0)
     }
 
-    def assertRetries(BuildResult result, int retries, String gradleVersion) {
+    def assertRetries(BuildResult result, int retries) {
         // 1 initial + retries + 1 overall task FAILED + 1 build FAILED
         with(result.output) {
             it.count('FAILED') == 1 + retries + 1 + 1
         }
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries, gradleVersion)
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1 + retries)
     }
 }

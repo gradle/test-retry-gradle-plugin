@@ -114,27 +114,31 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
         int retryCount = 0;
         JvmTestExecutionSpec testExecutionSpec = spec;
 
-        while (true) {
-            delegate.execute(testExecutionSpec, retryTestResultProcessor);
-            RoundResult result = retryTestResultProcessor.getResult();
-            lastResult = result;
+        try {
+            while (true) {
+                delegate.execute(testExecutionSpec, retryTestResultProcessor);
+                RoundResult result = retryTestResultProcessor.getResult();
+                lastResult = result;
 
-            if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
-                // fall through to our doLast action to fail accordingly
-                testTask.setIgnoreFailures(true);
-                break;
-            } else if (result.failedTests.isEmpty()) {
-                if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
+                if (extension.getSimulateNotRetryableTest() || !result.nonRetriedTests.isEmpty()) {
+                    // fall through to our doLast action to fail accordingly
                     testTask.setIgnoreFailures(true);
+                    break;
+                } else if (result.failedTests.isEmpty()) {
+                    if (retryCount > 0 && !result.hasRetryFilteredFailures && !failOnPassedAfterRetry) {
+                        testTask.setIgnoreFailures(true);
+                    }
+                    break;
+                } else if (result.lastRound) {
+                    break;
+                } else {
+                    TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, spec.getTestFramework(), result.failedTests, result.testClassesSeenInCurrentRound);
+                    testExecutionSpec = testExecutionSpecFor(retryTestFramework, spec);
+                    retryTestResultProcessor.reset(++retryCount == maxRetries);
                 }
-                break;
-            } else if (result.lastRound) {
-                break;
-            } else {
-                TestFramework retryTestFramework = testFrameworkStrategy.createRetrying(frameworkTemplate, spec.getTestFramework(), result.failedTests, result.testClassesSeenInCurrentRound);
-                testExecutionSpec = testExecutionSpecFor(retryTestFramework, spec);
-                retryTestResultProcessor.reset(++retryCount == maxRetries);
             }
+        } finally {
+            retryTestResultProcessor.close();
         }
     }
 

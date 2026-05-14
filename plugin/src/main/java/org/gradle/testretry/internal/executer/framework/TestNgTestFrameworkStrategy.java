@@ -71,22 +71,26 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     @Override
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound) {
-        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, template);
+        DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, testClassesSeenInCurrentRound, template);
 
         return testFrameworkProvider(template, testFramework)
             .testFrameworkFor(failedTestsFilter);
     }
 
-    private DefaultTestFilter testFilterFor(TestNames failedTests, TestFrameworkTemplate template) {
+    private DefaultTestFilter testFilterFor(TestNames failedTests, Set<String> testClassesSeenInCurrentRound, TestFrameworkTemplate template) {
         TestFilterBuilder filter = template.filterBuilder();
-        addFilters(template.testsReader, failedTests, filter);
+        addFilters(template.testsReader, failedTests,  testClassesSeenInCurrentRound, filter);
 
         return filter.build();
     }
 
-    private void addFilters(TestsReader testsReader, TestNames failedTests, TestFilterBuilder filters) {
+    private void addFilters(TestsReader testsReader, TestNames failedTests, Set<String> testClassesSeenInCurrentRound, TestFilterBuilder filters) {
         failedTests.stream().forEach(entry -> {
             String className = entry.getKey();
+            if (className == null) {
+                testClassesSeenInCurrentRound.forEach(filters::clazz);
+                return;
+            }
             Set<String> tests = entry.getValue();
             if (tests.isEmpty()) {
                 filters.clazz(className);
