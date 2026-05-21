@@ -22,6 +22,7 @@ import org.gradle.api.tasks.testing.junitplatform.JUnitPlatformOptions;
 import org.gradle.testretry.internal.executer.TestFrameworkTemplate;
 import org.gradle.testretry.internal.executer.TestNames;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkProvider.ProviderForCurrentGradleVersion;
+import org.gradle.testretry.internal.testsreader.TestsReader;
 
 import java.lang.reflect.Constructor;
 import java.util.Set;
@@ -41,6 +42,11 @@ final class Junit5TestFrameworkStrategy extends BaseJunitTestFrameworkStrategy {
     public TestFramework createRetrying(TestFrameworkTemplate template, TestFramework testFramework, TestNames failedTests, Set<String> testClassesSeenInCurrentRound) {
         DefaultTestFilter failedTestsFilter = testFilterFor(failedTests, isSpock2Used, template, testClassesSeenInCurrentRound);
         return testFrameworkProvider(template, testFramework).testFrameworkFor(failedTestsFilter);
+    }
+
+    @Override
+    public boolean isLifecycleFailureTest(TestsReader testsReader, String className, String testName) {
+        return super.isLifecycleFailureTest(testsReader, className, testName) && className != null && !className.isEmpty();
     }
 
     static class Junit5TestFrameworkProvider {

@@ -556,7 +556,13 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         then:
         with(result.output) {
             it.contains("> There were failing tests.")
-            it.count("initializationError FAILED") == 3
+            if (gradleVersion >= "9.3") {
+                //Starting with 9.3, discovery errors are reported without a synthetic class name,
+                //so we can exclude them from retrying
+                it.count("initializationError FAILED") == 1
+            } else {
+                it.count("initializationError FAILED") == 3
+            }
         }
 
         where:
