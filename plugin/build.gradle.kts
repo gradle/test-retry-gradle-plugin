@@ -1,4 +1,5 @@
 import com.google.gson.Gson
+import org.gradle.plugin.compatibility.compatibility
 import org.gradle.testretry.build.GradleVersionData
 import org.gradle.testretry.build.GradleVersionsCommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
@@ -105,6 +106,11 @@ gradlePlugin {
             description = project.description
             implementationClass = "org.gradle.testretry.TestRetryPlugin"
             tags.addAll("test", "flaky")
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
