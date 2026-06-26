@@ -12,9 +12,9 @@ fun BuildType.agentRequirement(os: Os) {
     }
 }
 
-fun BuildType.notEc2Requirement() {
+fun BuildType.releaseRequirement() {
     requirements {
-        doesNotContain("teamcity.agent.name", "ec2")
+        contains("teamcity.agent.name", "release")
     }
 }
 

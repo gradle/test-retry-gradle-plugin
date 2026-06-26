@@ -207,7 +207,7 @@ project {
                 withPendingChangesOnly = false
             }
 
-            notEc2Requirement()
+            releaseRequirement()
         }
 
         buildType("Development") {
