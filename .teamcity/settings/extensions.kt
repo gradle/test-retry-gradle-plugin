@@ -65,10 +65,6 @@ fun Project.buildType(buildTypeName: String, init: BuildType.() -> Unit): BuildT
 
             // Enable `teamcity-jdk-provider-plugin`
             param("JdkProviderEnabled", "true")
-
-            param("env.GRADLE_CACHE_REMOTE_URL", "%gradle.cache.remote.url%")
-            param("env.GRADLE_CACHE_REMOTE_USERNAME", "%gradle.cache.remote.username%")
-            param("env.GRADLE_CACHE_REMOTE_PASSWORD", "%gradle.cache.remote.password%")
         }
 
         vcs {
