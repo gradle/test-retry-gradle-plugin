@@ -806,6 +806,52 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    def "supports test suites modeled as sealed class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import static org.junit.jupiter.api.Assertions.*;
+            import org.junit.jupiter.api.*;
+
+            sealed abstract class TestsSuite {
+
+                static final class SuccessfulTests extends TestsSuite {
+                    @Test
+                    public void successTest() {}
+                }
+            
+                static final class FailedTests extends TestsSuite {
+                    @Test
+                    public void failedTest() {
+                        assertTrue(false);
+                    }
+                }
+            
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.count("${classAndMethodForSuite("TestsSuite\$FailedTests", "failedTest()", gradleVersion)} FAILED") == 2
+            it.count("${classAndMethodForSuite("TestsSuite\$SuccessfulTests", "successTest()", gradleVersion)} PASSED") == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
     private static String dynamicTestName(GradleVersion gv) {
         if (gv >= GradleVersion.version("8.8")) {
             return 'MyTest > dynamicContainerTest() > container > test name 1'
