@@ -17,6 +17,7 @@ package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 
 import javax.annotation.Nullable
 
@@ -806,6 +807,10 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
     }
 
+    @IgnoreIf(
+        value = { effectiveTestJavaMajorVersion() < 17 },
+        reason = "Sealed classes require Java 17 or above"
+    )
     def "supports test suites modeled as sealed class (gradle version #gradleVersion)"() {
         given:
         buildFile << """
