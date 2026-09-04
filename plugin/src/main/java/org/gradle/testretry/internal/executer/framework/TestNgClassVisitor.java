@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 
 final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.ClassInfo> {
 
@@ -111,7 +111,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.Cl
         private final TestNGTestAnnotationVisitor testAnnotationVisitor = new TestNGTestAnnotationVisitor();
 
         public TestNGMethodVisitor() {
-            super(ASM7);
+            super(ASM9);
         }
 
         @Override
@@ -130,7 +130,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.Cl
         private final TestNGTestDependsOnAnnotationVisitor dependsOnAnnotationVisitor = new TestNGTestDependsOnAnnotationVisitor();
 
         public TestNGTestAnnotationVisitor() {
-            super(ASM7);
+            super(ASM9);
         }
 
         @Override
@@ -145,7 +145,7 @@ final class TestNgClassVisitor extends TestsReader.Visitor<TestNgClassVisitor.Cl
     private final class TestNGTestDependsOnAnnotationVisitor extends AnnotationVisitor {
 
         public TestNGTestDependsOnAnnotationVisitor() {
-            super(ASM7);
+            super(ASM9);
         }
 
         @Override
