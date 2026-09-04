@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 
 public final class TestsReader {
 
@@ -133,7 +133,7 @@ public final class TestsReader {
     public abstract static class Visitor<T> extends ClassVisitor {
 
         public Visitor() {
-            super(ASM7);
+            super(ASM9);
         }
 
         public abstract T getResult();

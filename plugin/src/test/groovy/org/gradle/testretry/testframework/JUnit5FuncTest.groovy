@@ -17,6 +17,7 @@ package org.gradle.testretry.testframework
 
 import org.gradle.testretry.AbstractFrameworkFuncTest
 import org.gradle.util.GradleVersion
+import spock.lang.IgnoreIf
 
 import javax.annotation.Nullable
 
@@ -800,6 +801,56 @@ class JUnit5FuncTest extends AbstractFrameworkFuncTest {
         with(result.output) {
             it.count("${testname} FAILED") == 1
             it.count("${testname} PASSED") == 1
+        }
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @IgnoreIf(
+        value = { effectiveTestJavaMajorVersion() < 17 },
+        reason = "Sealed classes require Java 17 or above"
+    )
+    def "supports test suites modeled as sealed class (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test {
+                retry {
+                    maxRetries = 1
+                }
+            }
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import static org.junit.jupiter.api.Assertions.*;
+            import org.junit.jupiter.api.*;
+
+            sealed abstract class TestsSuite {
+
+                static final class SuccessfulTests extends TestsSuite {
+                    @Test
+                    public void successTest() {}
+                }
+            
+                static final class FailedTests extends TestsSuite {
+                    @Test
+                    public void failedTest() {
+                        assertTrue(false);
+                    }
+                }
+            
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).buildAndFail()
+
+        then:
+        with(result.output) {
+            it.count("${classAndMethodForSuite("TestsSuite\$FailedTests", "failedTest()", gradleVersion)} FAILED") == 2
+            it.count("${classAndMethodForSuite("TestsSuite\$SuccessfulTests", "successTest()", gradleVersion)} PASSED") == 1
         }
 
         where:

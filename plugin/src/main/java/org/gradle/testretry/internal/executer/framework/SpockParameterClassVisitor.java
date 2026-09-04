@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNull;
-import static org.objectweb.asm.Opcodes.ASM7;
+import static org.objectweb.asm.Opcodes.ASM9;
 
 /**
  * Class visitor that identifies unparameterized test method names.
@@ -116,7 +116,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
         private SpockUnrollAnnotationVisitor unrollAnnotationVisitor;
 
         public SpockParameterMethodVisitor() {
-            super(ASM7);
+            super(ASM9);
         }
 
         @Override
@@ -159,7 +159,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
             private String testMethodName;
 
             public SpockFeatureMetadataAnnotationVisitor() {
-                super(ASM7);
+                super(ASM9);
             }
 
             @Override
@@ -182,7 +182,7 @@ final class SpockParameterClassVisitor extends TestsReader.Visitor<Map<String, L
             private String unrollTemplate;
 
             public SpockUnrollAnnotationVisitor() {
-                super(ASM7);
+                super(ASM9);
             }
 
             @Override
