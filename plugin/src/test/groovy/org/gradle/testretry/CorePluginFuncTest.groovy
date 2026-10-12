@@ -15,6 +15,7 @@
  */
 package org.gradle.testretry
 
+import org.gradle.testretry.internal.PluginVersion
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAdapter
 
 class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
@@ -105,6 +106,30 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
 
         then:
         assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
+
+        where:
+        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    def "reports the plugin version when a test is un-retryable (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        failedTest()
+
+        when:
+        def result
+        try {
+            System.setProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY, "true")
+            result = gradleRunner(gradleVersion).buildAndFail()
+        } finally {
+            System.clearProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY)
+        }
+
+        then:
+        result.output.contains("The following test methods could not be retried by test-retry plugin version " + PluginVersion.get())
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
