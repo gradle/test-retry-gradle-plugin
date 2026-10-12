@@ -97,29 +97,6 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         failedTest()
 
         when:
-        try {
-            System.setProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY, "true")
-            gradleRunner(gradleVersion).buildAndFail()
-        } finally {
-            System.clearProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY)
-        }
-
-        then:
-        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
-
-        where:
-        gradleVersion << GRADLE_VERSIONS_UNDER_TEST
-    }
-
-    def "reports the plugin version when a test is un-retryable (gradle version #gradleVersion)"() {
-        given:
-        buildFile << """
-            test.retry.maxRetries = 1
-        """
-
-        failedTest()
-
-        when:
         def result
         try {
             System.setProperty(TestRetryTaskExtensionAdapter.SIMULATE_NOT_RETRYABLE_PROPERTY, "true")
@@ -129,7 +106,13 @@ class CorePluginFuncTest extends AbstractGeneralPluginFuncTest {
         }
 
         then:
-        result.output.contains("The following test methods could not be retried by test-retry plugin version " + PluginVersion.get())
+        assertTestReportContains("FailedTests", reportedTestName("failedTest"), 0, 1)
+
+        and: 'the failure names a resolved plugin version rather than the unknown fallback'
+        def version = PluginVersion.get()
+        version != "unknown"
+        version ==~ /\d+\.\d+\.\d+.*/
+        result.output.contains("The following test methods could not be retried by test-retry plugin version " + version + ", which is unexpected.")
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
