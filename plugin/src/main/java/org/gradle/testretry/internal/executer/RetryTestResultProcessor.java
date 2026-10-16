@@ -21,6 +21,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.internal.tasks.testing.TestStartEvent;
 import org.gradle.api.tasks.testing.TestFailure;
 import org.gradle.api.tasks.testing.TestOutputEvent;
+import org.gradle.api.tasks.testing.TestMetadataEvent;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.ClassRetryMatcher;
 import org.gradle.testretry.internal.filter.RetryFilter;
@@ -234,6 +235,11 @@ final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
     @Override
     public void output(Object testId, TestOutputEvent testOutputEvent) {
         delegate.output(testId, testOutputEvent);
+    }
+
+    @Override
+    public void published(Object testId, TestMetadataEvent event) {
+        delegate.published(testId, event);
     }
 
     @SuppressWarnings("unused")
