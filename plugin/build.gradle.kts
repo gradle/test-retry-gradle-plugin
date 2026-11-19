@@ -96,6 +96,16 @@ tasks.jar {
     dependsOn(tasks.shadowJar)
 }
 
+tasks.processResources {
+    val pluginVersion = project.version.toString()
+    inputs.property("pluginVersion", pluginVersion)
+    // Makes the plugin version available to the plugin at runtime, see org.gradle.testretry.internal.PluginVersion
+    doLast {
+        val file = File(destinationDir, "plugin-version.properties")
+        file.writeText("version=$pluginVersion\n")
+    }
+}
+
 gradlePlugin {
     website.set("https://github.com/gradle/test-retry-gradle-plugin")
     vcsUrl.set("https://github.com/gradle/test-retry-gradle-plugin.git")

@@ -22,6 +22,7 @@ import org.gradle.api.internal.tasks.testing.TestResultProcessor;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.reflect.Instantiator;
+import org.gradle.testretry.internal.PluginVersion;
 import org.gradle.testretry.internal.config.TestRetryTaskExtensionAccessor;
 import org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy;
 import org.gradle.testretry.internal.filter.AnnotationInspectorImpl;
@@ -144,7 +145,7 @@ public final class RetryTestExecuter implements TestExecuter<JvmTestExecutionSpe
 
     public void failWithNonRetriedTestsIfAny() {
         if (extension.getSimulateNotRetryableTest() || hasNonRetriedTests()) {
-            throw new IllegalStateException("The following test methods could not be retried, which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
+            throw new IllegalStateException("The following test methods could not be retried by test-retry plugin version " + PluginVersion.get() + ", which is unexpected. Please file a bug report at https://github.com/gradle/test-retry-gradle-plugin/issues" +
                 lastResult.nonRetriedTests.stream()
                     .flatMap(entry -> entry.getValue().stream().map(methodName -> "   " + entry.getKey() + "#" + methodName))
                     .collect(Collectors.joining("\n", "\n", "\n")));
