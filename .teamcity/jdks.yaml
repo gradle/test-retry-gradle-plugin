@@ -7,17 +7,17 @@ jdks:
     os: linux
     arch: amd64
     vendor: "liberica"
-    version: "8u513+9"
-    sha256: a9c91a31fc48574af6f6503b8d607ef07f33af418e525c92ecda71763a629c0b
+    version: "8u514+5"
+    sha256: cc82f9e6cadb5172fc8d3826de1faef0ad283e2c58ea74b1a047f926d1310ac4
   - param: "linux.java17.openjdk.64bit"
     os: linux
     arch: amd64
     vendor: "liberica"
-    version: "17.0.21.0.3+5"
-    sha256: fc87917b371354c32c0af3b903f7488bc38df70d85e5fe5b0a76662f2a8191e9
+    version: "17.0.21.1+5"
+    sha256: add6f8c21289daf20eb38cd8fbd05bc374773038512cae655844e4e9a9a4f3d3
   - param: "linux.java25.openjdk.64bit"
     os: linux
     arch: amd64
     vendor: "liberica"
-    version: "25.0.5.0.3+5"
-    sha256: 619c84961ce12dd1cd455719680e22d080bee63dbfe64711e2ef47243114e3ef
+    version: "25.0.5.1+5"
+    sha256: d27deff2b71c670c1603aa31195ccc0e28c56ccab2495231fa58a48ee4a8b1c4
