@@ -80,4 +80,12 @@ public interface TestFrameworkStrategy {
     default boolean isExpectedUnretriedTest(String className, String test) {
         return false;
     }
+
+    /**
+     * Returns the name under which a failed test is tracked between rounds.
+     * A test that passes in the next round clears the failure only if both names normalize to the same value.
+     */
+    default String normalizeTestName(String testName) {
+        return testName;
+    }
 }
