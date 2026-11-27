@@ -16,6 +16,7 @@
 package org.gradle.testretry.testframework
 
 import org.gradle.util.GradleVersion
+import spock.lang.Issue
 
 import javax.annotation.Nullable
 
@@ -80,5 +81,71 @@ class TestNGPlainFuncTest extends BaseTestNGFuncTest {
 
         where:
         gradleVersion << GRADLE_VERSIONS_UNDER_TEST
+    }
+
+    @Issue("https://github.com/gradle/test-retry-gradle-plugin/issues/487")
+    def "retries data provider test with #parameter.name() parameter representation (gradle version #gradleVersion)"() {
+        given:
+        buildFile << """
+            test.retry.maxRetries = 1
+        """
+
+        writeJavaTestSource """
+            package acme;
+
+            import org.testng.annotations.*;
+
+            public class ParameterTest {
+                public static class Value {
+                    final int number;
+
+                    Value(int number) {
+                        this.number = number;
+                    }
+
+                    ${parameter.toStringMethod}
+                }
+
+                @DataProvider(name = "parameters")
+                public Object[] createParameters() {
+                    return new Object[]{new Value(0), new Value(1)};
+                }
+
+                @Test(dataProvider = "parameters")
+                public void test(Value value) {
+                    ${flakyAssert()}
+                }
+            }
+        """
+
+        when:
+        def result = gradleRunner(gradleVersion).build()
+
+        then:
+        // the first iteration fails once, then all iterations are rerun and pass
+        with(result.output) {
+            it.count(' FAILED') == 1
+            it.count(' PASSED') == 3
+            !it.contains('The following test methods could not be retried')
+        }
+
+        where:
+        [gradleVersion, parameter] << GroovyCollections.combinations((Iterable) [
+            GRADLE_VERSIONS_UNDER_TEST,
+            ParameterToString.values()
+        ])
+    }
+
+    enum ParameterToString {
+        NESTED_PARENTHESES('public String toString() { return "Value(number=" + number + ")"; }'),
+        DEFAULT_OBJECT_TO_STRING(''),
+        RANDOM('public String toString() { return java.util.UUID.randomUUID().toString(); }'),
+        MULTI_LINE('public String toString() { return "first line\\nsecond line " + number; }')
+
+        final String toStringMethod
+
+        ParameterToString(String toStringMethod) {
+            this.toStringMethod = toStringMethod
+        }
     }
 }

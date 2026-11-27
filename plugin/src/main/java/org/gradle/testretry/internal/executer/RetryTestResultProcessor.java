@@ -123,7 +123,7 @@ final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
                 String className = descriptor.getClassName();
                 String name = descriptor.getName();
 
-                boolean failedInPreviousRound = previousRoundFailedTests.remove(className, name);
+                boolean failedInPreviousRound = previousRoundFailedTests.remove(className, testFrameworkStrategy.normalizeTestName(name));
                 boolean shouldRetrySkippedTestThatPreviouslyFailed = failedInPreviousRound && testCompleteEvent.getResultType() == SKIPPED && failOnSkippedAfterRetry;
                 if (shouldRetrySkippedTestThatPreviouslyFailed) {
                     addRetry(descriptor);
@@ -186,7 +186,7 @@ final class RetryTestResultProcessor implements TestResultProcessor, Closeable {
         if (classMatchingClassRetryFilter.isPresent()) {
             currentRoundFailedTests.addClass(classMatchingClassRetryFilter.get().getClassName());
         } else {
-            currentRoundFailedTests.add(descriptor.getClassName(), descriptor.getName());
+            currentRoundFailedTests.add(descriptor.getClassName(), testFrameworkStrategy.normalizeTestName(descriptor.getName()));
         }
     }
 

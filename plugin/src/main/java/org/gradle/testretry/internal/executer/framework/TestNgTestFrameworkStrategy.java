@@ -39,6 +39,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.gradle.testretry.internal.executer.framework.TestFrameworkStrategy.gradleVersionIsAtLeast;
 import static org.gradle.testretry.internal.executer.framework.TestNgTestFrameworkStrategy.TestNGTestFrameworkProvider.testFrameworkProvider;
@@ -46,6 +48,10 @@ import static org.gradle.testretry.internal.executer.framework.TestNgTestFramewo
 final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestNgTestFrameworkStrategy.class);
+
+    // Gradle reports data provider iterations as "method[invocation](params)". The parameter text
+    // comes from toString(), so it may contain any character. A method name cannot contain '['.
+    private static final Pattern PARAMETERIZED_TEST_NAME = Pattern.compile("^([^\\[]+)\\[\\d+]\\(.*\\)$", Pattern.DOTALL);
 
     private final Map<String, Optional<TestNgClassVisitor.ClassInfo>> classInfoCache = new HashMap<>();
 
@@ -103,9 +109,8 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
                     if (isLifecycleMethod(testsReader, test, classInfo)) {
                         filters.clazz(className);
                     } else {
-                        String parameterlessName = stripParameters(test);
-                        filters.test(className, parameterlessName);
-                        classInfo.dependsOn(parameterlessName)
+                        filters.test(className, test);
+                        classInfo.dependsOn(test)
                             .forEach(methodName -> filters.test(className, methodName));
                     }
                 } else {
@@ -128,8 +133,15 @@ final class TestNgTestFrameworkStrategy implements TestFrameworkStrategy {
         });
     }
 
-    private static String stripParameters(String testMethodName) {
-        return testMethodName.replaceAll("\\[[^)]+](\\([^)]*\\))+$", "");
+    /**
+     * All iterations of a data provider method are rerun together, so they are tracked under the method name.
+     * This keeps retries working when the parameter text differs between runs, for example a default
+     * {@code Object.toString()}.
+     */
+    @Override
+    public String normalizeTestName(String testName) {
+        Matcher matcher = PARAMETERIZED_TEST_NAME.matcher(testName);
+        return matcher.matches() ? matcher.group(1) : testName;
     }
 
     static class TestNGTestFrameworkProvider {
